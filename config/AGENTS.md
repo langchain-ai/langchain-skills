@@ -1,0 +1,87 @@
+# LangGraph + LangSmith Agent Development
+
+## CRITICAL: Read This BEFORE Writing ANY Code
+
+You have access to skills for building agents with LangGraph and observing/evaluating them with LangSmith.
+
+### ABSOLUTELY FORBIDDEN - These Patterns Are BANNED
+
+DO NOT import or use these under ANY circumstances:
+
+```python
+from langchain.llms import OpenAI  # BANNED - deprecated
+from langchain.llms import *  # BANNED - deprecated
+from langchain.chains import LLMChain  # BANNED - deprecated
+from langchain.prompts import PromptTemplate  # BANNED - deprecated
+from langchain.agents import create_sql_agent  # BANNED - use create_agent
+from langchain.agents import create_react_agent  # BANNED - use create_agent
+from langchain.agents import create_tool_calling_agent  # BANNED - use create_agent
+from langchain.agents import create_openai_functions_agent  # BANNED - use create_agent
+```
+
+If you write code using ANY of the above, your solution is INCORRECT and WILL FAIL.
+
+### CORRECT Modern Patterns - Use These Instead
+
+```python
+from langchain_anthropic import ChatAnthropic  # CORRECT
+from langchain_openai import ChatOpenAI  # CORRECT
+from langchain.agents import create_agent  # CORRECT
+from langchain_core.tools import tool  # CORRECT
+
+@tool
+def my_tool(input: str) -> str:
+    """Tool description here."""
+    return result
+
+model = ChatAnthropic(model="claude-sonnet-4-5")
+agent = create_agent(model=model, tools=[my_tool])
+```
+
+### Mandatory Skill Consultation Rules
+
+BEFORE writing code, ALWAYS consult the appropriate skill:
+
+1. **langgraph-code** - For ANY coding involving LangChain/LangGraph
+2. **langsmith-trace** - For observability questions
+3. **langsmith-dataset** - For creating test datasets
+4. **langsmith-evaluator** - For evaluating agents
+
+The skill will show you the CORRECT modern patterns with examples.
+
+## Skills Available
+
+- **langgraph-code** - ANY coding question involving LangChain products (agents, primitives, context management, multi-agent)
+- **langsmith-trace** - ANY observability question (query traces, debug execution, analyze behavior)
+- **langsmith-dataset** - ANY question about creating test/evaluation datasets
+- **langsmith-evaluator** - ANY question about evaluating or testing agents
+
+## When Building Agents
+
+**Start simple.** Use `create_agent` or basic ReAct loops before adding complexity.
+
+**Manage context early.** If your agent handles long conversations or large state, consult `langgraph-code` section 2:
+- Subagent delegation (offload work, return summaries)
+- Filesystem context (store paths not content)
+- Message trimming (keep recent only)
+- Compression (summarize old context)
+
+**Track execution.** Ensure `LANGSMITH_API_KEY` is set. Traces appear automatically at https://smith.langchain.com
+
+## When Debugging/Evaluating
+
+**Investigate failures:** Use `langsmith-trace` to query recent runs, filter by error status, export to JSON
+
+**Create test sets:** Use `langsmith-dataset` to generate datasets from production traces (final_response, trajectory, single_step, RAG types)
+
+**Define metrics:** Use `langsmith-evaluator` for custom evaluation (LLM as Judge for subjective quality, custom code for objective checks)
+
+## Common Patterns
+
+**Research agent:** Subagent delegation + filesystem + LLM as Judge
+
+**SQL agent:** Simple ReAct loop + exact match evaluation
+
+**Multi-agent:** Supervisor pattern + compressed outputs + trajectory datasets
+
+**Long-running:** Hierarchical state + checkpointing + message trimming

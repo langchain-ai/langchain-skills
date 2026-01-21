@@ -1,6 +1,6 @@
 ---
 name: langsmith-evaluator
-description: Create evaluators for LangSmith datasets to measure agent performance. Use this skill for building LLM as Judge evaluators with structured output and custom code evaluators for trajectory, single_step, and final_response datasets in LangSmith.
+description: Use this skill for ANY question about evaluating or testing LangChain agents. Covers creating custom metrics, LLM as Judge evaluators, code-based evaluators, and uploading evaluation logic to LangSmith.
 ---
 
 # LangSmith Evaluator

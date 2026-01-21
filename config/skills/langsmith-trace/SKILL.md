@@ -1,6 +1,6 @@
 ---
 name: langsmith-trace
-description: Query, analyze, and export traces from LangSmith observability platform. Use this skill for debugging agent behavior, viewing trace hierarchy, exporting runs, and understanding trace structure in LangSmith.
+description: Use this skill for ANY LangChain observability question. Covers querying traces, debugging agent behavior, analyzing execution flow, filtering runs, and exporting trace data from LangSmith.
 ---
 
 # LangSmith Trace

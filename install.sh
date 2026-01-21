@@ -58,12 +58,12 @@ echo "Installing..."
 # Create agent directory structure
 mkdir -p "$AGENT_DIR"
 
-# Copy AGENT.md as AGENTS.md (note the S!)
-if [ -f "$SCRIPT_DIR/config/AGENT.md" ]; then
-    cp "$SCRIPT_DIR/config/AGENT.md" "$AGENT_DIR/AGENTS.md"
+# Copy AGENTS.md
+if [ -f "$SCRIPT_DIR/config/AGENTS.md" ]; then
+    cp "$SCRIPT_DIR/config/AGENTS.md" "$AGENT_DIR/AGENTS.md"
     echo "✓ Copied AGENTS.md"
 else
-    echo "❌ ERROR: config/AGENT.md not found"
+    echo "❌ ERROR: config/AGENTS.md not found"
     rm -rf "$AGENT_DIR"
     exit 1
 fi

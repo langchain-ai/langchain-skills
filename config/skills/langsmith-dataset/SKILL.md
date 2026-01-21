@@ -1,6 +1,6 @@
 ---
 name: langsmith-dataset
-description: Generate evaluation datasets from LangSmith traces. Use this skill for creating final_response, single_step, trajectory, and RAG datasets from LangSmith with sampling and depth control.
+description: Use this skill for ANY question about creating test or evaluation datasets for LangChain agents. Covers generating datasets from traces (final_response, single_step, trajectory, RAG types), uploading to LangSmith, and managing evaluation data.
 ---
 
 # LangSmith Dataset
