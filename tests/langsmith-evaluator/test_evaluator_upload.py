@@ -37,8 +37,9 @@ Steps:
 2. Create a simple evaluator function in test_evaluator.py with:
    - Function name: test_length_check
    - Purpose: Check if output length is > 10 characters
-   - Return format: {{"key": "length_check", "score": 1 if len > 10 else 0, "comment": "..."}}
+   - Return format: {{"length_check": 1 if len > 10 else 0, "comment": "..."}}
    - Use (run, example) signature for LangSmith
+   - IMPORTANT: Use upload format (metric_name: score), NOT experiment format
 
 3. Upload the evaluator to LangSmith (do not just run an experiment):
    - Use the upload script at: ~/.deepagents/langchain_agent/skills/langsmith-evaluator/scripts/upload_evaluators.py

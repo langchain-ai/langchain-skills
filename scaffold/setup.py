@@ -39,9 +39,16 @@ def setup_test_environment(base_env_path: Optional[Path] = None) -> Path:
 
 def cleanup_test_environment(test_dir: Path):
     """Clean up temporary test directory."""
-    if not str(test_dir).startswith('/tmp/'):
-        print(f"Not cleaning up {test_dir} (not in /tmp)")
+    # Check if it's a temp directory (starts with system temp dir or contains "deepagents_test_")
+    temp_indicators = [
+        tempfile.gettempdir() in str(test_dir),
+        'deepagents_test_' in str(test_dir)
+    ]
+
+    if not any(temp_indicators):
+        print(f"Not cleaning up {test_dir} (not a temp directory)")
         return
+
     if test_dir.exists():
         print(f"Cleaning up {test_dir}...")
         shutil.rmtree(test_dir)

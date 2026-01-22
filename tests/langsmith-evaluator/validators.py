@@ -171,10 +171,11 @@ class EvaluatorValidator(TestValidator):
             evaluator = next((r for r in rules if r.get("display_name") == evaluator_name), None)
 
             if evaluator:
-                # Check if it has dataset targets
-                dataset_ids = evaluator.get("target_dataset_ids", [])
-                if dataset_ids:
-                    self.passed.append(f"✓ Evaluator exists in LangSmith: {evaluator_name} (attached to {len(dataset_ids)} dataset(s))")
+                # Check if it has dataset attached (API uses dataset_id not target_dataset_ids)
+                dataset_id = evaluator.get("dataset_id")
+                dataset_name = evaluator.get("dataset_name")
+                if dataset_id:
+                    self.passed.append(f"✓ Evaluator exists in LangSmith: {evaluator_name} (attached to dataset: {dataset_name})")
                 else:
                     self.failed.append(f"✗ Evaluator '{evaluator_name}' exists but not attached to any dataset")
             else:

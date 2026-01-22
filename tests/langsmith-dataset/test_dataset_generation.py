@@ -10,6 +10,9 @@ This test verifies that the agent can:
 Run:
     python tests/langsmith-dataset/test_dataset_generation.py
     python tests/langsmith-dataset/test_dataset_generation.py --work-dir /path/to/test/env
+"""
+
+import sys
 import json
 import argparse
 from pathlib import Path
@@ -63,9 +66,7 @@ def run_test(work_dir: Path = None):
         validate_func=validate
     )
 
-    # Always cleanup temp directory
-        cleanup_test_environment(test_dir)
-
+    cleanup_test_environment(test_dir)
     return result
 
 
@@ -79,7 +80,6 @@ def main():
         type=Path,
         help="Working directory with deepagents installed (default: ~/Desktop/Projects/test)"
     )
-    parser.add_argument(
 
     args = parser.parse_args()
 

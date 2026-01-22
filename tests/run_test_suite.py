@@ -2,58 +2,61 @@
 """
 Unified test suite for LangChain agent skills.
 
-This suite runs all tests in dependency order with a shared LangSmith project:
-1. langgraph-code - Creates and runs SQL agent (generates traces to test project)
+Runs all tests sequentially in dependency order:
+1. langgraph-code - Creates and runs SQL agent (generates traces)
 2. langsmith-trace - Queries traces from test project
-3. langsmith-dataset generation - Generates dataset from test project traces
+3. langsmith-dataset generation - Generates dataset from traces
 4. langsmith-dataset upload - Uploads dataset with test name
 5. langsmith-evaluator - Creates evaluator attached to test dataset
 
-Environment variables:
-- LANGSMITH_PROJECT: Set to "Skills Test - DELETE ME" for all tests
-- Test artifacts use "DELETE ME" suffix for easy cleanup
-
-All tests use a single shared environment. If any test fails, the suite exits.
+Each test uses an isolated temporary directory for safety.
+LangSmith artifacts are cleaned up at the end automatically.
 
 Usage:
-    python tests/run_test_suite.py
-    python tests/run_test_suite.py --work-dir /path/to/test/env
-    python tests/run_test_suite.py --use-temp
+    uv run python tests/run_test_suite.py
+    uv run python tests/run_test_suite.py --work-dir /path/to/test/env
 """
 
 import sys
 import os
+import subprocess
 import argparse
 from pathlib import Path
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Skills root
 skills_root = Path(__file__).parent.parent
 sys.path.insert(0, str(skills_root))
 
-from scaffold.setup import setup_test_environment, cleanup_test_environment
-
-# Test project name for LangSmith
-TEST_PROJECT = "Skills Test - DELETE ME"
-TEST_DATASET_NAME = "Test Dataset - DELETE ME"
-TEST_EVALUATOR_DATASET_NAME = "Evaluator Test Dataset - DELETE ME"
-TEST_EVALUATOR_NAME = "Test Length Check - DELETE ME"
-
-# Import test modules
-sys.path.insert(0, str(skills_root / "tests" / "langgraph-code"))
-sys.path.insert(0, str(skills_root / "tests" / "langsmith-trace"))
-sys.path.insert(0, str(skills_root / "tests" / "langsmith-dataset"))
-sys.path.insert(0, str(skills_root / "tests" / "langsmith-evaluator"))
-
-from test_sql_agent_autonomous import run_test as run_langgraph_test
-from test_trace_query import run_test as run_trace_test
-from test_dataset_generation import run_test as run_dataset_gen_test
-from test_dataset_upload import run_test as run_dataset_upload_test
-from test_evaluator_upload import run_test as run_evaluator_test
+from scaffold.cleanup import cleanup_langsmith_assets
 
 
-def run_suite(work_dir: Path = None, use_temp: bool = False):
-    """Run the complete test suite."""
+def run_test_script(test_path: Path, work_dir: Path = None) -> int:
+    """Run a test script as a subprocess."""
+    cmd = ["uv", "run", "python", str(test_path)]
+    if work_dir:
+        cmd.extend(["--work-dir", str(work_dir)])
+
+    result = subprocess.run(cmd, cwd=str(skills_root))
+
+    # Clean up local files after each test (temp dirs handle their own cleanup)
+    print("Cleaning up local test files...")
+    cleanup_cmd = ["uv", "run", "python", "scaffold/cleanup.py", "--local"]
+    subprocess.run(cleanup_cmd, cwd=str(skills_root), capture_output=True)
+
+    return result.returncode
+
+
+def run_suite(work_dir: Path = None):
+    """Run the complete test suite.
+
+    Args:
+        work_dir: Base environment with deepagents installed (or None for default)
+    """
 
     start_time = datetime.now()
 
@@ -63,25 +66,7 @@ def run_suite(work_dir: Path = None, use_temp: bool = False):
     print()
     print(f"Started: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-
-    # Set up shared test environment
-    print("Setting up test environment...")
-    try:
-        if work_dir:
-            test_dir = setup_test_environment(work_dir, use_temp=use_temp)
-        else:
-            test_dir = setup_test_environment(use_temp=use_temp)
-    except FileNotFoundError as e:
-        print(f"ERROR: {e}")
-        return 1
-
-    print(f"✓ Test environment ready: {test_dir}")
-    print()
-
-    # Set up environment variables for all tests
-    print("Configuring LangSmith environment...")
-    os.environ["LANGSMITH_PROJECT"] = TEST_PROJECT
-    print(f"✓ LANGSMITH_PROJECT = {TEST_PROJECT}")
+    print("Each test runs in an isolated temporary directory.")
     print()
 
     # Define test suite in dependency order
@@ -89,27 +74,27 @@ def run_suite(work_dir: Path = None, use_temp: bool = False):
         {
             "name": "LangGraph Code",
             "description": "Create SQL agent using modern patterns",
-            "function": run_langgraph_test
+            "path": skills_root / "tests" / "langgraph-code" / "test_create_agent.py"
         },
         {
             "name": "LangSmith Trace Query",
             "description": "Query and extract recent traces",
-            "function": run_trace_test
+            "path": skills_root / "tests" / "langsmith-trace" / "test_trace_query.py"
         },
         {
             "name": "LangSmith Dataset Generation",
             "description": "Generate dataset from traces (no upload)",
-            "function": run_dataset_gen_test
+            "path": skills_root / "tests" / "langsmith-dataset" / "test_dataset_generation.py"
         },
         {
             "name": "LangSmith Dataset Upload",
             "description": "Generate and upload dataset",
-            "function": run_dataset_upload_test
+            "path": skills_root / "tests" / "langsmith-dataset" / "test_dataset_upload.py"
         },
         {
             "name": "LangSmith Evaluator Upload",
             "description": "Create and upload evaluator",
-            "function": run_evaluator_test
+            "path": skills_root / "tests" / "langsmith-evaluator" / "test_evaluator_upload.py"
         }
     ]
 
@@ -125,8 +110,7 @@ def run_suite(work_dir: Path = None, use_temp: bool = False):
         print()
 
         try:
-            # Pass work_dir but not use_temp (we already set up the environment)
-            result = test["function"](work_dir=test_dir, use_temp=False)
+            result = run_test_script(test["path"], work_dir)
             results.append((test["name"], result))
 
             if result != 0:
@@ -182,18 +166,12 @@ def run_suite(work_dir: Path = None, use_temp: bool = False):
         print("=" * 80)
         print("ALL TESTS PASSED")
         print("=" * 80)
-        print()
-        print("⚠️  CLEANUP REQUIRED:")
-        print("   - Delete evaluator: 'Test Length Check - DELETE ME'")
-        print("   - Delete dataset: 'Evaluator Test Dataset - DELETE ME'")
-        print("   - Delete dataset: 'Test Dataset - DELETE ME'")
         final_result = 0
 
-    # Cleanup if using temp directory
-    if use_temp:
-        print()
-        print("Cleaning up temporary test environment...")
-        cleanup_test_environment(test_dir)
+    # Cleanup LangSmith assets
+    print()
+    print("Cleaning up LangSmith test assets...")
+    cleanup_langsmith_assets()
 
     return final_result
 
@@ -208,15 +186,10 @@ def main():
         type=Path,
         help="Working directory with deepagents installed (default: ~/Desktop/Projects/test)"
     )
-    parser.add_argument(
-        "--use-temp",
-        action="store_true",
-        help="Create temporary directory for isolated test"
-    )
 
     args = parser.parse_args()
 
-    return run_suite(work_dir=args.work_dir, use_temp=args.use_temp)
+    return run_suite(work_dir=args.work_dir)
 
 
 if __name__ == "__main__":
