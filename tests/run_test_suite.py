@@ -3,7 +3,7 @@
 Unified test suite for LangChain agent skills.
 
 Runs all tests sequentially in dependency order:
-1. langgraph-code - Creates and runs SQL agent (generates traces)
+1. langchain-agents - Creates and runs SQL agent (generates traces)
 2. langsmith-trace - Queries traces from test project
 3. langsmith-dataset generation - Generates dataset from traces
 4. langsmith-dataset upload - Uploads dataset with test name
@@ -74,7 +74,7 @@ def run_suite(work_dir: Path = None):
         {
             "name": "LangGraph Code",
             "description": "Create SQL agent using modern patterns",
-            "path": skills_root / "tests" / "langgraph-code" / "test_create_agent.py"
+            "path": skills_root / "tests" / "langchain-agents" / "test_create_agent.py"
         },
         {
             "name": "LangSmith Trace Query",

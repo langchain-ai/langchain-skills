@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Autonomous test for SQL agent creation using langgraph-code skill.
+Autonomous test for SQL agent creation using langchain-agents skill.
 
 This test:
 1. Defines a complete, specific prompt
@@ -9,9 +9,9 @@ This test:
 4. Reports results
 
 Run:
-    python tests/langgraph-code/test_sql_agent_autonomous.py
-    python tests/langgraph-code/test_sql_agent_autonomous.py --work-dir /path/to/test/env
-    python tests/langgraph-code/test_sql_agent_autonomous.py --use-temp
+    python tests/langchain-agents/test_sql_agent_autonomous.py
+    python tests/langchain-agents/test_sql_agent_autonomous.py --work-dir /path/to/test/env
+    python tests/langchain-agents/test_sql_agent_autonomous.py --use-temp
 """
 
 import sys
@@ -39,7 +39,7 @@ def get_prompt() -> str:
     """Return the test prompt.
 
     This prompt tests whether the agent can:
-    - Consult langgraph-code skill for modern patterns
+    - Consult langchain-agents skill for modern patterns
     - Build a working SQL agent
     - Generate traces to LangSmith
     """
@@ -147,7 +147,7 @@ def run_test(work_dir: Path = None):
 
     # Validate using LangGraphCodeValidator
     validator = LangGraphCodeValidator()
-    validator.check_skill("langgraph-code", summary_content)
+    validator.check_skill("langchain-agents", summary_content)
     validator.check_modern_patterns(summary_content)
     validator.check_legacy_patterns_avoided(summary_content)
     validator.check_agent_file(test_dir)

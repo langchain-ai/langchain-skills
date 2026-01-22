@@ -19,7 +19,7 @@ export LANGSMITH_API_KEY=<your-key>
 
 ## Available Skills
 
-- **langgraph-code** - Build agents with LangGraph (primitives, context management, multi-agent patterns)
+- **langchain-agents** - Build agents with LangChain ecosystem (primitives, context management, multi-agent patterns)
 - **langsmith-trace** - Query and inspect traces
 - **langsmith-dataset** - Generate evaluation datasets from traces
 - **langsmith-evaluator** - Create custom evaluation metrics
@@ -47,7 +47,7 @@ uv run python tests/run_test_suite.py
 
 # Run individual tests (IMPORTANT: clean local data between each run)
 uv run python scaffold/cleanup.py --local
-uv run python tests/langgraph-code/test_create_agent.py
+uv run python tests/langchain-agents/test_create_agent.py
 uv run python scaffold/cleanup.py --local
 uv run python tests/langsmith-trace/test_trace_query.py
 
@@ -92,7 +92,7 @@ class MyValidator(TestValidator):
 ## Test Suite
 
 Tests run in dependency order:
-1. **langgraph-code** - Creates SQL agent (generates traces)
+1. **langchain-agents** - Creates SQL agent (generates traces)
 2. **langsmith-trace** - Queries traces
 3. **langsmith-dataset** - Generates datasets from traces
 4. **langsmith-evaluator** - Creates evaluators attached to datasets

@@ -42,7 +42,7 @@ agent = create_agent(model=model, tools=[my_tool])
 
 BEFORE writing code, ALWAYS consult the appropriate skill:
 
-1. **langgraph-code** - For ANY coding involving LangChain/LangGraph
+1. **langchain-agents** - For ANY coding involving LangChain/LangGraph
 2. **langsmith-trace** - For observability questions
 3. **langsmith-dataset** - For creating test datasets
 4. **langsmith-evaluator** - For evaluating agents
@@ -51,7 +51,7 @@ The skill will show you the CORRECT modern patterns with examples.
 
 ## Skills Available
 
-- **langgraph-code** - ANY coding question involving LangChain products (agents, primitives, context management, multi-agent)
+- **langchain-agents** - ANY coding question involving LangChain products (agents, primitives, context management, multi-agent)
 - **langsmith-trace** - ANY observability question (query traces, debug execution, analyze behavior)
 - **langsmith-dataset** - ANY question about creating test/evaluation datasets
 - **langsmith-evaluator** - ANY question about evaluating or testing agents
@@ -60,7 +60,7 @@ The skill will show you the CORRECT modern patterns with examples.
 
 **Start simple.** Use `create_agent` or basic ReAct loops before adding complexity.
 
-**Manage context early.** If your agent handles long conversations or large state, consult `langgraph-code` section 2:
+**Manage context early.** If your agent handles long conversations or large state, consult `langchain-agents` section 2:
 - Subagent delegation (offload work, return summaries)
 - Filesystem context (store paths not content)
 - Message trimming (keep recent only)

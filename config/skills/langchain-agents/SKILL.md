@@ -1,9 +1,9 @@
 ---
-name: langgraph-code
+name: langchain-agents
 description: Use this skill for ANY coding question involving LangChain products (LangChain, LangGraph, LangSmith SDK). Covers agent development patterns, primitives, context management, multi-agent systems, and when to use create_agent vs create_deep_agent vs raw LangGraph. Consult this BEFORE writing any LangChain-related code.
 ---
 
-# LangGraph Development Guide
+# LangChain Ecosystem Guide
 
 Build production-ready agents with LangGraph, from basic primitives to advanced context management.
 
