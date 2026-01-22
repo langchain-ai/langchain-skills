@@ -27,7 +27,7 @@ class LangGraphCodeValidator(TestValidator):
         modern_patterns = {
             "@tool": "decorator",
             "create_agent": "function",
-            "ChatAnthropic": "model",
+            "ChatOpenAI": "model",
         }
 
         found = [name for pattern, name in modern_patterns.items() if pattern in summary]

@@ -14,4 +14,8 @@ dependencies = [
     "rich>=13.0.0",
     "python-dotenv>=1.0.0",
     "sqlalchemy>=2.0.0",
+    "pexpect>=4.9.0",
 ]
+
+[tool.setuptools]
+packages = []

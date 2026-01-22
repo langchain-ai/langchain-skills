@@ -31,10 +31,7 @@ from datetime import datetime
 skills_root = Path(__file__).parent.parent
 sys.path.insert(0, str(skills_root))
 
-from scaffold.fixtures import (
-    setup_test_environment,
-    cleanup_test_environment
-)
+from scaffold.setup import setup_test_environment, cleanup_test_environment
 
 # Test project name for LangSmith
 TEST_PROJECT = "Skills Test - DELETE ME"

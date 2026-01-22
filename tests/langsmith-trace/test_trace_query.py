@@ -22,64 +22,54 @@ from pathlib import Path
 skills_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(skills_root))
 
-from scaffold.fixtures import (
-    setup_test_environment,
-    cleanup_test_environment,
-    run_autonomous_test
-)
-from scaffold.validators import TestValidator
+from scaffold.setup import setup_test_environment, cleanup_test_environment
+from scaffold.runner import run_autonomous_test, make_autonomous_prompt
+from validators import TraceValidator
+import os
 
 
 def get_prompt() -> str:
     """Return the test prompt."""
-    import os
-    project = os.environ.get("LANGSMITH_PROJECT", "default")
-    return f"""Use the langsmith-trace skill to list the 5 most recent traces from the LangSmith project "{project}".
+    project = os.environ.get("LANGSMITH_PROJECT", "skills")
+    return f"""List the 5 most recent traces from the LangSmith project "{project}".
 
 Then, get details about the first trace (most recent one).
 
 Save the trace ID to a file called test_trace_id.txt in the current directory.
 
-Do not ask any clarifying questions - implement this specific design."""
+Do not ask clarifying questions."""
 
 
 def validate(summary_content: str, test_dir: Path) -> tuple[list[str], list[str]]:
-    """Validate test results using TestValidator."""
-    validator = TestValidator()
+    """Validate test results using TraceValidator."""
+    project = os.environ.get("LANGSMITH_PROJECT", "skills")
+    validator = TraceValidator()
     validator.check_skill("langsmith-trace", summary_content)
     validator.check_file_exists("test_trace_id.txt", test_dir, "trace ID file")
     validator.check_uuid_format("test_trace_id.txt", test_dir)
+    validator.check_trace_in_langsmith(test_dir, project)
     return validator.results()
 
 
-def run_test(work_dir: Path = None, use_temp: bool = False):
+def run_test(work_dir: Path = None):
     """Run the autonomous test."""
-    # Set up test environment
     try:
-        if work_dir:
-            test_dir = setup_test_environment(work_dir, use_temp=use_temp)
-        else:
-            test_dir = setup_test_environment(use_temp=use_temp)
+        test_dir = setup_test_environment(work_dir)
     except FileNotFoundError as e:
         print(f"ERROR: {e}")
         return 1
 
     runner = skills_root / "scaffold" / "runner.py"
 
-    # Run test using helper
     result = run_autonomous_test(
         test_name="LangSmith Trace Query",
-        prompt=get_prompt(),
+        prompt=make_autonomous_prompt(get_prompt()),
         test_dir=test_dir,
         runner_path=runner,
-        validate_func=validate,
-        timeout=180
+        validate_func=validate
     )
 
-    # Cleanup if using temp directory
-    if use_temp:
-        cleanup_test_environment(test_dir)
-
+    cleanup_test_environment(test_dir)
     return result
 
 
@@ -93,15 +83,10 @@ def main():
         type=Path,
         help="Working directory with deepagents installed (default: ~/Desktop/Projects/test)"
     )
-    parser.add_argument(
-        "--use-temp",
-        action="store_true",
-        help="Create temporary directory for isolated test"
-    )
 
     args = parser.parse_args()
 
-    return run_test(work_dir=args.work_dir, use_temp=args.use_temp)
+    return run_test(work_dir=args.work_dir)
 
 
 if __name__ == "__main__":

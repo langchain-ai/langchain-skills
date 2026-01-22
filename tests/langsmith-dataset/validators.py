@@ -5,6 +5,7 @@ LangSmith dataset test validators.
 import sys
 import json
 from pathlib import Path
+from langsmith import Client
 
 # Skills root
 skills_root = Path(__file__).parent.parent.parent
@@ -67,6 +68,14 @@ class DatasetGenerationValidator(TestValidator):
 class DatasetUploadValidator(TestValidator):
     """Validator for dataset upload tests."""
 
+    def __init__(self):
+        """Initialize validator with LangSmith client."""
+        super().__init__()
+        try:
+            self.client = Client()
+        except Exception:
+            self.client = None
+
     def check_dataset_uploaded(self, test_dir: Path, expected_name: str) -> 'DatasetUploadValidator':
         """Check that dataset was uploaded with correct name.
 
@@ -83,3 +92,29 @@ class DatasetUploadValidator(TestValidator):
             return False, f"Dataset name incorrect: {content} (expected {expected_name})"
 
         return self.check_file_content("test_dataset_upload_name.txt", test_dir, check_name)
+
+    def check_dataset_in_langsmith(self, dataset_name: str) -> 'DatasetUploadValidator':
+        """Check that dataset exists in LangSmith.
+
+        Args:
+            dataset_name: Expected dataset name
+
+        Returns:
+            self for chaining
+        """
+        if not self.client:
+            self.failed.append("✗ LangSmith client not available")
+            return self
+
+        try:
+            datasets = list(self.client.list_datasets(dataset_name=dataset_name))
+            if datasets:
+                dataset = datasets[0]
+                example_count = len(list(self.client.list_examples(dataset_id=dataset.id)))
+                self.passed.append(f"✓ Dataset exists in LangSmith: {dataset_name} ({example_count} examples)")
+            else:
+                self.failed.append(f"✗ Dataset not found in LangSmith: {dataset_name}")
+        except Exception as e:
+            self.failed.append(f"✗ Error checking LangSmith for dataset: {e}")
+
+        return self

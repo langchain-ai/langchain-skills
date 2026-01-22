@@ -22,12 +22,15 @@ from pathlib import Path
 skills_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(skills_root))
 
-from scaffold.fixtures import (
+from scaffold.setup import (
     setup_test_environment,
     cleanup_test_environment,
-    run_deepagents_test,
-    extract_summary_path,
     copy_test_data
+)
+from scaffold.runner import (
+    run_deepagents_subprocess,
+    extract_summary_path,
+    make_autonomous_prompt
 )
 from validators import LangGraphCodeValidator
 
@@ -35,61 +38,47 @@ from validators import LangGraphCodeValidator
 def get_prompt() -> str:
     """Return the test prompt.
 
-    This prompt is designed to:
-    - Be specific and complete (no follow-up questions needed)
-    - Test skill consultation
-    - Require modern patterns
-    - Avoid legacy patterns
+    This prompt tests whether the agent can:
+    - Consult langgraph-code skill for modern patterns
+    - Build a working SQL agent
     - Generate traces to LangSmith
     """
-    return """Create a Python text-to-SQL agent using LangChain that can query a SQLite database.
+    return """Build a Python text-to-SQL agent using LangChain that can query the chinook.db SQLite database (in current directory).
 
-Requirements:
-- Use the chinook.db database (assume it exists in current directory)
-- Use the @tool decorator from langchain_core.tools for database operations
-- Use ChatAnthropic with claude-sonnet-4-5 model
-- Use create_agent from langchain.agents (NOT the legacy create_sql_agent)
-- Include a simple @tool function that executes SELECT queries only
-- Add basic error handling for invalid queries
+The agent should:
+- Use modern LangChain patterns
+- Use ChatOpenAI with gpt-4o-mini
+- Include proper error handling
+- Only allow SELECT queries for safety
 
-Save the complete agent code to a file called sql_agent.py.
+Save to sql_agent.py and run it with a few test queries to generate traces to LangSmith.
 
-After creating the agent, run it with 2-3 test queries to generate traces to LangSmith:
-- "What are the top 5 albums?"
-- "How many customers are there?"
-- "List the first 3 tracks"
-
-The agent will automatically trace to the LangSmith project specified in LANGSMITH_PROJECT environment variable.
-
-Do not ask any clarifying questions - implement this specific design."""
+Do not ask clarifying questions."""
 
 
-def run_test(work_dir: Path = None, use_temp: bool = False):
+def run_test(work_dir: Path = None):
     """Run the autonomous test.
 
     Args:
-        work_dir: Working directory for test (or None for default)
-        use_temp: If True, create temporary directory
+        work_dir: Base working directory with deepagents installed (or None for default)
     """
     print("=" * 70)
     print("AUTONOMOUS TEST: SQL Agent Creation")
     print("=" * 70)
     print()
 
-    # Get prompt
-    prompt = get_prompt()
+    # Get prompt and add summary requirement
+    task_prompt = get_prompt()
+    prompt = make_autonomous_prompt(task_prompt)
     print("PROMPT:")
     print("-" * 70)
     print(prompt)
     print("-" * 70)
     print()
 
-    # Set up test environment
+    # Set up test environment (always creates temp directory)
     try:
-        if work_dir:
-            test_dir = setup_test_environment(work_dir, use_temp=use_temp)
-        else:
-            test_dir = setup_test_environment(use_temp=use_temp)
+        test_dir = setup_test_environment(work_dir)
     except FileNotFoundError as e:
         print(f"ERROR: {e}")
         return 1
@@ -104,16 +93,16 @@ def run_test(work_dir: Path = None, use_temp: bool = False):
 
     runner = skills_root / "scaffold" / "runner.py"
 
-    print("Running deepagents (this may take 60-120 seconds)...")
+    print("Running deepagents (this may take 60-300 seconds)...")
     print()
 
     try:
-        returncode, stdout, stderr = run_deepagents_test(
+        returncode, stdout, stderr = run_deepagents_subprocess(
             agent_name="langchain_agent",
             prompt=prompt,
             test_dir=test_dir,
-            runner_path=runner,
-            timeout=180
+            runner_path=runner
+            # timeout uses default (300s)
         )
 
         if stderr:
@@ -186,9 +175,8 @@ def run_test(work_dir: Path = None, use_temp: bool = False):
         print(f"  All {len(validations_passed)} checks passed")
         result = 0
 
-    # Cleanup if using temp directory
-    if use_temp:
-        cleanup_test_environment(test_dir)
+    # Always cleanup temp directory
+    cleanup_test_environment(test_dir)
 
     return result
 
@@ -203,15 +191,10 @@ def main():
         type=Path,
         help="Working directory with deepagents installed (default: ~/Desktop/Projects/test)"
     )
-    parser.add_argument(
-        "--use-temp",
-        action="store_true",
-        help="Create temporary directory for isolated test"
-    )
 
     args = parser.parse_args()
 
-    return run_test(work_dir=args.work_dir, use_temp=args.use_temp)
+    return run_test(work_dir=args.work_dir)
 
 
 if __name__ == "__main__":

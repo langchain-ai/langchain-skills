@@ -98,11 +98,23 @@ cp -r config/skills ~/.deepagents/your_agent/
 
 ### Running Tests
 
+**IMPORTANT**: Always use `uv run python` instead of just `python` to ensure proper dependency resolution.
+
 Basic test execution:
 
 ```bash
 cd /path/to/skills
-python scaffold/runner.py langchain_agent "Create a SQL agent"
+
+# Run individual test
+uv run python tests/langgraph-code/test_create_agent.py
+
+# Run with cleanup between tests
+uv run python scaffold/cleanup.py --local
+uv run python tests/langgraph-code/test_create_agent.py
+uv run python scaffold/cleanup.py --local
+
+# Run all tests
+uv run python tests/run_test_suite.py
 ```
 
 This will:
@@ -120,7 +132,55 @@ After running a test, you'll find in `logs/<agent>_<timestamp>/`:
 
 ## Framework Components
 
-### 1. Parser (`scaffold/parser.py`)
+### 1. Setup (`scaffold/setup.py`)
+
+Environment setup and teardown utilities.
+
+**Functions**:
+- `setup_test_environment(base_env_path, use_temp)` - Set up test environment
+- `cleanup_test_environment(test_dir)` - Clean up temporary directories
+- `get_deepagents_python(test_dir)` - Get path to python in test environment
+- `copy_test_data(source_file, test_dir)` - Copy test data files
+
+### 2. Runner (`scaffold/runner.py`)
+
+Test execution functions and CLI runner.
+
+**Library functions**:
+- `make_autonomous_prompt(task_prompt)` - Add summary requirement to prompt
+- `run_autonomous_test(...)` - Run complete autonomous test with validation
+- `run_deepagents_subprocess(...)` - Run deepagents via subprocess
+- `extract_summary_path(stdout)` - Extract summary file path from output
+
+**CLI usage**:
+```bash
+uv run python scaffold/runner.py <agent_name> <prompt> [options]
+```
+
+### 3. Cleanup (`scaffold/cleanup.py`)
+
+Cleanup utilities for test artifacts and LangSmith assets.
+
+**Library functions**:
+- `cleanup_test_files(test_dir)` - Remove test artifact files
+- `cleanup_langsmith_assets()` - Delete test datasets from LangSmith
+
+**CLI usage**:
+```bash
+# Clean both LangSmith and local files
+uv run python scaffold/cleanup.py
+
+# Clean only LangSmith assets
+uv run python scaffold/cleanup.py --langsmith
+
+# Clean only local test files
+uv run python scaffold/cleanup.py --local
+
+# Specify custom test directory
+uv run python scaffold/cleanup.py --test-dir /path/to/dir
+```
+
+### 4. Parser (`scaffold/parser.py`)
 
 Parses terminal UI output and extracts structured content.
 
@@ -315,19 +375,21 @@ skills/
 ├── README.md                 # This file
 ├── scaffold/                 # Testing framework
 │   ├── __init__.py          # Package exports
+│   ├── setup.py             # Environment setup/teardown
+│   ├── runner.py            # Test execution + CLI runner
+│   ├── cleanup.py           # Cleanup utilities + CLI
 │   ├── parser.py            # TUI/ANSI parser and formatter
-│   ├── validator.py         # Validation framework
-│   └── runner.py            # CLI test runner
+│   └── validators.py        # Validation framework
 ├── config/                   # Agent configuration
 │   ├── AGENTS.md            # Main agent instructions
 │   └── skills/              # Skill definitions
 │       └── langgraph-code/
 │           └── SKILL.md
 └── tests/                    # Test outputs
-    └── output/
-        ├── summary.txt
-        ├── readable.txt
-        └── raw_output.txt
+    ├── langgraph-code/
+    ├── langsmith-trace/
+    ├── langsmith-dataset/
+    └── langsmith-evaluator/
 ```
 
 ## Validation Best Practices
@@ -377,18 +439,31 @@ python tests/run_test_suite.py --use-temp
 **Run individual tests:**
 
 ```bash
+# Clean up before each test to avoid stale artifacts
+uv run python scaffold/cleanup.py --local
+
+# Use uv to run tests with proper dependencies
 # LangGraph code test
-python tests/langgraph-code/test_sql_agent_autonomous.py
+uv run python tests/langgraph-code/test_create_agent.py
+
+# Clean up after test (important when running one at a time)
+uv run python scaffold/cleanup.py --local
 
 # LangSmith trace query test
-python tests/langsmith-trace/test_trace_query.py
+uv run python tests/langsmith-trace/test_trace_query.py
+
+# Clean up after test
+uv run python scaffold/cleanup.py --local
 
 # LangSmith dataset tests
-python tests/langsmith-dataset/test_dataset_generation.py
-python tests/langsmith-dataset/test_dataset_upload.py
+uv run python tests/langsmith-dataset/test_dataset_generation.py
+uv run python scaffold/cleanup.py --local
+
+uv run python tests/langsmith-dataset/test_dataset_upload.py
+uv run python scaffold/cleanup.py --local
 
 # LangSmith evaluator test
-python tests/langsmith-evaluator/test_evaluator_upload.py
+uv run python tests/langsmith-evaluator/test_evaluator_upload.py
 ```
 
 **Test dependencies:**
@@ -417,14 +492,11 @@ After running the test suite, clean up LangSmith artifacts:
 
 **Creating new tests:**
 
-Use the autonomous test pattern with fixtures and validators:
+Use the autonomous test pattern with setup, runner, and validators:
 
 ```python
-from scaffold.fixtures import (
-    setup_test_environment,
-    cleanup_test_environment,
-    run_autonomous_test
-)
+from scaffold.setup import setup_test_environment, cleanup_test_environment
+from scaffold.runner import run_autonomous_test, make_autonomous_prompt
 from scaffold.validators import TestValidator
 
 def get_prompt() -> str:
