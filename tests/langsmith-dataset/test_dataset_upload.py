@@ -37,6 +37,8 @@ Replace any existing dataset with the same name.
 
 Store the dataset name in test_dataset_upload_name.txt in the current directory.
 
+IMPORTANT: Actually perform the upload - don't just create a script, execute it and verify the dataset is uploaded to LangSmith.
+
 Do not ask clarifying questions."""
 
 
