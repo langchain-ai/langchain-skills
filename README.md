@@ -2,6 +2,13 @@
 
 Agent skills for building, observing, and evaluating LangGraph agents with LangSmith.
 
+> **This repository contains installable skills for [deepagents-cli](https://github.com/anthropics/deepagents-cli).** Skills extend the CLI's capabilities by providing specialized knowledge and tools for specific domains.
+
+## Prerequisites
+
+- [deepagents-cli](https://github.com/anthropics/deepagents-cli) installed
+- A LangSmith API key (for tracing and evaluation features)
+
 ## Installation
 
 ```bash
