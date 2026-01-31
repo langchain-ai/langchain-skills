@@ -137,11 +137,6 @@ def run_test(work_dir: Path = None):
     print("=" * 70)
     print()
 
-    # For validation, we need the raw output - read from parent directory
-    log_dir = summary_file.parent
-    # The runner doesn't save raw output anymore, so we'll work with the summary
-    # For full validation, we'd need to parse the summary or run validations differently
-
     print("VALIDATION:")
     print("-" * 70)
 
