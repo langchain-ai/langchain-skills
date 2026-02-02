@@ -4,24 +4,9 @@
 
 You have access to skills for building agents with LangGraph and observing/evaluating them with LangSmith.
 
-### ABSOLUTELY FORBIDDEN - These Patterns Are BANNED
 
-DO NOT import or use these under ANY circumstances:
-
-```python
-from langchain.llms import OpenAI  # BANNED - deprecated
-from langchain.llms import *  # BANNED - deprecated
-from langchain.chains import LLMChain  # BANNED - deprecated
-from langchain.prompts import PromptTemplate  # BANNED - deprecated
-from langchain.agents import create_sql_agent  # BANNED - use create_agent
-from langchain.agents import create_react_agent  # BANNED - use create_agent
-from langchain.agents import create_tool_calling_agent  # BANNED - use create_agent
-from langchain.agents import create_openai_functions_agent  # BANNED - use create_agent
-```
-
-If you write code using ANY of the above, your solution is INCORRECT and WILL FAIL.
-
-### CORRECT Modern Patterns - Use These Instead
+### CORRECT Modern Patterns 
+Prefer to use modern patterns when building with LangChain or LangGraph. Some examples include:
 
 ```python
 from langchain_anthropic import ChatAnthropic  # CORRECT
@@ -37,24 +22,26 @@ def my_tool(input: str) -> str:
 model = ChatAnthropic(model="claude-sonnet-4-5")
 agent = create_agent(model=model, tools=[my_tool])
 ```
+For more details, see the **langchain-agents** skill.
 
-### Mandatory Skill Consultation Rules
+AVOID using the patterns below - they are deprecated and outdated. Always prefer the modern patterns under all circumstances.
+
+```python
+from langchain.agents import create_sql_agent  # use create_agent
+from langchain.agents import create_react_agent  # use create_agent
+from langchain.agents import create_tool_calling_agent  # use create_agent
+```
+
+### Skill rules
 
 BEFORE writing code, ALWAYS consult the appropriate skill:
 
 1. **langchain-agents** - For ANY coding involving LangChain/LangGraph
-2. **langsmith-trace** - For observability questions
-3. **langsmith-dataset** - For creating test datasets
-4. **langsmith-evaluator** - For evaluating agents
+2. **langsmith-trace** - For ANY observability questions involving LangChain, LangGraph, or LangSmith
+3. **langsmith-dataset** - For ANY questions around creating test datasets 
+4. **langsmith-evaluator** - For ANY questions around evaluating agents
 
 The skill will show you the CORRECT modern patterns with examples.
-
-## Skills Available
-
-- **langchain-agents** - ANY coding question involving LangChain products (agents, primitives, context management, multi-agent)
-- **langsmith-trace** - ANY observability question (query traces, debug execution, analyze behavior)
-- **langsmith-dataset** - ANY question about creating test/evaluation datasets
-- **langsmith-evaluator** - ANY question about evaluating or testing agents
 
 ## When Building Agents
 

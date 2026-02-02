@@ -363,7 +363,7 @@ python query_datasets.py show "Skills: Final Response" --limit 3
 - Check dataset doesn't exist or use `--replace`
 - Verify LANGSMITH_API_KEY is set
 
-## Next Steps
+## Related Skills
 
 - Use **langsmith-trace** skill to query and export traces
 - Use **langsmith-evaluator** skill to create evaluators and measure performance

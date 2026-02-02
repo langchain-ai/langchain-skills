@@ -55,53 +55,52 @@ result = agent.invoke({"messages": [("user", "Your question")]})
 ```
 
 **Pattern applies to:** SQL agents, search agents, Q&A bots, tool-calling workflows.
-**Replaces:** Legacy `create_sql_agent`, `create_react_agent`, `LLMChain` patterns.
+**Replaces:** Legacy convenience helpers and `LLMChain` patterns.
 
-### Example: SQL Agent (Text-to-SQL)
-
-NEVER use the legacy create_sql_agent helper - it's deprecated.
-
-CORRECT approach using create_agent:
+### Example: Calculator Agent
 
 ```python
-import sqlite3
 from langchain_anthropic import ChatAnthropic
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 
-def get_schema(db_path: str) -> str:
-    """Get database schema."""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT sql FROM sqlite_master WHERE type='table'")
-    schema = "\n".join([row[0] for row in cursor.fetchall()])
-    conn.close()
-    return schema
+@tool
+def calculate(expression: str) -> str:
+    """Evaluate a mathematical expression safely."""
+    try:
+        # Only allow safe math operations
+        allowed = set('0123456789+-*/(). ')
+        if not all(c in allowed for c in expression):
+            return "Error: Invalid characters"
+        return str(eval(expression))
+    except Exception as e:
+        return f"Error: {e}"
 
 @tool
-def query_database(sql_query: str) -> str:
-    """Execute a SQL SELECT query and return results."""
-    # Safety: only allow SELECT
-    if not sql_query.upper().strip().startswith("SELECT"):
-        return "Error: Only SELECT queries allowed"
+def convert_units(value: float, from_unit: str, to_unit: str) -> str:
+    """Convert between common units."""
+    conversions = {
+        ("km", "miles"): 0.621371,
+        ("miles", "km"): 1.60934,
+        ("kg", "lbs"): 2.20462,
+        ("lbs", "kg"): 0.453592,
+    }
+    factor = conversions.get((from_unit, to_unit), None)
+    if factor:
+        return f"{value * factor:.2f} {to_unit}"
+    return "Conversion not supported"
 
-    conn = sqlite3.connect("chinook.db")
-    cursor = conn.cursor()
-    cursor.execute(sql_query)
-    results = cursor.fetchall()
-    conn.close()
-    return str(results)
-
-schema = get_schema("chinook.db")
 model = ChatAnthropic(model="claude-sonnet-4-5")
 agent = create_agent(
     model=model,
-    tools=[query_database],
-    system_prompt=f"You are a SQL expert. Generate SELECT queries to answer questions.\n\nDatabase schema:\n{schema}"
+    tools=[calculate, convert_units],
+    system_prompt="You are a helpful calculator assistant."
 )
 
-result = agent.invoke({"messages": [("user", "How many customers are there?")]})
+result = agent.invoke({"messages": [("user", "What is 15% of 250?")]})
 ```
+
+**Pattern applies to:** SQL agents, search agents, Q&A bots, tool-calling workflows.
 
 ### Basic ReAct Agent from Scratch
 

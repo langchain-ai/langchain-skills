@@ -71,7 +71,7 @@ python query_traces.py recent --format json --limit 5
 - Increase `--max-concurrent 10` for large exports
 - Use `--format json` with jq for analysis
 
-## Next Steps
+## Related skills
 
 - Use **langsmith-dataset** skill to generate evaluation datasets from traces
 - Use **langsmith-evaluator** skill to create evaluators and measure performance
