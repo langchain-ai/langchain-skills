@@ -1,11 +1,11 @@
 ---
 name: langsmith-trace
-description: Use this skill for ANY LangChain observability question. Covers querying traces, debugging agent behavior, analyzing execution flow, filtering runs, and exporting trace data from LangSmith.
+description: "Use this skill for ANY LangSmith/LangChain observability question. Covers two topics: (1) Adding tracing to your application (LangChain/LangGraph or vanilla Python/TS with @traceable), and (2) Querying traces for debugging, analyzing execution flow, and exporting trace data."
 ---
 
 # LangSmith Trace
 
-Query, analyze, and export LangSmith traces for debugging and analysis.
+Two main topics: **adding tracing** to your application, and **querying traces** for debugging and analysis.
 
 ## Setup
 
@@ -23,7 +23,75 @@ LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped
 pip install langsmith click rich python-dotenv
 ```
 
-## Usage
+## Adding Tracing to Your Application
+
+### LangChain/LangGraph Apps
+
+Just set environment variables — tracing is automatic:
+
+```bash
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY=<your-api-key>
+export OPENAI_API_KEY=<your-openai-api-key>  # or your LLM provider's key
+```
+
+Optional variables:
+- `LANGSMITH_PROJECT` - specify project name (defaults to "default")
+- `LANGCHAIN_CALLBACKS_BACKGROUND=false` - use for serverless to ensure traces complete before function exit
+
+### Non-LangChain/LangGraph Apps
+
+Use the `@traceable` decorator and wrap your LLM client:
+
+**Python:**
+```python
+from langsmith import traceable
+from langsmith.wrappers import wrap_openai
+from openai import OpenAI
+
+client = wrap_openai(OpenAI())
+
+@traceable
+def my_llm_pipeline(question: str) -> str:
+    resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": question}],
+    )
+    return resp.choices[0].message.content
+```
+
+Traces automatically appear in your LangSmith workspace.
+
+### Best Practices
+
+- **Apply `@traceable` to all nested functions** you want visible in LangSmith. Only decorated functions appear as separate spans in the trace hierarchy.
+- **Wrapped clients auto-trace all calls** — `wrap_openai()` automatically records every LLM call without additional decorators.
+- **Name your traces** for easier filtering: `@traceable(name="retrieve_docs")` or `traceable(myFunc, { name: "retrieve_docs" })`
+- **Add metadata** for searchability: `@traceable(metadata={"user_id": "123", "feature": "chat"})`
+
+```python
+# Example: nested tracing
+@traceable
+def rag_pipeline(question: str) -> str:
+    docs = retrieve_docs(question)  # traced if @traceable applied
+    return generate_answer(question, docs)  # traced if @traceable applied
+
+@traceable(name="retrieve_docs")
+def retrieve_docs(query: str) -> list[str]:
+    # retrieval logic
+    return docs
+
+@traceable(name="generate_answer")
+def generate_answer(question: str, docs: list[str]) -> str:
+    # LLM calls via wrapped client are auto-traced
+    return client.chat.completions.create(...)
+```
+
+---
+
+## Querying Traces
+
+Use the scripts below to query, analyze, and export traces from LangSmith.
 
 Navigate to `skills/langsmith-trace/scripts/` to run commands.
 
@@ -54,7 +122,7 @@ python query_traces.py search "agent" --project my-project
 python query_traces.py recent --format json --limit 5
 ```
 
-## Commands
+### Commands
 
 **`recent`** - List recent traces (`--limit`, `--project`, `--last-n-minutes`, `--include-metadata`, `--format`)
 
@@ -64,7 +132,7 @@ python query_traces.py recent --format json --limit 5
 
 **`search <pattern>`** - Find runs by name (`--limit`, `--last-n-minutes`)
 
-## Tips
+### Tips
 
 - Use `export` for bulk data, always specify `--project`, use `/tmp` for temp files
 - Include `--include-metadata` for performance/cost analysis
