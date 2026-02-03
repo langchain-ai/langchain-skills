@@ -4,6 +4,16 @@
 
 You have access to skills for building agents with LangGraph and observing/evaluating them with LangSmith.
 
+### CRITICAL RULES
+
+BEFORE writing code, ALWAYS consult the appropriate skill:
+
+1. **langchain-agents** - For ANY coding involving LangChain/LangGraph
+2. **langsmith-trace** - For ANY observability questions involving LangChain, LangGraph, or LangSmith
+3. **langsmith-dataset** - For ANY questions around creating test datasets 
+4. **langsmith-evaluator** - For ANY questions around evaluating agents
+
+The skill will show you the CORRECT modern patterns with examples.
 
 ### CORRECT Modern Patterns 
 Prefer to use modern patterns when building with LangChain or LangGraph. Some examples include:
@@ -31,17 +41,6 @@ from langchain.agents import create_sql_agent  # use create_agent
 from langchain.agents import create_react_agent  # use create_agent
 from langchain.agents import create_tool_calling_agent  # use create_agent
 ```
-
-### Skill rules
-
-BEFORE writing code, ALWAYS consult the appropriate skill:
-
-1. **langchain-agents** - For ANY coding involving LangChain/LangGraph
-2. **langsmith-trace** - For ANY observability questions involving LangChain, LangGraph, or LangSmith
-3. **langsmith-dataset** - For ANY questions around creating test datasets 
-4. **langsmith-evaluator** - For ANY questions around evaluating agents
-
-The skill will show you the CORRECT modern patterns with examples.
 
 ## When Building Agents
 
