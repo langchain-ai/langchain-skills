@@ -54,7 +54,17 @@ from langchain.agents import create_tool_calling_agent  # use create_agent
 
 **Track execution.** Ensure `LANGSMITH_API_KEY` is set. Traces appear automatically at https://smith.langchain.com
 
-## When Debugging/Evaluating
+## Skill Synergies
+
+### Build → Trace → Dataset → Evaluate Pipeline
+
+1. **Build agent** using `langchain-agents` patterns
+2. **Run agent** to generate traces in LangSmith
+3. **Query traces** using `langsmith-trace` to find interesting examples
+4. **Create dataset** using `langsmith-dataset` from those traces
+5. **Build evaluator** using `langsmith-evaluator` to measure quality
+
+### Debugging/Evaluating
 
 **Investigate failures:** Use `langsmith-trace` to query recent runs, filter by error status, export to JSON
 

@@ -113,7 +113,12 @@ python query_traces.py trace <trace-id> --show-hierarchy
 
 # Export traces to directory (recommended for bulk collection)
 python query_traces.py export ./traces --limit 50 --include-metadata
-python query_traces.py export /tmp/traces --limit 20  # Use temp files
+python query_traces.py export ./traces --limit 20 --include-io    # With inputs/outputs
+python query_traces.py export ./traces --limit 20 --full          # Everything
+
+# Filter by run type
+python query_traces.py export ./traces --run-type tool            # Only tool calls
+python query_traces.py export ./traces --run-type llm             # Only LLM calls
 
 # Search by name pattern
 python query_traces.py search "agent" --project my-project
@@ -128,7 +133,7 @@ python query_traces.py recent --format json --limit 5
 
 **`trace <id>`** - Get specific trace (`--show-hierarchy`, `--include-metadata`, `--output`)
 
-**`export <dir>`** - Bulk export to directory (`--limit`, `--include-metadata`, `--max-concurrent`)
+**`export <dir>`** - Bulk export to directory (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`, `--max-concurrent`)
 
 **`search <pattern>`** - Find runs by name (`--limit`, `--last-n-minutes`)
 

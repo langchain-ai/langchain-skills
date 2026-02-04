@@ -58,39 +58,60 @@ def calc_duration(run) -> int | None:
     return None
 
 
-def extract_metadata(run) -> dict:
-    """Extract full metadata from run."""
-    return {
+def extract_run(run, include_metadata=False, include_io=False) -> dict:
+    """Extract run data with configurable detail level.
+
+    Args:
+        run: LangSmith run object
+        include_metadata: Include timing, tokens, costs
+        include_io: Include inputs and outputs
+    """
+    data = {
         "run_id": str(run.id),
         "trace_id": get_trace_id(run),
         "name": run.name,
         "run_type": run.run_type,
-        "status": getattr(run, "status", None),
-        "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
-        "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
-        "duration_ms": calc_duration(run),
-        "custom_metadata": run.extra.get("metadata", {}) if hasattr(run, "extra") and run.extra else {},
-        "token_usage": {
-            "prompt_tokens": getattr(run, "prompt_tokens", None),
-            "completion_tokens": getattr(run, "completion_tokens", None),
-            "total_tokens": getattr(run, "total_tokens", None),
-        },
-        "costs": {
-            "prompt_cost": getattr(run, "prompt_cost", None),
-            "completion_cost": getattr(run, "completion_cost", None),
-            "total_cost": getattr(run, "total_cost", None),
-        },
+        "parent_run_id": str(run.parent_run_id) if run.parent_run_id else None,
     }
+
+    if include_metadata:
+        data.update({
+            "status": getattr(run, "status", None),
+            "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
+            "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
+            "duration_ms": calc_duration(run),
+            "custom_metadata": run.extra.get("metadata", {}) if hasattr(run, "extra") and run.extra else {},
+            "token_usage": {
+                "prompt_tokens": getattr(run, "prompt_tokens", None),
+                "completion_tokens": getattr(run, "completion_tokens", None),
+                "total_tokens": getattr(run, "total_tokens", None),
+            },
+            "costs": {
+                "prompt_cost": getattr(run, "prompt_cost", None),
+                "completion_cost": getattr(run, "completion_cost", None),
+                "total_cost": getattr(run, "total_cost", None),
+            },
+        })
+
+    if include_io:
+        data.update({
+            "inputs": run.inputs if hasattr(run, "inputs") else None,
+            "outputs": run.outputs if hasattr(run, "outputs") else None,
+            "error": getattr(run, "error", None),
+        })
+
+    return data
+
+
+# Legacy aliases for backwards compatibility
+def extract_metadata(run) -> dict:
+    """Extract full metadata from run (legacy)."""
+    return extract_run(run, include_metadata=True, include_io=False)
 
 
 def extract_basic(run) -> dict:
-    """Extract basic run info without metadata."""
-    return {
-        "run_id": str(run.id),
-        "name": run.name,
-        "run_type": run.run_type,
-        "parent_run_id": str(run.parent_run_id) if run.parent_run_id else None,
-    }
+    """Extract basic run info (legacy)."""
+    return extract_run(run, include_metadata=False, include_io=False)
 
 
 def output_json(data, file_path=None):
@@ -195,11 +216,17 @@ def recent(limit, project, last_n_minutes, since, fmt, include_metadata):
 @click.option("--project", help="Project name")
 @click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty")
 @click.option("--output", "-o", help="Output file")
-@click.option("--include-metadata", is_flag=True, help="Include metadata")
+@click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
+@click.option("--include-io", is_flag=True, help="Include inputs/outputs")
+@click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
 @click.option("--show-hierarchy", is_flag=True, help="Show run tree")
-def trace(trace_id, project, fmt, output, include_metadata, show_hierarchy):
+def trace(trace_id, project, fmt, output, include_metadata, include_io, full, show_hierarchy):
     """Fetch specific trace by ID."""
     client = get_client()
+
+    # --full enables both metadata and io
+    if full:
+        include_metadata = include_io = True
 
     params = {"trace_id": trace_id, "limit": 100}
     if project or os.getenv("LANGSMITH_PROJECT"):
@@ -221,7 +248,7 @@ def trace(trace_id, project, fmt, output, include_metadata, show_hierarchy):
     else:
         data = {
             "trace_id": trace_id,
-            "runs": [extract_metadata(r) if include_metadata else extract_basic(r) for r in runs],
+            "runs": [extract_run(r, include_metadata, include_io) for r in runs],
         }
 
         if fmt == "json":
@@ -239,11 +266,18 @@ def trace(trace_id, project, fmt, output, include_metadata, show_hierarchy):
 @click.option("--project", help="Project name")
 @click.option("--last-n-minutes", type=int, help="Time filter")
 @click.option("--since", help="ISO timestamp filter")
-@click.option("--include-metadata", is_flag=True, help="Include metadata")
+@click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
+@click.option("--include-io", is_flag=True, help="Include inputs/outputs")
+@click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
+@click.option("--run-type", "run_type_filter", help="Filter by run type (llm, tool, chain, retriever)")
 @click.option("--filename-pattern", default="{trace_id}.json", help="Filename pattern")
 @click.option("--max-concurrent", default=5, help="Parallel fetches (default: 5)")
-def export(output_dir, limit, project, last_n_minutes, since, include_metadata, filename_pattern, max_concurrent):
+def export(output_dir, limit, project, last_n_minutes, since, include_metadata, include_io, full, run_type_filter, filename_pattern, max_concurrent):
     """Export traces to directory (one file per trace)."""
+    # --full enables both metadata and io
+    if full:
+        include_metadata = include_io = True
+
     client = get_client()
     output_path = Path(output_dir).resolve()
     output_path.mkdir(parents=True, exist_ok=True)
@@ -291,15 +325,20 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
         if not filename.endswith(".json"):
             filename += ".json"
 
+        # Apply run_type filter if specified
+        filtered_runs = trace_runs
+        if run_type_filter:
+            filtered_runs = [r for r in trace_runs if r.run_type == run_type_filter]
+
         data = {
             "trace_id": trace_id,
-            "runs": [extract_metadata(r) if include_metadata else extract_basic(r) for r in trace_runs],
+            "runs": [extract_run(r, include_metadata, include_io) for r in filtered_runs],
         }
 
         with open(output_path / filename, "w") as f:
             json.dump(data, f, indent=2, default=str)
 
-        console.print(f"  [green]✓[/green] {trace_id[:16]}... → {filename} ({len(trace_runs)} runs)")
+        console.print(f"  [green]✓[/green] {trace_id[:16]}... → {filename} ({len(filtered_runs)} runs)")
 
     console.print(f"\n[green]✓[/green] Exported {len(results)} trace(s) to {output_path}/")
 

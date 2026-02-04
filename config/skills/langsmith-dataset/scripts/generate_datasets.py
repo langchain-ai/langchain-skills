@@ -237,7 +237,8 @@ def generate_dataset(traces: List[tuple], dataset_type: str, run_name: str = Non
             else:
                 continue
 
-            dataset.append({"trace_id": trace_id, "inputs": {"query": input_msg}, "outputs": outputs})
+            # Preserve full inputs from trace for exact ground truth matching
+            dataset.append({"trace_id": trace_id, "inputs": root.inputs or {"query": input_msg}, "outputs": outputs})
 
     return dataset
 
