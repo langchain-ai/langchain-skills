@@ -41,7 +41,9 @@ Optional variables:
 
 ### Non-LangChain/LangGraph Apps
 
-Use the `@traceable` decorator and wrap your LLM client:
+> **Check the codebase first:** If using OpenTelemetry, prefer the OTel integration (https://docs.langchain.com/langsmith/trace-with-opentelemetry). For Vercel AI SDK, LlamaIndex, Instructor, DSPy, or LiteLLM, see native integrations at https://docs.langchain.com/langsmith/integrations.
+
+If not using an integration, use the `@traceable` decorator and wrap your LLM client:
 
 **Python:**
 ```python
