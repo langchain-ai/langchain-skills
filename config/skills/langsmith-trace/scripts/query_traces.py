@@ -228,7 +228,7 @@ def trace(trace_id, project, fmt, output, include_metadata, include_io, full, sh
     if full:
         include_metadata = include_io = True
 
-    params = {"trace_id": trace_id, "limit": 100}
+    params = {"trace_id": trace_id}
     if project or os.getenv("LANGSMITH_PROJECT"):
         params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
 
@@ -299,7 +299,7 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
     def fetch_runs(run):
         trace_id = get_trace_id(run)
         try:
-            params = {"trace_id": trace_id, "limit": 100}
+            params = {"trace_id": trace_id}
             if project or os.getenv("LANGSMITH_PROJECT"):
                 params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
             return trace_id, list(client.list_runs(**params))
@@ -345,23 +345,72 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
 
 @cli.command()
 @click.argument("pattern")
-@click.option("--limit", "-n", default=50, help="Max runs to search (default: 50)")
+@click.option("--limit", "-n", default=50, help="Max results to return (default: 50)")
+@click.option("--is-root", is_flag=True, help="Only search root traces")
+@click.option("--run-type", type=click.Choice(["llm", "chain", "tool", "retriever", "prompt", "parser"]), help="Filter by run type")
+@click.option("--error/--no-error", default=None, help="Filter by error status")
+@click.option("--filter", "raw_filter", help="Raw filter query (see below)")
 @click.option("--project", help="Project name")
 @click.option("--last-n-minutes", type=int, help="Time filter")
 @click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty")
-def search(pattern, limit, project, last_n_minutes, fmt):
-    """Search runs by name pattern."""
+def search(pattern, limit, is_root, run_type, error, raw_filter, project, last_n_minutes, fmt):
+    """Search runs by name pattern.
+
+    \b
+    PATTERN is matched case-insensitively against run names.
+    Use --filter for advanced queries with LangSmith filter syntax.
+
+    \b
+    FILTER QUERY SYNTAX:
+    Comparators:
+      eq(field, value)     - equals
+      neq(field, value)    - not equals
+      gt(field, value)     - greater than
+      gte(field, value)    - greater than or equal
+      lt(field, value)     - less than
+      lte(field, value)    - less than or equal
+      has(field, value)    - array contains value
+
+    \b
+    Boolean operators:
+      and(expr1, expr2, ...)  - all must be true
+      or(expr1, expr2, ...)   - any must be true
+
+    \b
+    Common fields:
+      name, run_type, latency, total_tokens, start_time, tags
+
+    \b
+    Examples:
+      --filter 'gt(latency, 5)'                    # runs slower than 5s
+      --filter 'gt(total_tokens, 1000)'            # runs using >1000 tokens
+      --filter 'has(tags, "production")'           # runs tagged "production"
+      --filter 'and(eq(run_type, "llm"), gt(latency, 2))'  # slow LLM calls
+    """
     client = get_client()
 
-    params = {"limit": limit}
+    # Build params with API-level filters (more efficient than client-side)
+    params = {}
     if project or os.getenv("LANGSMITH_PROJECT"):
         params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
+    if is_root:
+        params["is_root"] = True
+    if run_type:
+        params["run_type"] = run_type
+    if error is not None:
+        params["error"] = error
+    if raw_filter:
+        params["filter"] = raw_filter
     add_time_filter(params, last_n_minutes, None)
 
+    # Iterate without limit (auto-paginates), collect matches until we have enough
+    matching = []
     with console.status("[cyan]Searching..."):
-        runs = list(client.list_runs(**params))
-
-    matching = [r for r in runs if pattern.lower() in (r.name or "").lower()]
+        for run in client.list_runs(**params):
+            if pattern.lower() in (run.name or "").lower():
+                matching.append(run)
+                if len(matching) >= limit:
+                    break
 
     if not matching:
         console.print(f"[yellow]No runs matching '{pattern}'[/yellow]")
@@ -375,9 +424,9 @@ def search(pattern, limit, project, last_n_minutes, fmt):
             "trace_id": get_trace_id(r),
             "run_id": str(r.id),
             "start_time": r.start_time.isoformat() if r.start_time else None,
-        } for r in matching[:20]])
+        } for r in matching])
     else:
-        for run in sorted(matching[:20], key=lambda x: x.start_time or datetime.min, reverse=True):
+        for run in sorted(matching, key=lambda x: x.start_time or datetime.min, reverse=True):
             console.print(f"[yellow]Name:[/yellow] {run.name}")
             console.print(f"  [dim]Trace ID:[/dim] {get_trace_id(run)}")
             console.print(f"  [dim]Run ID:[/dim] {run.id}")
