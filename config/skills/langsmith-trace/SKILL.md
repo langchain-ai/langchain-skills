@@ -122,8 +122,8 @@ python query_traces.py export ./traces --limit 20 --full          # Everything
 python query_traces.py export ./traces --run-type tool            # Only tool calls
 python query_traces.py export ./traces --run-type llm             # Only LLM calls
 
-# Search by name pattern
-python query_traces.py search "agent" --project my-project
+# Search by name pattern, show only up to 20 root traces
+python query_traces.py search "agent" --project my-project --is-root --limit 20
 
 # Output as JSON
 python query_traces.py recent --format json --limit 5
@@ -137,7 +137,7 @@ python query_traces.py recent --format json --limit 5
 
 **`export <dir>`** - Bulk export to directory (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`, `--max-concurrent`)
 
-**`search <pattern>`** - Find runs by name (`--limit`, `--last-n-minutes`)
+**`search <pattern>`** - Find runs by name (`--limit`, `--is-root`, `--run-type`, `--error/--no-error`, `--filter`, `--last-n-minutes`)
 
 ### Tips
 
