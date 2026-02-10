@@ -6,3 +6,4 @@ logs/
 .claude
 __pycache__
 .DS_Store
+uv.lock
