@@ -1,8 +1,12 @@
 # LangGraph + LangSmith Skills for DeepAgents CLI
 
-Agent skills for building, observing, and evaluating LangGraph agents with LangSmith.
+**Alpha** — Agent skills for building, observing, and evaluating LangGraph agents with LangSmith.
 
 > **This repository contains installable skills for [deepagents-cli](https://github.com/anthropics/deepagents-cli).** Skills extend the CLI's capabilities by providing specialized knowledge and tools for specific domains.
+
+### Current Limitations
+
+These skills are currently focused on **ReAct-style agents** that call tools in a loop. Support for other agent architectures is coming soon.
 
 ## Prerequisites
 
@@ -39,3 +43,10 @@ Agent configuration lives in `config/`. To update:
 rm -rf ~/.deepagents/langchain_agent
 ./install.sh
 ```
+
+## Coming Soon
+
+- JavaScript/TypeScript support
+- Tracing support for wider agent architectures
+- Dataset generation for non-ReAct agents
+- Evaluator patterns for diverse agent types
