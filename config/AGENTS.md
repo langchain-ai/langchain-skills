@@ -1,58 +1,36 @@
-# LangGraph + LangSmith Agent Development
+# LangChain + LangSmith Development Guide
 
-## CRITICAL: Read This BEFORE Writing ANY Code
+This project uses skills that contain up-to-date patterns and working reference scripts.
 
-You have access to skills for building agents with LangGraph and observing/evaluating them with LangSmith.
+## CRITICAL: Invoke Skills BEFORE Writing Code
 
-### CRITICAL RULES
+**ALWAYS** invoke the relevant skill first - skills have the correct imports, patterns, and scripts that prevent common mistakes. The skills available to you are:
 
-BEFORE writing code, ALWAYS consult the appropriate skill:
+- **langchain-agents** - Invoke for ANY LangChain/LangGraph agent code
+- **langsmith-trace** - Invoke for ANY trace querying or analysis
+- **langsmith-dataset** - Invoke for ANY dataset creation from traces
+- **langsmith-evaluator** - Invoke for ANY evaluator creation
 
-1. **langchain-agents** - For ANY coding involving LangChain/LangGraph
-2. **langsmith-trace** - For ANY observability questions involving LangChain, LangGraph, or LangSmith
-3. **langsmith-dataset** - For ANY questions around creating test datasets 
-4. **langsmith-evaluator** - For ANY questions around evaluating agents
+Each skill includes reference scripts in `scripts/` - use these instead of writing from scratch.
 
-The skill will show you the CORRECT modern patterns with examples.
+## Modern LangChain Patterns
 
-### CORRECT Modern Patterns 
-Prefer to use modern patterns when building with LangChain or LangGraph. Some examples include:
+Use LangGraph for agent orchestration and `langchain_openai`/`langchain_anthropic` for models:
 
 ```python
-from langchain_anthropic import ChatAnthropic  # CORRECT
-from langchain_openai import ChatOpenAI  # CORRECT
-from langchain.agents import create_agent  # CORRECT
-from langchain_core.tools import tool  # CORRECT
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from langchain_core.tools import tool
+from langgraph.prebuilt import create_react_agent
 
 @tool
-def my_tool(input: str) -> str:
-    """Tool description here."""
+def my_tool(query: str) -> str:
+    """Tool description."""
     return result
 
-model = ChatAnthropic(model="claude-sonnet-4-5")
-agent = create_agent(model=model, tools=[my_tool])
+model = ChatOpenAI(model="gpt-4o-mini")
+agent = create_react_agent(model, tools=[my_tool])
 ```
-For more details, see the **langchain-agents** skill.
-
-AVOID using the patterns below - they are deprecated and outdated. Always prefer the modern patterns under all circumstances.
-
-```python
-from langchain.agents import create_sql_agent  # use create_agent
-from langchain.agents import create_react_agent  # use create_agent
-from langchain.agents import create_tool_calling_agent  # use create_agent
-```
-
-## When Building Agents
-
-**Start simple.** Use `create_agent` or basic ReAct loops before adding complexity.
-
-**Manage context early.** If your agent handles long conversations or large state, consult `langchain-agents` section 2:
-- Subagent delegation (offload work, return summaries)
-- Filesystem context (store paths not content)
-- Message trimming (keep recent only)
-- Compression (summarize old context)
-
-**Track execution.** Ensure `LANGSMITH_API_KEY` is set. Traces appear automatically at https://smith.langchain.com
 
 ## Skill Synergies
 
@@ -64,20 +42,34 @@ from langchain.agents import create_tool_calling_agent  # use create_agent
 4. **Create dataset** using `langsmith-dataset` from those traces
 5. **Build evaluator** using `langsmith-evaluator` to measure quality
 
-### Debugging/Evaluating
+### Common Workflows
 
-**Investigate failures:** Use `langsmith-trace` to query recent runs, filter by error status, export to JSON
+**Debugging a failing agent:**
+1. Use `langsmith-trace` to query recent error traces
+2. Examine the trace hierarchy to find where it failed
+3. Fix the agent code using `langchain-agents` patterns
 
-**Create test sets:** Use `langsmith-dataset` to generate datasets from production traces (final_response, trajectory, single_step, RAG types)
+**Setting up evaluation:**
+1. Generate traces by running your agent on test cases
+2. Use `langsmith-dataset` to create a dataset (type: `final_response` for output quality, `trajectory` for step-by-step)
+3. Use `langsmith-evaluator` to create metrics (LLM-as-judge for subjective, code-based for objective)
 
-**Define metrics:** Use `langsmith-evaluator` for custom evaluation (LLM as Judge for subjective quality, custom code for objective checks)
+**Iterating on agent quality:**
+1. Run evaluation to get baseline scores
+2. Analyze low-scoring traces with `langsmith-trace`
+3. Improve agent using `langchain-agents` best practices
+4. Re-run evaluation to measure improvement
 
-## Common Patterns
+## Environment Setup
 
-**Research agent:** Subagent delegation + filesystem + LLM as Judge
+Required environment variables:
+```bash
+LANGSMITH_API_KEY=<your-key>
+LANGSMITH_PROJECT=<project-name>  # Optional, defaults to "default"
+OPENAI_API_KEY=<your-key>  # For OpenAI models
+ANTHROPIC_API_KEY=<your-key>  # For Anthropic models
+```
 
-**SQL agent:** Simple ReAct loop + exact match evaluation
+## Reference Scripts
 
-**Multi-agent:** Supervisor pattern + compressed outputs + trajectory datasets
-
-**Long-running:** Hierarchical state + checkpointing + message trimming
+When you invoke a skill, check its `scripts/` directory for working implementations you can adapt. These scripts handle common edge cases and use tested patterns.
