@@ -1,7 +1,7 @@
 [project]
-name = "langsmith-skills"
+name = "langchain-skills"
 version = "0.1.0"
-description = "LangSmith skills for Claude Code - trace querying and dataset generation"
+description = "LangChain skills for coding agents - trace querying and dataset generation"
 requires-python = ">=3.11"
 dependencies = []
 
