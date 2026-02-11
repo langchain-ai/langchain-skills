@@ -72,13 +72,14 @@ def extract_run(run, include_metadata=False, include_io=False) -> dict:
         "name": run.name,
         "run_type": run.run_type,
         "parent_run_id": str(run.parent_run_id) if run.parent_run_id else None,
+        # Always include timing for trajectory ordering and duration calculation
+        "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
+        "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
     }
 
     if include_metadata:
         data.update({
             "status": getattr(run, "status", None),
-            "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
-            "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
             "duration_ms": calc_duration(run),
             "custom_metadata": run.extra.get("metadata", {}) if hasattr(run, "extra") and run.extra else {},
             "token_usage": {
