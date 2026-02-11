@@ -113,7 +113,7 @@ python query_traces.py recent --since 2025-01-20T10:00:00Z
 # Get specific trace details
 python query_traces.py trace <trace-id> --show-hierarchy
 
-# Export traces to directory (recommended for bulk collection)
+# Export traces to JSONL (one run per line, one file per trace)
 python query_traces.py export ./traces --limit 50 --include-metadata
 python query_traces.py export ./traces --limit 20 --include-io    # With inputs/outputs
 python query_traces.py export ./traces --limit 20 --full          # Everything
@@ -121,6 +121,9 @@ python query_traces.py export ./traces --limit 20 --full          # Everything
 # Filter by run type
 python query_traces.py export ./traces --run-type tool            # Only tool calls
 python query_traces.py export ./traces --run-type llm             # Only LLM calls
+
+# Stitch multiple JSONL files together
+cat ./traces/*.jsonl > all_traces.jsonl
 
 # Search by name pattern, show only up to 20 root traces
 python query_traces.py search "agent" --project my-project --is-root --limit 20
@@ -135,9 +138,18 @@ python query_traces.py recent --format json --limit 5
 
 **`trace <id>`** - Get specific trace (`--show-hierarchy`, `--include-metadata`, `--output`)
 
-**`export <dir>`** - Bulk export to directory (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`, `--max-concurrent`)
+**`export <dir>`** - Bulk export to JSONL (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`, `--max-concurrent`)
 
 **`search <pattern>`** - Find runs by name (`--limit`, `--is-root`, `--run-type`, `--error/--no-error`, `--filter`, `--last-n-minutes`)
+
+### Export Format
+
+Export creates `.jsonl` files (one run per line) with these fields:
+```json
+{"run_id": "...", "trace_id": "...", "name": "...", "run_type": "...", "parent_run_id": "...", "inputs": {...}, "outputs": {...}}
+```
+
+Use `--include-io` to include inputs/outputs (required for dataset generation).
 
 ### Tips
 
@@ -145,8 +157,4 @@ python query_traces.py recent --format json --limit 5
 - Include `--include-metadata` for performance/cost analysis
 - Increase `--max-concurrent 10` for large exports
 - Use `--format json` with jq for analysis
-
-## Related skills
-
-- Use **langsmith-dataset** skill to generate evaluation datasets from traces
-- Use **langsmith-evaluator** skill to create evaluators and measure performance
+- Stitch files: `cat ./traces/*.jsonl > all.jsonl`

@@ -310,8 +310,3 @@ python upload_evaluators.py upload evaluators.py \
 - [LangSmith Evaluation Concepts](https://docs.langchain.com/langsmith/evaluation-concepts)
 - [Custom Code Evaluators](https://changelog.langchain.com/announcements/custom-code-evaluators-in-langsmith)
 - [OpenEvals - Readymade Evaluators](https://github.com/langchain-ai/openevals)
-
-## Related Skills
-
-- Use **langsmith-trace** skill to query and export traces
-- Use **langsmith-dataset** skill to generate evaluation datasets from traces
