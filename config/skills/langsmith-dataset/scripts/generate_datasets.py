@@ -47,10 +47,15 @@ def dict_to_obj(d: dict) -> SimpleNamespace:
     return obj
 
 
-def load_traces_from_dir(input_dir: Path) -> List[tuple]:
+def load_traces_from_dir(input_dir: Path, sort: str = "newest") -> List[tuple]:
     """Load trace data from exported JSONL or JSON files.
 
-    Returns list of (trace_id, root_run, all_runs) tuples.
+    Args:
+        input_dir: Directory containing JSONL/JSON trace files
+        sort: Sort order - "newest", "oldest", "alphabetical", "reverse-alphabetical", or None
+
+    Returns:
+        List of (trace_id, root_run, all_runs) tuples
     """
     from collections import defaultdict
 
@@ -99,11 +104,29 @@ def load_traces_from_dir(input_dir: Path) -> List[tuple]:
         except (json.JSONDecodeError, KeyError) as e:
             console.print(f"[yellow]Warning: Skipping {file_path.name}: {e}[/yellow]")
 
+    # Sort traces
+    if sort == "newest":
+        traces = sorted(traces, key=lambda t: getattr(t[1], 'start_time', None) or datetime.min, reverse=True)
+    elif sort == "oldest":
+        traces = sorted(traces, key=lambda t: getattr(t[1], 'start_time', None) or datetime.min)
+    elif sort == "alphabetical":
+        traces = sorted(traces, key=lambda t: t[0])
+    elif sort == "reverse-alphabetical":
+        traces = sorted(traces, key=lambda t: t[0], reverse=True)
+
     return traces
 
 
-def load_traces_from_file(input_file: Path) -> List[tuple]:
-    """Load traces from a single JSONL or JSON file."""
+def load_traces_from_file(input_file: Path, sort: str = "newest") -> List[tuple]:
+    """Load traces from a single JSONL or JSON file.
+
+    Args:
+        input_file: Path to JSONL or JSON file
+        sort: Sort order - "newest", "oldest", "alphabetical", "reverse-alphabetical", or None
+
+    Returns:
+        List of (trace_id, root_run, all_runs) tuples
+    """
     from collections import defaultdict
 
     traces = []
@@ -122,28 +145,37 @@ def load_traces_from_file(input_file: Path) -> List[tuple]:
             if runs:
                 root = next((r for r in runs if not getattr(r, 'parent_run_id', None)), runs[0])
                 traces.append((trace_id, root, runs))
-        return traces
-
-    # Legacy JSON format
-    with open(input_file) as f:
-        data = json.load(f)
-
-    # Handle array of traces or single trace
-    if isinstance(data, list):
-        items = data
     else:
-        items = [data]
+        # Legacy JSON format
+        with open(input_file) as f:
+            data = json.load(f)
 
-    for item in items:
-        trace_id = item.get("trace_id", "unknown")
-        runs_data = item.get("runs", [])
+        # Handle array of traces or single trace
+        if isinstance(data, list):
+            items = data
+        else:
+            items = [data]
 
-        if not runs_data:
-            continue
+        for item in items:
+            trace_id = item.get("trace_id", "unknown")
+            runs_data = item.get("runs", [])
 
-        runs = [dict_to_obj(r) for r in runs_data]
-        root = next((r for r in runs if not getattr(r, 'parent_run_id', None)), runs[0])
-        traces.append((trace_id, root, runs))
+            if not runs_data:
+                continue
+
+            runs = [dict_to_obj(r) for r in runs_data]
+            root = next((r for r in runs if not getattr(r, 'parent_run_id', None)), runs[0])
+            traces.append((trace_id, root, runs))
+
+    # Sort traces
+    if sort == "newest":
+        traces = sorted(traces, key=lambda t: getattr(t[1], 'start_time', None) or datetime.min, reverse=True)
+    elif sort == "oldest":
+        traces = sorted(traces, key=lambda t: getattr(t[1], 'start_time', None) or datetime.min)
+    elif sort == "alphabetical":
+        traces = sorted(traces, key=lambda t: t[0])
+    elif sort == "reverse-alphabetical":
+        traces = sorted(traces, key=lambda t: t[0], reverse=True)
 
     return traces
 
@@ -604,9 +636,11 @@ def export_to_langsmith(client: Client, dataset: List[dict], dataset_name: str, 
 @click.option("--output-fields", help="Comma-separated output keys to extract (e.g., 'answer,response')")
 @click.option("--messages-only", is_flag=True, help="For final_response: only extract from messages")
 @click.option("--sample-per-trace", type=int, help="For single_step: max examples per trace")
+@click.option("--sort", "sort_order", type=click.Choice(["newest", "oldest", "alphabetical", "reverse-alphabetical"]),
+              default="newest", help="Sort order for traces (default: newest)")
 @click.option("--replace", is_flag=True, help="Replace existing file/dataset")
 @click.option("--yes", is_flag=True, help="Skip confirmation prompts")
-def generate(input_path, dataset_type, output, upload, run_name, depth, input_fields, output_fields, messages_only, sample_per_trace, replace, yes):
+def generate(input_path, dataset_type, output, upload, run_name, depth, input_fields, output_fields, messages_only, sample_per_trace, sort_order, replace, yes):
     """Generate evaluation datasets from exported JSONL trace files.
 
     \b
@@ -631,9 +665,9 @@ def generate(input_path, dataset_type, output, upload, run_name, depth, input_fi
 
     # Load traces
     if input_path.is_dir():
-        traces = load_traces_from_dir(input_path)
+        traces = load_traces_from_dir(input_path, sort=sort_order)
     elif input_path.is_file():
-        traces = load_traces_from_file(input_path)
+        traces = load_traces_from_file(input_path, sort=sort_order)
     else:
         console.print(f"[red]Error: {input_path} not found[/red]")
         return
@@ -642,7 +676,7 @@ def generate(input_path, dataset_type, output, upload, run_name, depth, input_fi
         console.print("[yellow]No valid traces found[/yellow]")
         return
 
-    console.print(f"[green]✓[/green] Loaded {len(traces)} traces from {input_path}")
+    console.print(f"[green]✓[/green] Loaded {len(traces)} traces from {input_path} (sorted: {sort_order})")
 
     # Generate dataset
     input_fields_list = input_fields.split(",") if input_fields else None

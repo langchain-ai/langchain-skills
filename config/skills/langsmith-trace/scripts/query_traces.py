@@ -279,6 +279,8 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
 
     with console.status("[cyan]Querying traces..."):
         runs = list(client.list_runs(**params))
+        # Sort by start_time descending to ensure most recent traces first
+        runs = sorted(runs, key=lambda x: x.start_time or datetime.min, reverse=True)
 
     if not runs:
         console.print("[yellow]No traces found[/yellow]")

@@ -8,8 +8,8 @@ This project uses skills that contain up-to-date patterns and working reference 
 
 - **langchain-agents** - Invoke for ANY LangChain/LangGraph agent code
 - **langsmith-trace** - Invoke for ANY trace querying or analysis
-- **langsmith-dataset** - Invoke for ANY dataset creation from traces
-- **langsmith-evaluator** - Invoke for ANY evaluator creation
+- **langsmith-dataset** - Invoke for ANY dataset creation from traces. Using langsmith-trace is strongly recommended to coordinate with this skill.
+- **langsmith-evaluator** - Invoke for ANY evaluator creation. Using langsmith-dataset is strongly recommended to coordinate with this skill.
 
 Each skill includes reference scripts in `scripts/` - use these instead of writing from scratch.
 
