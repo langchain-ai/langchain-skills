@@ -91,56 +91,117 @@ def generate_answer(question: str, docs: list[str]) -> str:
 
 ---
 
-## Querying Traces
-
-Use the scripts below to query, analyze, and export traces from LangSmith.
+## Querying Traces and Runs
 
 Navigate to `skills/langsmith-trace/scripts/` to run commands.
+
+### Traces vs Runs
+
+**Understanding the difference is critical:**
+
+- **Trace** = A complete execution tree (root run + all child runs). A trace represents one full agent invocation with all its LLM calls, tool calls, and nested operations.
+- **Run** = A single node in the tree (one LLM call, one tool call, etc.)
+
+**Generally, query traces first** — they provide complete context and preserve hierarchy needed for trajectory analysis and dataset generation.
+
+### Command Structure
+
+Two command groups with consistent behavior:
+
+```
+query_traces.py
+├── traces (operations on trace trees - USE THIS FIRST)
+│   ├── list    - List traces (filters apply to root run)
+│   ├── get     - Get single trace with full hierarchy
+│   └── export  - Export traces to JSONL files (one file per trace)
+│
+└── runs (operations on individual runs - for specific analysis)
+    ├── list    - List runs (flat, filters apply to any run)
+    ├── get     - Get single run
+    └── export  - Export runs to single JSONL file (flat)
+```
+
+**Key differences:**
+
+| | `traces *` | `runs *` |
+|---|---|---|
+| Filters apply to | Root run only | Any matching run |
+| `--run-type` | Not available | Available |
+| Returns | Full hierarchy | Flat list |
+| Export output | Directory (one file/trace) | Single file |
 
 ### Quick Reference
 
 ```bash
-# Show recent traces
-python query_traces.py recent --limit 10 --project my-project
+# List recent traces (most common operation)
+python query_traces.py traces list --limit 10 --project my-project
 
-# Show with metadata (timing, tokens, costs)
-python query_traces.py recent --limit 10 --include-metadata
+# List traces with metadata (timing, tokens, costs)
+python query_traces.py traces list --limit 10 --include-metadata
 
-# Filter by time
-python query_traces.py recent --last-n-minutes 60
-python query_traces.py recent --since 2025-01-20T10:00:00Z
+# Filter traces by time
+python query_traces.py traces list --last-n-minutes 60
+python query_traces.py traces list --since 2025-01-20T10:00:00Z
 
-# Get specific trace details
-python query_traces.py trace <trace-id> --show-hierarchy
+# Get specific trace with full hierarchy
+python query_traces.py traces get <trace-id>
 
-# Export traces to JSONL (one run per line, one file per trace)
-python query_traces.py export ./traces --limit 50 --include-metadata
-python query_traces.py export ./traces --limit 20 --include-io    # With inputs/outputs
-python query_traces.py export ./traces --limit 20 --full          # Everything
+# List traces and show hierarchy inline
+python query_traces.py traces list --limit 5 --show-hierarchy
 
-# Filter by run type
-python query_traces.py export ./traces --run-type tool            # Only tool calls
-python query_traces.py export ./traces --run-type llm             # Only LLM calls
+# Export traces to JSONL (one file per trace, includes all runs)
+python query_traces.py traces export ./traces --limit 20 --full
+python query_traces.py traces export ./traces --limit 10 --include-io
+
+# Filter traces by performance
+python query_traces.py traces list --min-latency 5.0 --limit 10    # Slow traces (>= 5s)
+python query_traces.py traces list --error --last-n-minutes 60     # Failed traces
+
+# Export specific traces by ID
+python query_traces.py traces export ./traces --trace-ids abc123,def456 --full
 
 # Stitch multiple JSONL files together
 cat ./traces/*.jsonl > all_traces.jsonl
 
-# Search by name pattern, show only up to 20 root traces
-python query_traces.py search "agent" --project my-project --is-root --limit 20
+# --- RUNS (for specific analysis) ---
 
-# Output as JSON
-python query_traces.py recent --format json --limit 5
+# List specific run types (flat list)
+python query_traces.py runs list --run-type llm --limit 20         # LLM calls only
+python query_traces.py runs list --name "ChatOpenAI" --limit 10    # By name pattern
+
+# Get a specific run by ID
+python query_traces.py runs get <run-id> --full
+
+# Export LLM runs for analysis
+python query_traces.py runs export ./llm_runs.jsonl --run-type llm --limit 100 --full
 ```
 
-### Commands
+### Filters
 
-**`recent`** - List recent traces (`--limit`, `--project`, `--last-n-minutes`, `--include-metadata`, `--format`)
+All commands support these filters (all AND together):
 
-**`trace <id>`** - Get specific trace (`--show-hierarchy`, `--include-metadata`, `--output`)
+**Basic filters:**
+- `--trace-ids abc,def` - Filter to specific traces
+- `--limit N` - Max results
+- `--project NAME` - Project name
+- `--last-n-minutes N` - Time filter
+- `--since TIMESTAMP` - Time filter (ISO format)
+- `--error / --no-error` - Error status
+- `--name PATTERN` - Name contains (case-insensitive)
 
-**`export <dir>`** - Bulk export to JSONL (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`)
+**Performance filters:**
+- `--min-latency SECONDS` - Minimum latency (e.g., `5` for >= 5s)
+- `--max-latency SECONDS` - Maximum latency
+- `--min-tokens N` - Minimum total tokens
+- `--tags tag1,tag2` - Has any of these tags
 
-**`search <pattern>`** - Find runs by name (`--limit`, `--is-root`, `--run-type`, `--error/--no-error`, `--filter`, `--last-n-minutes`)
+**Advanced filter:**
+- `--filter QUERY` - Raw LangSmith filter query for complex cases (feedback, metadata, etc.)
+
+```bash
+# Example: Filter by feedback score
+python query_traces.py traces list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))'
+```
 
 ### Export Format
 
@@ -149,11 +210,13 @@ Export creates `.jsonl` files (one run per line) with these fields:
 {"run_id": "...", "trace_id": "...", "name": "...", "run_type": "...", "parent_run_id": "...", "inputs": {...}, "outputs": {...}}
 ```
 
-Use `--include-io` to include inputs/outputs (required for dataset generation).
+Use `--include-io` or `--full` to include inputs/outputs (required for dataset generation).
 
 ### Tips
 
-- Use `export` for bulk data, always specify `--project`, use `/tmp` for temp files
+- **Start with traces** — they provide complete context needed for trajectory and dataset generation
+- Use `traces export --full` for bulk data destined for datasets
+- Always specify `--project` to avoid mixing data from different projects
+- Use `/tmp` for temporary exports
 - Include `--include-metadata` for performance/cost analysis
-- Use `--format json` with jq for analysis
 - Stitch files: `cat ./traces/*.jsonl > all.jsonl`
