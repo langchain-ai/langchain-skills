@@ -31,9 +31,9 @@ export LANGSMITH_API_KEY=<your-key>
 ## Available Skills
 
 - **langchain-agents** - Build agents with LangChain ecosystem (primitives, context management, multi-agent patterns)
-- **langsmith-trace** - Query and inspect traces
-- **langsmith-dataset** - Generate evaluation datasets from traces
-- **langsmith-evaluator** - Create custom evaluation metrics
+- **langsmith-trace** - Query and export traces from LangSmith
+- **langsmith-dataset** - Generate test/evaluation datasets from exported traces (final_response, single_step, trajectory, RAG types) and upload to LangSmith
+- **langsmith-evaluator** - Create custom evaluation metrics and link to datasets
 
 ## Development
 

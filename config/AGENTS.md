@@ -8,8 +8,8 @@ This project uses skills that contain up-to-date patterns and working reference 
 
 - **langchain-agents** - Invoke for ANY LangChain/LangGraph agent code
 - **langsmith-trace** - Invoke for ANY trace querying or analysis
-- **langsmith-dataset** - Invoke for ANY dataset creation from traces
-- **langsmith-evaluator** - Invoke for ANY evaluator creation
+- **langsmith-dataset** - Invoke for ANY dataset creation from traces. Using langsmith-trace is strongly recommended to coordinate with this skill.
+- **langsmith-evaluator** - Invoke for ANY evaluator creation. Using langsmith-dataset is strongly recommended to coordinate with this skill.
 
 Each skill includes reference scripts in `scripts/` - use these instead of writing from scratch.
 
@@ -20,8 +20,8 @@ Use LangGraph for agent orchestration and `langchain_openai`/`langchain_anthropi
 ```python
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain.agents import create_agent
 from langchain_core.tools import tool
-from langgraph.prebuilt import create_react_agent
 
 @tool
 def my_tool(query: str) -> str:
@@ -29,7 +29,7 @@ def my_tool(query: str) -> str:
     return result
 
 model = ChatOpenAI(model="gpt-4o-mini")
-agent = create_react_agent(model, tools=[my_tool])
+agent = create_agent(model=model, tools=[my_tool], system_prompt="Your guidelines here.")
 ```
 
 ## Skill Synergies
@@ -51,8 +51,8 @@ agent = create_react_agent(model, tools=[my_tool])
 
 **Setting up evaluation:**
 1. Generate traces by running your agent on test cases
-2. Use `langsmith-dataset` to create a dataset (type: `final_response` for output quality, `trajectory` for step-by-step)
-3. Use `langsmith-evaluator` to create metrics (LLM-as-judge for subjective, code-based for objective)
+2. Use `langsmith-dataset` to create a dataset and upload it to LangSmith
+3. Use `langsmith-evaluator` to create an evaluator, upload it to LangSmith, and link it to your dataset
 
 **Iterating on agent quality:**
 1. Run evaluation to get baseline scores

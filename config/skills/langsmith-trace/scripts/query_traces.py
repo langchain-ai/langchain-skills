@@ -4,7 +4,6 @@
 import json
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -72,13 +71,14 @@ def extract_run(run, include_metadata=False, include_io=False) -> dict:
         "name": run.name,
         "run_type": run.run_type,
         "parent_run_id": str(run.parent_run_id) if run.parent_run_id else None,
+        # Always include timing for trajectory ordering and duration calculation
+        "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
+        "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
     }
 
     if include_metadata:
         data.update({
             "status": getattr(run, "status", None),
-            "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
-            "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
             "duration_ms": calc_duration(run),
             "custom_metadata": run.extra.get("metadata", {}) if hasattr(run, "extra") and run.extra else {},
             "token_usage": {
@@ -101,17 +101,6 @@ def extract_run(run, include_metadata=False, include_io=False) -> dict:
         })
 
     return data
-
-
-# Legacy aliases for backwards compatibility
-def extract_metadata(run) -> dict:
-    """Extract full metadata from run (legacy)."""
-    return extract_run(run, include_metadata=True, include_io=False)
-
-
-def extract_basic(run) -> dict:
-    """Extract basic run info (legacy)."""
-    return extract_run(run, include_metadata=False, include_io=False)
 
 
 def output_json(data, file_path=None):
@@ -181,7 +170,7 @@ def recent(limit, project, last_n_minutes, since, fmt, include_metadata):
         return
 
     if fmt == "json":
-        data = [extract_metadata(r) if include_metadata else {
+        data = [extract_run(r, include_metadata=True, include_io=False) if include_metadata else {
             "trace_id": get_trace_id(r),
             "name": r.name,
             "start_time": r.start_time.isoformat() if r.start_time else None,
@@ -271,8 +260,7 @@ def trace(trace_id, project, fmt, output, include_metadata, include_io, full, sh
 @click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
 @click.option("--run-type", "run_type_filter", help="Filter by run type (llm, tool, chain, retriever)")
 @click.option("--filename-pattern", default="{trace_id}.json", help="Filename pattern")
-@click.option("--max-concurrent", default=5, help="Parallel fetches (default: 5)")
-def export(output_dir, limit, project, last_n_minutes, since, include_metadata, include_io, full, run_type_filter, filename_pattern, max_concurrent):
+def export(output_dir, limit, project, last_n_minutes, since, include_metadata, include_io, full, run_type_filter, filename_pattern):
     """Export traces to directory (one file per trace)."""
     # --full enables both metadata and io
     if full:
@@ -289,6 +277,8 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
 
     with console.status("[cyan]Querying traces..."):
         runs = list(client.list_runs(**params))
+        # Sort by start_time descending to ensure most recent traces first
+        runs = sorted(runs, key=lambda x: x.start_time or datetime.min, reverse=True)
 
     if not runs:
         console.print("[yellow]No traces found[/yellow]")
@@ -296,47 +286,42 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
 
     console.print(f"[green]✓[/green] Found {len(runs)} trace(s). Fetching details...")
 
-    def fetch_runs(run):
-        trace_id = get_trace_id(run)
-        try:
-            params = {"trace_id": trace_id}
-            if project or os.getenv("LANGSMITH_PROJECT"):
-                params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
-            return trace_id, list(client.list_runs(**params))
-        except Exception as e:
-            console.print(f"[yellow]Warning: Failed {trace_id}: {e}[/yellow]")
-            return trace_id, None
-
     results = []
     with Progress(SpinnerColumn(), TextColumn("[bold blue]Fetching {task.completed}/{task.total}..."),
                   BarColumn(), TaskProgressColumn()) as progress:
         task = progress.add_task("fetch", total=len(runs))
-        with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
-            for future in as_completed({executor.submit(fetch_runs, r): r for r in runs}):
-                trace_id, trace_runs = future.result()
-                if trace_runs:
-                    results.append((trace_id, trace_runs))
-                progress.update(task, advance=1)
+        for run in runs:
+            trace_id = get_trace_id(run)
+            try:
+                fetch_params = {"trace_id": trace_id}
+                if project or os.getenv("LANGSMITH_PROJECT"):
+                    fetch_params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
+                trace_runs = list(client.list_runs(**fetch_params))
+                results.append((trace_id, trace_runs))
+            except Exception as e:
+                console.print(f"[yellow]Warning: Failed {trace_id}: {e}[/yellow]")
+            progress.update(task, advance=1)
 
     console.print(f"[cyan]Saving {len(results)} trace(s) to {output_path}/[/cyan]")
 
     for idx, (trace_id, trace_runs) in enumerate(results, 1):
         filename = filename_pattern.format(trace_id=trace_id, index=idx)
-        if not filename.endswith(".json"):
-            filename += ".json"
+        # Use .jsonl extension for JSONL format
+        if filename.endswith(".json"):
+            filename = filename[:-5] + ".jsonl"
+        elif not filename.endswith(".jsonl"):
+            filename += ".jsonl"
 
         # Apply run_type filter if specified
         filtered_runs = trace_runs
         if run_type_filter:
             filtered_runs = [r for r in trace_runs if r.run_type == run_type_filter]
 
-        data = {
-            "trace_id": trace_id,
-            "runs": [extract_run(r, include_metadata, include_io) for r in filtered_runs],
-        }
-
+        # Write JSONL format (one run per line)
         with open(output_path / filename, "w") as f:
-            json.dump(data, f, indent=2, default=str)
+            for run in filtered_runs:
+                run_data = extract_run(run, include_metadata, include_io)
+                f.write(json.dumps(run_data, default=str) + "\n")
 
         console.print(f"  [green]✓[/green] {trace_id[:16]}... → {filename} ({len(filtered_runs)} runs)")
 
