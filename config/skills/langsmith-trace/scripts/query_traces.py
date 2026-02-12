@@ -1,5 +1,27 @@
 #!/usr/bin/env python3
-"""LangSmith Trace Query Tool - Query and export traces with metadata support."""
+"""LangSmith Trace Query Tool - Query and export traces and runs.
+
+Two command groups with consistent behavior:
+
+  traces  - Operations on trace trees (root run + all children)
+            Filters apply to the ROOT RUN, then full hierarchy is fetched.
+            Always returns complete trace trees.
+
+  runs    - Operations on individual runs (flat list)
+            Filters apply to ANY MATCHING RUN.
+            Returns flat list of runs without hierarchy.
+
+Examples:
+  # TRACES - always includes hierarchy
+  query_traces.py traces list --limit 5 --min-latency 2.0
+  query_traces.py traces get <trace-id>
+  query_traces.py traces export ./output --limit 10
+
+  # RUNS - flat list of individual runs
+  query_traces.py runs list --run-type llm --limit 20
+  query_traces.py runs get <run-id>
+  query_traces.py runs export ./output --run-type tool
+"""
 
 import json
 import os
@@ -32,12 +54,118 @@ def get_client() -> Client:
     return Client(api_key=api_key)
 
 
-def add_time_filter(params: dict, last_n_minutes: int | None, since: str | None):
-    """Add time filtering to filter params."""
+def build_query_params(
+    project: str | None,
+    trace_ids: str | None,
+    limit: int | None,
+    last_n_minutes: int | None,
+    since: str | None,
+    run_type: str | None,
+    is_root: bool,
+    error: bool | None,
+    name: str | None,
+    raw_filter: str | None,
+    min_latency: float | None = None,
+    max_latency: float | None = None,
+    min_tokens: int | None = None,
+    tags: str | None = None,
+) -> dict:
+    """Build unified query params for list_runs. All filters AND together.
+
+    Args:
+        project: Project name (overrides LANGSMITH_PROJECT env)
+        trace_ids: Comma-separated trace IDs to filter
+        limit: Max results to return
+        last_n_minutes: Only results from last N minutes
+        since: Only results since ISO timestamp
+        run_type: Filter by run type (llm, chain, tool, retriever, prompt, parser)
+        is_root: Only root runs (True for traces commands)
+        error: Filter by error status (True=errors only, False=no errors, None=all)
+        name: Filter by name pattern (case-insensitive search)
+        raw_filter: Raw LangSmith filter query for advanced filtering
+        min_latency: Min latency in seconds
+        max_latency: Max latency in seconds
+        min_tokens: Min total tokens
+        tags: Comma-separated tags (matches any)
+
+    Returns:
+        Dict of params for client.list_runs()
+    """
+    params = {}
+    filter_parts = []
+
+    # Project (always include if available)
+    if project or os.getenv("LANGSMITH_PROJECT"):
+        params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
+
+    # Trace IDs - filter to specific traces
+    if trace_ids:
+        ids = [t.strip() for t in trace_ids.split(",")]
+        if len(ids) == 1:
+            params["trace_id"] = ids[0]
+        else:
+            # Multiple trace IDs - use filter query
+            ids_str = ", ".join(f'"{id}"' for id in ids)
+            filter_parts.append(f'in(trace_id, [{ids_str}])')
+
+    # Limit
+    if limit:
+        params["limit"] = limit
+
+    # Time filters
     if last_n_minutes:
         params["start_time"] = datetime.now(timezone.utc) - timedelta(minutes=last_n_minutes)
     elif since:
         params["start_time"] = datetime.fromisoformat(since.replace("Z", "+00:00"))
+
+    # Run type
+    if run_type:
+        params["run_type"] = run_type
+
+    # Is root
+    if is_root:
+        params["is_root"] = True
+
+    # Error status
+    if error is not None:
+        params["error"] = error
+
+    # Name pattern
+    if name:
+        filter_parts.append(f'search(name, "{name}")')
+
+    # Latency filters (in seconds)
+    if min_latency is not None:
+        filter_parts.append(f'gte(latency, {min_latency})')
+    if max_latency is not None:
+        filter_parts.append(f'lte(latency, {max_latency})')
+
+    # Token filter
+    if min_tokens is not None:
+        filter_parts.append(f'gte(total_tokens, {min_tokens})')
+
+    # Tags filter (comma-separated, any match)
+    if tags:
+        tag_list = [t.strip() for t in tags.split(",")]
+        if len(tag_list) == 1:
+            filter_parts.append(f'has(tags, "{tag_list[0]}")')
+        else:
+            # Multiple tags - OR them together (has any of these tags)
+            tag_filters = [f'has(tags, "{t}")' for t in tag_list]
+            filter_parts.append(f'or({", ".join(tag_filters)})')
+
+    # Raw filter query (advanced)
+    if raw_filter:
+        filter_parts.append(raw_filter)
+
+    # Combine all filter parts with AND
+    if filter_parts:
+        if len(filter_parts) == 1:
+            params["filter"] = filter_parts[0]
+        else:
+            params["filter"] = f'and({", ".join(filter_parts)})'
+
+    return params
 
 
 def format_duration(ms: float | None) -> str:
@@ -63,7 +191,10 @@ def extract_run(run, include_metadata=False, include_io=False) -> dict:
     Args:
         run: LangSmith run object
         include_metadata: Include timing, tokens, costs
-        include_io: Include inputs and outputs
+        include_io: Include inputs/outputs
+
+    Returns:
+        Dict with run data
     """
     data = {
         "run_id": str(run.id),
@@ -71,7 +202,6 @@ def extract_run(run, include_metadata=False, include_io=False) -> dict:
         "name": run.name,
         "run_type": run.run_type,
         "parent_run_id": str(run.parent_run_id) if run.parent_run_id else None,
-        # Always include timing for trajectory ordering and duration calculation
         "start_time": run.start_time.isoformat() if hasattr(run, "start_time") and run.start_time else None,
         "end_time": run.end_time.isoformat() if hasattr(run, "end_time") and run.end_time else None,
     }
@@ -136,84 +266,225 @@ def print_tree(runs, parent_id=None, indent=0, visited=None):
         print_tree(runs, run.id, indent + 1, visited)
 
 
+def print_runs_table(runs, include_metadata=False, show_trace_id=True):
+    """Print runs as a table."""
+    table = Table(show_header=True)
+    table.add_column("Time", style="cyan")
+    table.add_column("Name", style="yellow")
+    table.add_column("Type", style="magenta")
+    if show_trace_id:
+        table.add_column("Trace ID", style="dim")
+    table.add_column("Run ID", style="dim")
+    if include_metadata:
+        table.add_column("Duration", style="green")
+        table.add_column("Status")
+
+    for run in sorted(runs, key=lambda x: x.start_time or datetime.min, reverse=True):
+        row = [
+            run.start_time.strftime("%H:%M:%S") if run.start_time else "N/A",
+            run.name[:40] if run.name else "N/A",
+            run.run_type or "N/A",
+        ]
+        if show_trace_id:
+            row.append(get_trace_id(run)[:16] + "...")
+        row.append(str(run.id)[:16] + "...")
+        if include_metadata:
+            row.extend([format_duration(calc_duration(run)), getattr(run, "status", "N/A")])
+        table.add_row(*row)
+
+    console.print(table)
+
+
 # ============================================================================
-# Commands
+# Shared filter options (decorator factory)
+# ============================================================================
+
+def common_filter_options(include_run_type=True):
+    """Add common filter options to a command.
+
+    Args:
+        include_run_type: Whether to include --run-type option (False for traces list)
+    """
+    def decorator(f):
+        # Basic filters
+        f = click.option("--trace-ids", help="Comma-separated trace IDs to filter")(f)
+        f = click.option("--limit", "-n", type=int, help="Max results to return")(f)
+        f = click.option("--project", help="Project name (overrides LANGSMITH_PROJECT env)")(f)
+        f = click.option("--last-n-minutes", type=int, help="Only from last N minutes")(f)
+        f = click.option("--since", help="Only since ISO timestamp")(f)
+        if include_run_type:
+            f = click.option("--run-type", type=click.Choice(["llm", "chain", "tool", "retriever", "prompt", "parser"]),
+                             help="Filter by run type")(f)
+        f = click.option("--error/--no-error", default=None, help="Filter by error status")(f)
+        f = click.option("--name", help="Filter by name pattern (case-insensitive search)")(f)
+        # Performance filters
+        f = click.option("--min-latency", type=float, help="Min latency in seconds (e.g., 5 for >= 5s)")(f)
+        f = click.option("--max-latency", type=float, help="Max latency in seconds (e.g., 10 for <= 10s)")(f)
+        f = click.option("--min-tokens", type=int, help="Min total tokens (e.g., 1000 for >= 1000)")(f)
+        f = click.option("--tags", help="Filter by tags (comma-separated, matches any)")(f)
+        # Advanced filter
+        f = click.option("--filter", "raw_filter", help="Raw LangSmith filter query (for feedback, metadata, etc.)")(f)
+        return f
+    return decorator
+
+
+# ============================================================================
+# Main CLI
 # ============================================================================
 
 @click.group()
 def cli():
-    """LangSmith Trace Query Tool"""
+    """LangSmith Trace Query Tool
+
+    \b
+    Two command groups with consistent behavior:
+
+    \b
+    TRACES - Operations on trace trees (root + all child runs)
+      traces list    List traces with hierarchy
+      traces get     Get single trace by ID
+      traces export  Export traces to JSONL files
+
+    \b
+    RUNS - Operations on individual runs (flat)
+      runs list      List runs (flat)
+      runs get       Get single run by ID
+      runs export    Export runs to JSONL files
+
+    \b
+    Key difference:
+      - traces: Filters apply to ROOT RUN, returns full hierarchy
+      - runs: Filters apply to ANY RUN, returns flat list
+    """
     pass
 
 
-@cli.command()
-@click.option("--limit", "-n", default=20, help="Number of traces (default: 20)")
-@click.option("--project", help="Project name (overrides env)")
-@click.option("--last-n-minutes", type=int, help="Only last N minutes")
-@click.option("--since", help="Only since ISO timestamp")
-@click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty")
+# ============================================================================
+# TRACES Commands - Always return full hierarchy
+# ============================================================================
+
+@cli.group()
+def traces():
+    """Operations on trace trees (root run + all children).
+
+    Filters apply to the ROOT RUN of each trace. When a trace matches,
+    the entire hierarchy (all child runs) is included.
+
+    \b
+    Commands:
+      list    List traces matching filters (shows hierarchy)
+      get     Get single trace by ID (shows hierarchy)
+      export  Export traces to JSONL files (includes all runs)
+    """
+    pass
+
+
+@traces.command("list")
+@common_filter_options(include_run_type=False)  # run_type doesn't make sense for trace-level filtering
+@click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty",
+              help="Output format")
 @click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
-def recent(limit, project, last_n_minutes, since, fmt, include_metadata):
-    """Show recent traces."""
+@click.option("--show-hierarchy", is_flag=True, help="Expand each trace to show run tree")
+def traces_list(trace_ids, limit, project, last_n_minutes, since, error, name,
+                min_latency, max_latency, min_tokens, tags, raw_filter,
+                fmt, include_metadata, show_hierarchy):
+    """List traces matching filters.
+
+    Filters apply to the ROOT RUN of each trace. Returns trace-level view
+    by default, or expanded hierarchy with --show-hierarchy.
+
+    \b
+    FILTERS (all AND together, applied to root run):
+      --trace-ids abc,def   Filter to specific traces
+      --limit 20            Max traces (default: 20)
+      --error / --no-error  Filter by error status
+      --name "agent"        Root name contains "agent"
+      --min-latency 5       Root run took >= 5 seconds
+      --max-latency 10      Root run took <= 10 seconds
+      --min-tokens 1000     Root run used >= 1000 tokens
+      --tags prod,test      Root run has any of these tags
+
+    \b
+    ADVANCED FILTER (--filter):
+    For complex queries like feedback filtering:
+      --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))'
+
+    \b
+    Examples:
+      traces list --limit 5                        # 5 most recent traces
+      traces list --min-latency 2.0 --limit 10     # 10 slowest traces (>= 2s)
+      traces list --error --last-n-minutes 60      # Failed traces in last hour
+      traces list --limit 5 --show-hierarchy       # Show full tree for each trace
+    """
     client = get_client()
 
-    params = {"is_root": True, "limit": limit}
-    if project or os.getenv("LANGSMITH_PROJECT"):
-        params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
-    add_time_filter(params, last_n_minutes, since)
+    # Build params - always query root runs for traces
+    params = build_query_params(
+        project, trace_ids, limit or 20, last_n_minutes, since,
+        None,  # run_type not applicable for trace-level filtering
+        True,  # is_root=True for traces
+        error, name, raw_filter,
+        min_latency, max_latency, min_tokens, tags
+    )
 
     with console.status("[cyan]Fetching traces..."):
-        runs = list(client.list_runs(**params))
+        root_runs = list(client.list_runs(**params))
 
-    if not runs:
+    if not root_runs:
         console.print("[yellow]No traces found[/yellow]")
         return
 
-    if fmt == "json":
-        data = [extract_run(r, include_metadata=True, include_io=False) if include_metadata else {
-            "trace_id": get_trace_id(r),
-            "name": r.name,
-            "start_time": r.start_time.isoformat() if r.start_time else None,
-        } for r in runs]
+    root_runs = sorted(root_runs, key=lambda x: x.start_time or datetime.min, reverse=True)
+
+    if show_hierarchy:
+        # Fetch full hierarchy for each trace
+        console.print(f"[green]✓[/green] Found {len(root_runs)} trace(s). Fetching hierarchy...\n")
+
+        for root in root_runs:
+            tid = get_trace_id(root)
+            fetch_params = {"trace_id": tid}
+            if project or os.getenv("LANGSMITH_PROJECT"):
+                fetch_params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
+
+            all_runs = list(client.list_runs(**fetch_params))
+
+            console.print(f"[bold]TRACE:[/bold] {tid}")
+            console.print(f"  Root: [cyan]{root.name}[/cyan] ({len(all_runs)} runs)")
+            if include_metadata:
+                console.print(f"  Duration: {format_duration(calc_duration(root))}")
+            print_tree(all_runs, root.id, indent=1)
+            console.print()
+    elif fmt == "json":
+        data = [extract_run(r, include_metadata=include_metadata, include_io=False) for r in root_runs]
         output_json(data)
     else:
-        console.print(f"[green]✓[/green] Found {len(runs)} trace(s)\n")
-
-        table = Table(show_header=True)
-        table.add_column("Time", style="cyan")
-        table.add_column("Name", style="yellow")
-        table.add_column("Trace ID", style="dim")
-        if include_metadata:
-            table.add_column("Duration", style="green")
-            table.add_column("Status", style="magenta")
-
-        for run in sorted(runs, key=lambda x: x.start_time or datetime.min, reverse=True):
-            row = [
-                run.start_time.strftime("%H:%M:%S") if run.start_time else "N/A",
-                run.name[:40],
-                get_trace_id(run)[:16] + "...",
-            ]
-            if include_metadata:
-                row.extend([format_duration(calc_duration(run)), getattr(run, "status", "N/A")])
-            table.add_row(*row)
-
-        console.print(table)
+        console.print(f"[green]✓[/green] Found {len(root_runs)} trace(s)\n")
+        print_runs_table(root_runs, include_metadata=include_metadata, show_trace_id=True)
+        console.print(f"\n[dim]Tip: Use --show-hierarchy to expand each trace[/dim]")
 
 
-@cli.command()
+@traces.command("get")
 @click.argument("trace_id")
 @click.option("--project", help="Project name")
-@click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty")
+@click.option("--format", "fmt", type=click.Choice(["json", "jsonl", "pretty"]), default="pretty",
+              help="Output format (jsonl for dataset-compatible)")
 @click.option("--output", "-o", help="Output file")
 @click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
 @click.option("--include-io", is_flag=True, help="Include inputs/outputs")
 @click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
-@click.option("--show-hierarchy", is_flag=True, help="Show run tree")
-def trace(trace_id, project, fmt, output, include_metadata, include_io, full, show_hierarchy):
-    """Fetch specific trace by ID."""
+def traces_get(trace_id, project, fmt, output, include_metadata, include_io, full):
+    """Get a specific trace by ID with full hierarchy.
+
+    Returns all runs in the trace tree (root + all children).
+
+    \b
+    Examples:
+      traces get abc123                              # Display trace tree
+      traces get abc123 --format json -o trace.json  # Export to JSON
+      traces get abc123 --format jsonl --full        # Export to JSONL (dataset-compatible)
+    """
     client = get_client()
 
-    # --full enables both metadata and io
     if full:
         include_metadata = include_io = True
 
@@ -228,41 +499,65 @@ def trace(trace_id, project, fmt, output, include_metadata, include_io, full, sh
         console.print(f"[red]No runs found for trace {trace_id}[/red]")
         return
 
-    if show_hierarchy:
-        console.print(f"[green]✓[/green] Found {len(runs)} run(s)\n")
-        for root in [r for r in runs if r.parent_run_id is None]:
+    # Find root run
+    root_runs = [r for r in runs if r.parent_run_id is None]
+
+    if fmt == "pretty":
+        console.print(f"[green]✓[/green] Found {len(runs)} run(s) in trace\n")
+        for root in root_runs:
             console.print(f"[bold]ROOT:[/bold] {root.name} (run_id: {root.id})")
             print_tree(runs, root.id, indent=1)
             console.print()
+    elif fmt == "jsonl":
+        # JSONL format - one run per line (dataset-compatible)
+        lines = [json.dumps(extract_run(r, include_metadata, include_io), default=str) for r in runs]
+        content = "\n".join(lines)
+        if output:
+            with open(output, "w") as f:
+                f.write(content + "\n")
+            console.print(f"[green]✓[/green] Saved {len(runs)} runs to {output}")
+        else:
+            console.print(content)
     else:
         data = {
             "trace_id": trace_id,
+            "run_count": len(runs),
             "runs": [extract_run(r, include_metadata, include_io) for r in runs],
         }
-
-        if fmt == "json":
-            output_json(data, output)
-        else:
-            if output:
-                console.print("[yellow]Warning: --output ignored in pretty format[/yellow]")
-            console.print(f"[green]✓[/green] Found {len(runs)} run(s)")
-            output_json(data)
+        output_json(data, output)
 
 
-@cli.command()
+@traces.command("export")
 @click.argument("output_dir", type=click.Path())
-@click.option("--limit", "-n", default=10, help="Number of traces (default: 10)")
-@click.option("--project", help="Project name")
-@click.option("--last-n-minutes", type=int, help="Time filter")
-@click.option("--since", help="ISO timestamp filter")
+@common_filter_options(include_run_type=False)
 @click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
 @click.option("--include-io", is_flag=True, help="Include inputs/outputs")
 @click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
-@click.option("--run-type", "run_type_filter", help="Filter by run type (llm, tool, chain, retriever)")
-@click.option("--filename-pattern", default="{trace_id}.json", help="Filename pattern")
-def export(output_dir, limit, project, last_n_minutes, since, include_metadata, include_io, full, run_type_filter, filename_pattern):
-    """Export traces to directory (one file per trace)."""
-    # --full enables both metadata and io
+@click.option("--filename-pattern", default="{trace_id}.jsonl", help="Filename pattern")
+def traces_export(output_dir, trace_ids, limit, project, last_n_minutes, since, error, name,
+                  min_latency, max_latency, min_tokens, tags, raw_filter,
+                  include_metadata, include_io, full, filename_pattern):
+    """Export traces to JSONL files (one file per trace, all runs included).
+
+    Each trace is exported as a separate .jsonl file containing all runs
+    in the trace tree (root + all children).
+
+    \b
+    FILTERS (all AND together, applied to root run):
+      --trace-ids abc,def   Export specific traces
+      --limit 20            Export up to 20 traces (default: 10)
+      --error / --no-error  Filter by error status
+      --name "agent"        Root name contains "agent"
+      --min-latency 5       Root run took >= 5 seconds
+      --tags production     Root run has this tag
+
+    \b
+    Examples:
+      traces export ./traces --limit 10 --full           # 10 recent traces
+      traces export ./traces --trace-ids abc,def --full  # Specific traces
+      traces export ./traces --error --last-n-minutes 60 # Failed traces in last hour
+      traces export ./traces --min-latency 5 --full      # Slow traces (>= 5s)
+    """
     if full:
         include_metadata = include_io = True
 
@@ -270,154 +565,269 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
     output_path = Path(output_dir).resolve()
     output_path.mkdir(parents=True, exist_ok=True)
 
-    params = {"is_root": True, "limit": limit}
-    if project or os.getenv("LANGSMITH_PROJECT"):
-        params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
-    add_time_filter(params, last_n_minutes, since)
+    # Get list of trace IDs to export
+    if trace_ids:
+        trace_id_list = [t.strip() for t in trace_ids.split(",")]
+        console.print(f"[cyan]Exporting {len(trace_id_list)} specified trace(s)...[/cyan]")
+    else:
+        # Query for root traces first
+        root_params = build_query_params(
+            project, None, limit or 10, last_n_minutes, since,
+            None, True, error, name, raw_filter,  # is_root=True
+            min_latency, max_latency, min_tokens, tags
+        )
 
-    with console.status("[cyan]Querying traces..."):
-        runs = list(client.list_runs(**params))
-        # Sort by start_time descending to ensure most recent traces first
-        runs = sorted(runs, key=lambda x: x.start_time or datetime.min, reverse=True)
+        with console.status("[cyan]Querying traces..."):
+            root_runs = list(client.list_runs(**root_params))
+            root_runs = sorted(root_runs, key=lambda x: x.start_time or datetime.min, reverse=True)
 
-    if not runs:
-        console.print("[yellow]No traces found[/yellow]")
-        return
+        if not root_runs:
+            console.print("[yellow]No traces found[/yellow]")
+            return
 
-    console.print(f"[green]✓[/green] Found {len(runs)} trace(s). Fetching details...")
+        trace_id_list = [get_trace_id(r) for r in root_runs]
+        console.print(f"[green]✓[/green] Found {len(trace_id_list)} trace(s). Fetching full hierarchy...")
 
+    # Fetch and export each trace
     results = []
     with Progress(SpinnerColumn(), TextColumn("[bold blue]Fetching {task.completed}/{task.total}..."),
                   BarColumn(), TaskProgressColumn()) as progress:
-        task = progress.add_task("fetch", total=len(runs))
-        for run in runs:
-            trace_id = get_trace_id(run)
+        task = progress.add_task("fetch", total=len(trace_id_list))
+        for tid in trace_id_list:
             try:
-                fetch_params = {"trace_id": trace_id}
+                fetch_params = {"trace_id": tid}
                 if project or os.getenv("LANGSMITH_PROJECT"):
                     fetch_params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
                 trace_runs = list(client.list_runs(**fetch_params))
-                results.append((trace_id, trace_runs))
+                if trace_runs:
+                    results.append((tid, trace_runs))
             except Exception as e:
-                console.print(f"[yellow]Warning: Failed {trace_id}: {e}[/yellow]")
+                console.print(f"[yellow]Warning: Failed {tid}: {e}[/yellow]")
             progress.update(task, advance=1)
+
+    if not results:
+        console.print("[yellow]No traces exported[/yellow]")
+        return
 
     console.print(f"[cyan]Saving {len(results)} trace(s) to {output_path}/[/cyan]")
 
-    for idx, (trace_id, trace_runs) in enumerate(results, 1):
-        filename = filename_pattern.format(trace_id=trace_id, index=idx)
-        # Use .jsonl extension for JSONL format
-        if filename.endswith(".json"):
-            filename = filename[:-5] + ".jsonl"
-        elif not filename.endswith(".jsonl"):
-            filename += ".jsonl"
+    for idx, (tid, trace_runs) in enumerate(results, 1):
+        filename = filename_pattern.format(trace_id=tid, index=idx)
+        if not filename.endswith(".jsonl"):
+            filename = filename.rsplit(".", 1)[0] + ".jsonl" if "." in filename else filename + ".jsonl"
 
-        # Apply run_type filter if specified
-        filtered_runs = trace_runs
-        if run_type_filter:
-            filtered_runs = [r for r in trace_runs if r.run_type == run_type_filter]
-
-        # Write JSONL format (one run per line)
         with open(output_path / filename, "w") as f:
-            for run in filtered_runs:
+            for run in trace_runs:
                 run_data = extract_run(run, include_metadata, include_io)
                 f.write(json.dumps(run_data, default=str) + "\n")
 
-        console.print(f"  [green]✓[/green] {trace_id[:16]}... → {filename} ({len(filtered_runs)} runs)")
+        console.print(f"  [green]✓[/green] {tid[:16]}... → {filename} ({len(trace_runs)} runs)")
 
     console.print(f"\n[green]✓[/green] Exported {len(results)} trace(s) to {output_path}/")
 
 
-@cli.command()
-@click.argument("pattern")
-@click.option("--limit", "-n", default=50, help="Max results to return (default: 50)")
-@click.option("--is-root", is_flag=True, help="Only search root traces")
-@click.option("--run-type", type=click.Choice(["llm", "chain", "tool", "retriever", "prompt", "parser"]), help="Filter by run type")
-@click.option("--error/--no-error", default=None, help="Filter by error status")
-@click.option("--filter", "raw_filter", help="Raw filter query (see below)")
-@click.option("--project", help="Project name")
-@click.option("--last-n-minutes", type=int, help="Time filter")
-@click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty")
-def search(pattern, limit, is_root, run_type, error, raw_filter, project, last_n_minutes, fmt):
-    """Search runs by name pattern.
+# ============================================================================
+# RUNS Commands - Return flat list of individual runs
+# ============================================================================
+
+@cli.group()
+def runs():
+    """Operations on individual runs (flat list).
+
+    Filters apply to ANY RUN that matches. Returns a flat list of runs
+    without hierarchy information.
 
     \b
-    PATTERN is matched case-insensitively against run names.
-    Use --filter for advanced queries with LangSmith filter syntax.
+    Commands:
+      list    List runs matching filters (flat)
+      get     Get single run by ID
+      export  Export runs to JSONL file (flat)
+    """
+    pass
+
+
+@runs.command("list")
+@common_filter_options(include_run_type=True)
+@click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty",
+              help="Output format")
+@click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
+def runs_list(trace_ids, limit, project, last_n_minutes, since, run_type, error, name,
+              min_latency, max_latency, min_tokens, tags, raw_filter,
+              fmt, include_metadata):
+    """List runs matching filters (flat list).
+
+    Filters apply to ANY RUN that matches, not just root runs.
+    Returns a flat list of individual runs.
 
     \b
-    FILTER QUERY SYNTAX:
-    Comparators:
-      eq(field, value)     - equals
-      neq(field, value)    - not equals
-      gt(field, value)     - greater than
-      gte(field, value)    - greater than or equal
-      lt(field, value)     - less than
-      lte(field, value)    - less than or equal
-      has(field, value)    - array contains value
+    FILTERS (all AND together):
+      --trace-ids abc,def   Runs from specific traces
+      --limit 50            Max runs (default: 50)
+      --run-type llm        Only LLM runs (or: chain, tool, retriever, prompt, parser)
+      --error / --no-error  Filter by error status
+      --name "model"        Name contains "model"
+      --min-latency 5       Runs taking >= 5 seconds
+      --max-latency 10      Runs taking <= 10 seconds
+      --min-tokens 1000     Runs using >= 1000 tokens
+      --tags prod,test      Runs with any of these tags
 
     \b
-    Boolean operators:
-      and(expr1, expr2, ...)  - all must be true
-      or(expr1, expr2, ...)   - any must be true
-
-    \b
-    Common fields:
-      name, run_type, latency, total_tokens, start_time, tags
+    ADVANCED FILTER (--filter):
+    For complex queries like feedback filtering:
+      --filter 'and(eq(feedback_key, "quality"), gte(feedback_score, 0.8))'
 
     \b
     Examples:
-      --filter 'gt(latency, 5)'                    # runs slower than 5s
-      --filter 'gt(total_tokens, 1000)'            # runs using >1000 tokens
-      --filter 'has(tags, "production")'           # runs tagged "production"
-      --filter 'and(eq(run_type, "llm"), gt(latency, 2))'  # slow LLM calls
+      runs list --run-type llm --limit 20           # 20 recent LLM calls
+      runs list --run-type tool --error             # Failed tool calls
+      runs list --name "ChatOpenAI" --min-latency 5 # Slow ChatOpenAI calls
+      runs list --trace-ids abc123 --run-type tool  # Tool calls from specific trace
     """
     client = get_client()
 
-    # Build params with API-level filters (more efficient than client-side)
-    params = {}
-    if project or os.getenv("LANGSMITH_PROJECT"):
-        params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
-    if is_root:
-        params["is_root"] = True
-    if run_type:
-        params["run_type"] = run_type
-    if error is not None:
-        params["error"] = error
-    if raw_filter:
-        params["filter"] = raw_filter
-    add_time_filter(params, last_n_minutes, None)
+    params = build_query_params(
+        project, trace_ids, limit or 50, last_n_minutes, since,
+        run_type,
+        False,  # is_root=False for runs
+        error, name, raw_filter,
+        min_latency, max_latency, min_tokens, tags
+    )
 
-    # Iterate without limit (auto-paginates), collect matches until we have enough
-    matching = []
-    with console.status("[cyan]Searching..."):
-        for run in client.list_runs(**params):
-            if pattern.lower() in (run.name or "").lower():
-                matching.append(run)
-                if len(matching) >= limit:
-                    break
+    with console.status("[cyan]Fetching runs..."):
+        all_runs = list(client.list_runs(**params))
 
-    if not matching:
-        console.print(f"[yellow]No runs matching '{pattern}'[/yellow]")
+    if not all_runs:
+        console.print("[yellow]No runs found[/yellow]")
         return
 
-    console.print(f"[green]✓[/green] Found {len(matching)} match(es)\n")
+    all_runs = sorted(all_runs, key=lambda x: x.start_time or datetime.min, reverse=True)
 
     if fmt == "json":
-        output_json([{
-            "name": r.name,
-            "trace_id": get_trace_id(r),
-            "run_id": str(r.id),
-            "start_time": r.start_time.isoformat() if r.start_time else None,
-        } for r in matching])
+        data = [extract_run(r, include_metadata=include_metadata, include_io=False) for r in all_runs]
+        output_json(data)
     else:
-        for run in sorted(matching, key=lambda x: x.start_time or datetime.min, reverse=True):
-            console.print(f"[yellow]Name:[/yellow] {run.name}")
-            console.print(f"  [dim]Trace ID:[/dim] {get_trace_id(run)}")
-            console.print(f"  [dim]Run ID:[/dim] {run.id}")
-            if run.start_time:
-                console.print(f"  [dim]Time:[/dim] {run.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-            console.print()
+        console.print(f"[green]✓[/green] Found {len(all_runs)} run(s)\n")
+        print_runs_table(all_runs, include_metadata=include_metadata, show_trace_id=True)
+
+
+@runs.command("get")
+@click.argument("run_id")
+@click.option("--project", help="Project name")
+@click.option("--format", "fmt", type=click.Choice(["json", "pretty"]), default="pretty",
+              help="Output format")
+@click.option("--output", "-o", help="Output file")
+@click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
+@click.option("--include-io", is_flag=True, help="Include inputs/outputs")
+@click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
+def runs_get(run_id, project, fmt, output, include_metadata, include_io, full):
+    """Get a specific run by ID.
+
+    Returns a single run without hierarchy information.
+
+    \b
+    Examples:
+      runs get abc123                              # Display run
+      runs get abc123 --format json -o run.json   # Export to JSON
+      runs get abc123 --full                      # Include all details
+    """
+    client = get_client()
+
+    if full:
+        include_metadata = include_io = True
+
+    try:
+        run = client.read_run(run_id)
+    except Exception as e:
+        console.print(f"[red]Error fetching run {run_id}: {e}[/red]")
+        return
+
+    if fmt == "pretty":
+        console.print(f"[green]✓[/green] Found run\n")
+        console.print(f"[bold]Run:[/bold] {run.name}")
+        console.print(f"  ID: [dim]{run.id}[/dim]")
+        console.print(f"  Trace ID: [dim]{get_trace_id(run)}[/dim]")
+        console.print(f"  Type: {run.run_type}")
+        console.print(f"  Parent: {run.parent_run_id or 'None (root)'}")
+        if include_metadata:
+            console.print(f"  Duration: {format_duration(calc_duration(run))}")
+            console.print(f"  Status: {getattr(run, 'status', 'N/A')}")
+        if include_io:
+            console.print(f"\n[bold]Inputs:[/bold]")
+            if run.inputs:
+                console.print(Syntax(json.dumps(run.inputs, indent=2, default=str), "json"))
+            console.print(f"\n[bold]Outputs:[/bold]")
+            if run.outputs:
+                console.print(Syntax(json.dumps(run.outputs, indent=2, default=str), "json"))
+    else:
+        data = extract_run(run, include_metadata, include_io)
+        output_json(data, output)
+
+
+@runs.command("export")
+@click.argument("output_file", type=click.Path())
+@common_filter_options(include_run_type=True)
+@click.option("--include-metadata", is_flag=True, help="Include timing/tokens/costs")
+@click.option("--include-io", is_flag=True, help="Include inputs/outputs")
+@click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
+def runs_export(output_file, trace_ids, limit, project, last_n_minutes, since, run_type, error, name,
+                min_latency, max_latency, min_tokens, tags, raw_filter,
+                include_metadata, include_io, full):
+    """Export runs to a single JSONL file (flat list).
+
+    Exports matching runs as one JSONL file (one run per line).
+    No hierarchy - just a flat list of runs.
+
+    \b
+    FILTERS (all AND together):
+      --trace-ids abc,def   Runs from specific traces
+      --limit 100           Max runs (default: 100)
+      --run-type llm        Only LLM runs
+      --error / --no-error  Filter by error status
+      --name "model"        Name contains "model"
+      --min-latency 5       Runs taking >= 5 seconds
+      --tags production     Runs with this tag
+
+    \b
+    Examples:
+      runs export ./llm_runs.jsonl --run-type llm --limit 100    # Export LLM runs
+      runs export ./tools.jsonl --run-type tool --full           # Export tool calls
+      runs export ./errors.jsonl --error --last-n-minutes 60     # Export errors
+      runs export ./slow.jsonl --min-latency 10 --full           # Export slow runs
+    """
+    if full:
+        include_metadata = include_io = True
+
+    client = get_client()
+    output_path = Path(output_file).resolve()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    params = build_query_params(
+        project, trace_ids, limit or 100, last_n_minutes, since,
+        run_type,
+        False,  # is_root=False for runs
+        error, name, raw_filter,
+        min_latency, max_latency, min_tokens, tags
+    )
+
+    with console.status("[cyan]Fetching runs..."):
+        all_runs = list(client.list_runs(**params))
+
+    if not all_runs:
+        console.print("[yellow]No runs found[/yellow]")
+        return
+
+    all_runs = sorted(all_runs, key=lambda x: x.start_time or datetime.min, reverse=True)
+
+    # Ensure .jsonl extension
+    if not str(output_path).endswith(".jsonl"):
+        output_path = output_path.with_suffix(".jsonl")
+
+    with open(output_path, "w") as f:
+        for run in all_runs:
+            run_data = extract_run(run, include_metadata, include_io)
+            f.write(json.dumps(run_data, default=str) + "\n")
+
+    console.print(f"[green]✓[/green] Exported {len(all_runs)} run(s) to {output_path}")
 
 
 if __name__ == "__main__":
