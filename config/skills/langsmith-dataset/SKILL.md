@@ -291,7 +291,7 @@ python query_datasets.py export "Skills: Final Response" /tmp/exported.json --li
 1. **Sample for single_step** - Use `--sample-per-trace 2` to capture conversation evolution
 2. **Match depth to needs** - `--depth 2` typically captures all main tool calls
 3. **Review before upload** - Use `query_datasets.py view-file` to inspect first
-4. **Iterative refinement** - Generate small batches (10-20) first, validate, then scale up
+4. **Iterative refinement** - Generate small batches (5-20) first, validate, then scale up
 5. **Use `--replace` carefully** - Overwrites existing datasets, useful for iteration
 6. **Stitch files for large datasets** - `cat ./traces/*.jsonl > all.jsonl`
 
