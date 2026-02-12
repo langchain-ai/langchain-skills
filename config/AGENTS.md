@@ -51,8 +51,8 @@ agent = create_react_agent(model, tools=[my_tool])
 
 **Setting up evaluation:**
 1. Generate traces by running your agent on test cases
-2. Use `langsmith-dataset` to create a dataset (type: `final_response` for output quality, `trajectory` for step-by-step)
-3. Use `langsmith-evaluator` to create metrics (LLM-as-judge for subjective, code-based for objective)
+2. Use `langsmith-dataset` to create a dataset and upload it to LangSmith
+3. Use `langsmith-evaluator` to create an evaluator, upload it to LangSmith, and link it to your dataset
 
 **Iterating on agent quality:**
 1. Run evaluation to get baseline scores

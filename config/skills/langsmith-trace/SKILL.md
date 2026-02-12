@@ -138,7 +138,7 @@ python query_traces.py recent --format json --limit 5
 
 **`trace <id>`** - Get specific trace (`--show-hierarchy`, `--include-metadata`, `--output`)
 
-**`export <dir>`** - Bulk export to JSONL (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`, `--max-concurrent`)
+**`export <dir>`** - Bulk export to JSONL (`--limit`, `--include-metadata`, `--include-io`, `--full`, `--run-type`)
 
 **`search <pattern>`** - Find runs by name (`--limit`, `--is-root`, `--run-type`, `--error/--no-error`, `--filter`, `--last-n-minutes`)
 
@@ -155,6 +155,5 @@ Use `--include-io` to include inputs/outputs (required for dataset generation).
 
 - Use `export` for bulk data, always specify `--project`, use `/tmp` for temp files
 - Include `--include-metadata` for performance/cost analysis
-- Increase `--max-concurrent 10` for large exports
 - Use `--format json` with jq for analysis
 - Stitch files: `cat ./traces/*.jsonl > all.jsonl`

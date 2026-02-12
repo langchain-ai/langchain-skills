@@ -24,7 +24,7 @@ pip install langsmith click rich python-dotenv
 
 ## Input Format
 
-This script requires traces exported in **JSONL format** (one run per line) from `query_traces.py export`.
+This script requires traces exported in **JSONL format** (one run per line).
 
 ### Required Fields
 
@@ -45,6 +45,11 @@ Each line must be a JSON object with these fields:
 | `outputs` | Run outputs (required for dataset generation) |
 
 **Important:** You MUST have inputs and outputs to generate datasets correctly.
+
+**Before generating datasets, verify your traces exist:**
+- Check that JSONL files exist in the output directory
+- Confirm traces have both `inputs` and `outputs` populated
+- Inspect the trace hierarchy to understand the structure
 
 ## Usage
 
@@ -293,13 +298,9 @@ python query_datasets.py export "Skills: Final Response" /tmp/exported.json --li
 ## Example Workflow
 
 ```bash
-# 1. Export traces as JSONL with inputs/outputs
-query_traces.py export ./traces \
-  --project skills \
-  --limit 30 \
-  --include-io
+# Assuming traces are already exported to ./traces as JSONL files
 
-# 2. Generate all dataset types from exported traces
+# Generate all dataset types from exported traces
 generate_datasets.py --input ./traces --type final_response \
   --output /tmp/final.json \
   --upload "Skills: Final Response" --replace
@@ -326,7 +327,7 @@ python query_datasets.py show "Skills: Final Response" --limit 3
 **"No valid traces found":**
 - Ensure input path contains `.jsonl` files (not `.json`)
 - Check files have required fields (trace_id, inputs, outputs)
-- Verify traces were exported with `--include-io`
+- Verify traces have inputs and outputs populated
 
 **Empty final_response outputs:**
 - Check that root run has outputs

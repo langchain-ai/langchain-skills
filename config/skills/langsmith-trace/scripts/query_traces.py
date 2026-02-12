@@ -4,7 +4,6 @@
 import json
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -261,8 +260,7 @@ def trace(trace_id, project, fmt, output, include_metadata, include_io, full, sh
 @click.option("--full", is_flag=True, help="Include everything (metadata + inputs/outputs)")
 @click.option("--run-type", "run_type_filter", help="Filter by run type (llm, tool, chain, retriever)")
 @click.option("--filename-pattern", default="{trace_id}.json", help="Filename pattern")
-@click.option("--max-concurrent", default=5, help="Parallel fetches (default: 5)")
-def export(output_dir, limit, project, last_n_minutes, since, include_metadata, include_io, full, run_type_filter, filename_pattern, max_concurrent):
+def export(output_dir, limit, project, last_n_minutes, since, include_metadata, include_io, full, run_type_filter, filename_pattern):
     """Export traces to directory (one file per trace)."""
     # --full enables both metadata and io
     if full:
@@ -288,27 +286,21 @@ def export(output_dir, limit, project, last_n_minutes, since, include_metadata, 
 
     console.print(f"[green]✓[/green] Found {len(runs)} trace(s). Fetching details...")
 
-    def fetch_runs(run):
-        trace_id = get_trace_id(run)
-        try:
-            params = {"trace_id": trace_id}
-            if project or os.getenv("LANGSMITH_PROJECT"):
-                params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
-            return trace_id, list(client.list_runs(**params))
-        except Exception as e:
-            console.print(f"[yellow]Warning: Failed {trace_id}: {e}[/yellow]")
-            return trace_id, None
-
     results = []
     with Progress(SpinnerColumn(), TextColumn("[bold blue]Fetching {task.completed}/{task.total}..."),
                   BarColumn(), TaskProgressColumn()) as progress:
         task = progress.add_task("fetch", total=len(runs))
-        with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
-            for future in as_completed({executor.submit(fetch_runs, r): r for r in runs}):
-                trace_id, trace_runs = future.result()
-                if trace_runs:
-                    results.append((trace_id, trace_runs))
-                progress.update(task, advance=1)
+        for run in runs:
+            trace_id = get_trace_id(run)
+            try:
+                fetch_params = {"trace_id": trace_id}
+                if project or os.getenv("LANGSMITH_PROJECT"):
+                    fetch_params["project_name"] = project or os.getenv("LANGSMITH_PROJECT")
+                trace_runs = list(client.list_runs(**fetch_params))
+                results.append((trace_id, trace_runs))
+            except Exception as e:
+                console.print(f"[yellow]Warning: Failed {trace_id}: {e}[/yellow]")
+            progress.update(task, advance=1)
 
     console.print(f"[cyan]Saving {len(results)} trace(s) to {output_path}/[/cyan]")
 
