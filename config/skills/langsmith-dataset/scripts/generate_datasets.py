@@ -2,7 +2,7 @@
 """Generate evaluation datasets from exported trace files.
 
 Workflow:
-  1. Export traces using langsmith-trace skill: query_traces.py export ./traces
+  1. Ensure traces are available in JSONL format in a directory (e.g., ./traces)
   2. Generate datasets from those traces: generate_datasets.py --input ./traces --type final_response
 
 Dataset types:

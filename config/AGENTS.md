@@ -20,8 +20,8 @@ Use LangGraph for agent orchestration and `langchain_openai`/`langchain_anthropi
 ```python
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain.agents import create_agent
 from langchain_core.tools import tool
-from langgraph.prebuilt import create_react_agent
 
 @tool
 def my_tool(query: str) -> str:
@@ -29,7 +29,7 @@ def my_tool(query: str) -> str:
     return result
 
 model = ChatOpenAI(model="gpt-4o-mini")
-agent = create_react_agent(model, tools=[my_tool])
+agent = create_agent(model=model, tools=[my_tool], system_prompt="Your guidelines here.")
 ```
 
 ## Skill Synergies
