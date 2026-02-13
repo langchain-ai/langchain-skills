@@ -83,6 +83,15 @@ Then run your coding agent from the directory where you installed (for local ins
 
 **Note:** The LangSmith skills require the `click` and `langsmith` Python packages.
 
+## Roadmap
+
+| Feature | Status |
+|---------|--------|
+| JavaScript/TypeScript support | Planned |
+| More comprehensive LangGraph guidance | Planned |
+| More comprehensive DeepAgents guidance | Planned |
+| Additional LangSmith features | Planned |
+
 ## Development
 
 Agent configuration lives in `config/`. To update an existing installation:
@@ -90,10 +99,3 @@ Agent configuration lives in `config/`. To update an existing installation:
 ```bash
 ./install.sh --force
 ```
-
-## Coming Soon
-
-- JavaScript/TypeScript support
-- More comprehensive LangGraph guidance
-- More comprehensive DeepAgents guidance
-- Additional LangSmith features
