@@ -81,6 +81,8 @@ Then run your coding agent from the directory where you installed (for local ins
 - **langsmith-dataset** - Generate test/evaluation datasets from exported traces (final_response, single_step, trajectory, RAG types) and upload to LangSmith
 - **langsmith-evaluator** - Create custom evaluation metrics and link to datasets
 
+**Note:** The LangSmith skills require the `click` and `langsmith` Python packages.
+
 ## Development
 
 Agent configuration lives in `config/`. To update an existing installation:
