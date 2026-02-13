@@ -22,6 +22,22 @@ These skills can be installed for the following AI coding agents:
 
 ## Installation
 
+### Quick Install (Global)
+
+Install globally with a single command:
+
+```bash
+# Claude Code
+curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --global -y && rm -rf /tmp/langchain-skills-main
+
+# DeepAgents CLI
+curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents --global -y && rm -rf /tmp/langchain-skills-main
+```
+
+### Manual Install
+
+Clone the repo and run the install script for more options:
+
 ```bash
 # Install for Claude Code in current directory (default)
 ./install.sh
