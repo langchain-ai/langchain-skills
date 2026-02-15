@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Upload evaluators to LangSmith."""
 
-import os
 import inspect
-import requests
-from typing import Callable, Optional
+import os
+from collections.abc import Callable
 from dataclasses import dataclass
+
+import click
+import requests
 from dotenv import load_dotenv
 from langsmith import Client
-import click
 from rich.console import Console
 from rich.table import Table
 
@@ -28,6 +29,7 @@ if not LANGSMITH_API_KEY:
 @dataclass
 class CodeEvaluator:
     """Code-based evaluator configuration."""
+
     code: str
     language: str = "python"
 
@@ -35,19 +37,17 @@ class CodeEvaluator:
 @dataclass
 class EvaluatorPayload:
     """Evaluator upload payload."""
+
     display_name: str
     evaluators: list[CodeEvaluator]
     sampling_rate: float
-    target_dataset_ids: Optional[list[str]] = None
-    target_project_ids: Optional[list[str]] = None
+    target_dataset_ids: list[str] | None = None
+    target_project_ids: list[str] | None = None
 
 
 def get_headers() -> dict:
     """Get API headers with authentication."""
-    headers = {
-        "x-api-key": LANGSMITH_API_KEY,
-        "Content-Type": "application/json"
-    }
+    headers = {"x-api-key": LANGSMITH_API_KEY, "Content-Type": "application/json"}
     if LANGSMITH_WORKSPACE_ID:
         headers["x-tenant-id"] = LANGSMITH_WORKSPACE_ID
     return headers
@@ -63,7 +63,7 @@ def evaluator_exists(name: str) -> bool:
     return any(rule.get("display_name") == name for rule in rules)
 
 
-def resolve_dataset_id(dataset_name: str) -> Optional[str]:
+def resolve_dataset_id(dataset_name: str) -> str | None:
     """Get dataset ID from name."""
     try:
         client = Client()
@@ -74,7 +74,7 @@ def resolve_dataset_id(dataset_name: str) -> Optional[str]:
         return None
 
 
-def resolve_project_id(project_name: str) -> Optional[str]:
+def resolve_project_id(project_name: str) -> str | None:
     """Get project ID from name."""
     try:
         client = Client()
@@ -93,11 +93,11 @@ def create_code_payload(
     name: str,
     func: Callable,
     sample_rate: float = 1.0,
-    target_dataset: Optional[str] = None,
-    target_project: Optional[str] = None,
+    target_dataset: str | None = None,
+    target_project: str | None = None,
     replace: bool = False,
-    skip_confirm: bool = False
-) -> Optional[EvaluatorPayload]:
+    skip_confirm: bool = False,
+) -> EvaluatorPayload | None:
     """Create payload for code-based evaluator.
 
     Args:
@@ -111,13 +111,15 @@ def create_code_payload(
     # Check if exists
     if evaluator_exists(name):
         if not replace:
-            console.print(f"[yellow]Evaluator '{name}' already exists. Use --replace to overwrite.[/yellow]")
+            console.print(
+                f"[yellow]Evaluator '{name}' already exists. Use --replace to overwrite.[/yellow]"
+            )
             return None
         else:
             if not skip_confirm:
                 console.print(f"[yellow]⚠️  Evaluator '{name}' already exists.[/yellow]")
                 response_text = input("Replace existing evaluator? (y/n): ").lower().strip()
-                if response_text != 'y':
+                if response_text != "y":
                     console.print("[yellow]Upload cancelled[/yellow]")
                     return None
             delete_evaluator(name, confirm=False)  # Already confirmed above or skipped
@@ -129,14 +131,12 @@ def create_code_payload(
     # Replace the function name in the source code
     func_name = func.__name__
     import re
+
     # Replace "def function_name(" with "def perform_eval("
-    source = re.sub(rf'\bdef\s+{re.escape(func_name)}\s*\(', 'def perform_eval(', source)
+    source = re.sub(rf"\bdef\s+{re.escape(func_name)}\s*\(", "def perform_eval(", source)
 
     # Create evaluator
-    code_evaluator = CodeEvaluator(
-        code=source,
-        language="python"
-    )
+    code_evaluator = CodeEvaluator(code=source, language="python")
 
     # Resolve targets
     dataset_ids = []
@@ -157,7 +157,7 @@ def create_code_payload(
         evaluators=[code_evaluator],
         sampling_rate=sample_rate,
         target_dataset_ids=dataset_ids if dataset_ids else None,
-        target_project_ids=project_ids if project_ids else None
+        target_project_ids=project_ids if project_ids else None,
     )
 
 
@@ -184,7 +184,7 @@ def delete_evaluator(name: str, confirm: bool = True) -> bool:
     if confirm:
         console.print(f"[yellow]⚠️  About to delete evaluator: '{name}'[/yellow]")
         response_text = input("Are you sure? (y/n): ").lower().strip()
-        if response_text != 'y':
+        if response_text != "y":
             console.print("[yellow]Deletion cancelled[/yellow]")
             return False
 
@@ -206,16 +206,17 @@ def create_evaluator(payload: EvaluatorPayload) -> bool:
     data = {
         "display_name": payload.display_name,
         "sampling_rate": payload.sampling_rate,
-        "code_evaluators": [
-            {"code": e.code, "language": e.language}
-            for e in payload.evaluators
-        ]
+        "code_evaluators": [{"code": e.code, "language": e.language} for e in payload.evaluators],
     }
 
     if payload.target_dataset_ids:
-        data["dataset_id"] = payload.target_dataset_ids[0] if len(payload.target_dataset_ids) == 1 else None
+        data["dataset_id"] = (
+            payload.target_dataset_ids[0] if len(payload.target_dataset_ids) == 1 else None
+        )
     if payload.target_project_ids:
-        data["session_id"] = payload.target_project_ids[0] if len(payload.target_project_ids) == 1 else None
+        data["session_id"] = (
+            payload.target_project_ids[0] if len(payload.target_project_ids) == 1 else None
+        )
 
     # Upload
     response = requests.post(url, json=data, headers=get_headers())
@@ -288,11 +289,11 @@ def upload(
     evaluator_file: str,
     name: str,
     function: str,
-    dataset: Optional[str],
-    project: Optional[str],
+    dataset: str | None,
+    project: str | None,
     sample_rate: float,
     replace: bool,
-    yes: bool
+    yes: bool,
 ):
     """Upload an evaluator from a Python file.
 
@@ -329,7 +330,7 @@ def upload(
         target_dataset=dataset,
         target_project=project,
         replace=replace,
-        skip_confirm=yes
+        skip_confirm=yes,
     )
 
     if payload:

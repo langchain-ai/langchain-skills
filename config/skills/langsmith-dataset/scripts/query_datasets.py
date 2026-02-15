@@ -10,9 +10,9 @@ import click
 from dotenv import load_dotenv
 from langsmith import Client
 from rich.console import Console
-from rich.table import Table
-from rich.syntax import Syntax
 from rich.panel import Panel
+from rich.syntax import Syntax
+from rich.table import Table
 
 load_dotenv(override=False)
 console = Console()
@@ -30,20 +30,44 @@ def get_client() -> Client:
 def display_examples(examples: list, fmt: str, limit: int):
     """Display examples in pretty or JSON format."""
     if fmt == "json":
-        console.print(Syntax(json.dumps(examples[:limit], indent=2, default=str), "json", theme="monokai"))
+        console.print(
+            Syntax(json.dumps(examples[:limit], indent=2, default=str), "json", theme="monokai")
+        )
     else:
         for i, ex in enumerate(examples[:limit], 1):
             console.print(f"[bold]Example {i}:[/bold]")
             if isinstance(ex, dict) and "inputs" in ex and "outputs" in ex:
                 # LangSmith format with inputs/outputs
-                console.print(Panel(Syntax(json.dumps(ex["inputs"], indent=2, default=str), "json",
-                            theme="monokai", line_numbers=False), title="[blue]Inputs[/blue]", border_style="blue"))
+                console.print(
+                    Panel(
+                        Syntax(
+                            json.dumps(ex["inputs"], indent=2, default=str),
+                            "json",
+                            theme="monokai",
+                            line_numbers=False,
+                        ),
+                        title="[blue]Inputs[/blue]",
+                        border_style="blue",
+                    )
+                )
                 if ex.get("outputs"):
-                    console.print(Panel(Syntax(json.dumps(ex["outputs"], indent=2, default=str), "json",
-                                theme="monokai", line_numbers=False), title="[green]Outputs[/green]", border_style="green"))
+                    console.print(
+                        Panel(
+                            Syntax(
+                                json.dumps(ex["outputs"], indent=2, default=str),
+                                "json",
+                                theme="monokai",
+                                line_numbers=False,
+                            ),
+                            title="[green]Outputs[/green]",
+                            border_style="green",
+                        )
+                    )
             else:
                 # Regular JSON format
-                console.print(Syntax(json.dumps(ex, indent=2, default=str), "json", theme="monokai"))
+                console.print(
+                    Syntax(json.dumps(ex, indent=2, default=str), "json", theme="monokai")
+                )
             console.print()
 
 
@@ -74,7 +98,7 @@ def list_datasets():
             ds.name,
             str(ds.id)[:16] + "...",
             (ds.description or "")[:50],
-            str(ds.example_count or 0)
+            str(ds.example_count or 0),
         )
 
     console.print(table)
@@ -93,8 +117,10 @@ def show(dataset_name, limit, fmt):
         console.print(f"[red]Error: Dataset '{dataset_name}' not found[/red]")
         return
 
-    examples = [{"inputs": ex.inputs, "outputs": ex.outputs}
-                for ex in client.list_examples(dataset_id=dataset.id, limit=limit)]
+    examples = [
+        {"inputs": ex.inputs, "outputs": ex.outputs}
+        for ex in client.list_examples(dataset_id=dataset.id, limit=limit)
+    ]
     if not examples:
         console.print(f"[yellow]No examples in dataset '{dataset_name}'[/yellow]")
         return
@@ -121,6 +147,7 @@ def view_file(file_path, limit, fmt):
         display_examples(data, fmt, limit)
     elif path.suffix == ".csv":
         import csv
+
         with open(path) as f:
             rows = list(csv.DictReader(f))
         console.print(f"[cyan]File:[/cyan] {path.name}\n[dim]Total: {len(rows)}[/dim]\n")
@@ -153,14 +180,17 @@ def structure(file_path):
         console.print(f"[cyan]Format:[/cyan] JSON\n[cyan]Examples:[/cyan] {len(data)}\n")
 
         if data:
-            console.print(f"[bold]Structure:[/bold]\n{json.dumps(data[0], indent=2, default=str)[:500]}\n")
+            console.print(
+                f"[bold]Structure:[/bold]\n{json.dumps(data[0], indent=2, default=str)[:500]}\n"
+            )
             all_keys = set().union(*[ex.keys() for ex in data if isinstance(ex, dict)])
             console.print("[bold]Fields:[/bold]")
             for key in sorted(all_keys):
                 count = sum(1 for ex in data if isinstance(ex, dict) and key in ex)
-                console.print(f"  {key}: {count}/{len(data)} ({count/len(data)*100:.0f}%)")
+                console.print(f"  {key}: {count}/{len(data)} ({count / len(data) * 100:.0f}%)")
     elif path.suffix == ".csv":
         import csv
+
         with open(path) as f:
             rows = list(csv.DictReader(f))
         console.print(f"[cyan]Format:[/cyan] CSV\n[cyan]Rows:[/cyan] {len(rows)}\n")
@@ -169,7 +199,9 @@ def structure(file_path):
             console.print("[bold]Columns:[/bold]")
             for col in rows[0].keys():
                 non_empty = sum(1 for row in rows if row[col])
-                console.print(f"  {col}: {non_empty}/{len(rows)} ({non_empty/len(rows)*100:.0f}%)")
+                console.print(
+                    f"  {col}: {non_empty}/{len(rows)} ({non_empty / len(rows) * 100:.0f}%)"
+                )
 
 
 @cli.command()
@@ -185,8 +217,10 @@ def export(dataset_name, output_file, limit):
         console.print(f"[red]Error: Dataset '{dataset_name}' not found[/red]")
         return
 
-    examples = [{"inputs": ex.inputs, "outputs": ex.outputs}
-                for ex in client.list_examples(dataset_id=dataset.id, limit=limit)]
+    examples = [
+        {"inputs": ex.inputs, "outputs": ex.outputs}
+        for ex in client.list_examples(dataset_id=dataset.id, limit=limit)
+    ]
     if not examples:
         console.print(f"[yellow]No examples in dataset '{dataset_name}'[/yellow]")
         return
