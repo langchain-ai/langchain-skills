@@ -99,9 +99,11 @@ Use `--type <type>` flag with the generate_datasets script:
 - **rag** - Question/chunks/answer/citations. Tests retrieval quality. Only matches `run_type="retriever"`.
 </dataset_types_overview>
 
-<python_usage>
-## Python Usage
+<script_usage>
+## Script Usage
 
+<python>
+Generate and query datasets using the Python CLI scripts.
 ```bash
 # Basic usage (raw inputs, extracted output)
 python generate_datasets.py --input ./traces --type final_response --output /tmp/final_response.json
@@ -125,11 +127,10 @@ python query_datasets.py list-datasets
 python query_datasets.py show "Skills: Trajectory" --limit 5
 python query_datasets.py view-file /tmp/trajectory_ds.json --limit 3
 ```
-</python_usage>
+</python>
 
-<typescript_usage>
-## TypeScript/JavaScript Usage
-
+<typescript>
+Generate and query datasets using the TypeScript CLI scripts.
 ```bash
 # Basic usage (raw inputs, extracted output)
 npx tsx generate_datasets.ts --input ./traces --type final_response --output /tmp/final_response.json
@@ -153,12 +154,14 @@ npx tsx query_datasets.ts list-datasets
 npx tsx query_datasets.ts show "Skills: Trajectory" --limit 5
 npx tsx query_datasets.ts view-file /tmp/trajectory_ds.json --limit 3
 ```
-</typescript_usage>
+</typescript>
+</script_usage>
 
 <example_workflow>
 Complete workflow from exported traces to LangSmith datasets:
 
-### Python
+<python>
+Generate all dataset types from exported traces and upload to LangSmith.
 ```bash
 # Generate all dataset types from exported traces
 python generate_datasets.py --input ./traces --type final_response \
@@ -178,8 +181,10 @@ python generate_datasets.py --input ./traces --type trajectory \
 # Query locally if needed
 python query_datasets.py show "Skills: Final Response" --limit 3
 ```
+</python>
 
-### TypeScript
+<typescript>
+Generate all dataset types from exported traces and upload to LangSmith.
 ```bash
 # Generate all dataset types from exported traces
 npx tsx generate_datasets.ts --input ./traces --type final_response \
@@ -199,6 +204,7 @@ npx tsx generate_datasets.ts --input ./traces --type trajectory \
 # Query locally if needed
 npx tsx query_datasets.ts show "Skills: Final Response" --limit 3
 ```
+</typescript>
 </example_workflow>
 
 <troubleshooting>

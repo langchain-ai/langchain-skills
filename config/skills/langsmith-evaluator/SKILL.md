@@ -30,8 +30,8 @@ npm install langsmith commander chalk cli-table3 dotenv openai
 <evaluator_format>
 Evaluators use `(run, example)` signature for offline (dataset) evaluations.
 
-### Python Format
-
+<python>
+Basic evaluator function signature returning metric dict.
 ```python
 def evaluator_name(run, example):
     """Evaluate using run/example dicts."""
@@ -43,9 +43,10 @@ def evaluator_name(run, example):
         "comment": "Reason..."    # Optional explanation
     }
 ```
+</python>
 
-### JavaScript Format
-
+<typescript>
+Basic evaluator function signature returning metric object.
 ```javascript
 function evaluatorName(run, example) {
   const agentResponse = run.outputs?.expected_response ?? "";
@@ -55,6 +56,7 @@ function evaluatorName(run, example) {
   return { metric_name: score, comment: "Reason..." };
 }
 ```
+</typescript>
 </evaluator_format>
 
 <evaluator_types>
@@ -64,8 +66,10 @@ function evaluatorName(run, example) {
 </evaluator_types>
 
 <llm_judge>
-### Python LLM as Judge
+## LLM as Judge Evaluators
 
+<python>
+Create an accuracy evaluator using structured output with LangChain.
 ```python
 from typing import TypedDict, Annotated
 from langchain_openai import ChatOpenAI
@@ -94,9 +98,10 @@ Evaluate accuracy:"""
         "comment": f"{grade['reasoning']} (confidence: {grade['confidence']})"
     }
 ```
+</python>
 
-### JavaScript LLM as Judge
-
+<typescript>
+Create an accuracy evaluator using JSON mode with OpenAI SDK.
 ```javascript
 import OpenAI from "openai";
 
@@ -129,11 +134,16 @@ async function accuracyEvaluator(run, example) {
   };
 }
 ```
+</typescript>
 </llm_judge>
 
 <code_evaluators>
-### Python Exact Match
+## Custom Code Evaluators
 
+### Exact Match
+
+<python>
+Compare outputs with case-insensitive exact match.
 ```python
 def exact_match_evaluator(run, example):
     output = run["outputs"].get("expected_response", "").strip().lower()
@@ -141,9 +151,10 @@ def exact_match_evaluator(run, example):
     match = output == expected
     return {"exact_match": 1 if match else 0, "comment": f"Match: {match}"}
 ```
+</python>
 
-### JavaScript Exact Match
-
+<typescript>
+Compare outputs with case-insensitive exact match.
 ```javascript
 function exactMatchEvaluator(run, example) {
   const output = (run.outputs?.expected_response ?? "").trim().toLowerCase();
@@ -152,9 +163,12 @@ function exactMatchEvaluator(run, example) {
   return { exact_match: match ? 1 : 0, comment: `Match: ${match}` };
 }
 ```
+</typescript>
 
-### Python Trajectory Validation
+### Trajectory Validation
 
+<python>
+Validate tool call sequence matches expected trajectory.
 ```python
 def trajectory_evaluator(run, example):
     trajectory = run["outputs"].get("expected_trajectory", [])
@@ -166,9 +180,10 @@ def trajectory_evaluator(run, example):
         "comment": f"Exact: {exact}, All tools: {all_tools}"
     }
 ```
+</python>
 
-### JavaScript Trajectory Validation
-
+<typescript>
+Validate tool call sequence matches expected trajectory.
 ```javascript
 function trajectoryEvaluator(run, example) {
   const trajectory = run.outputs?.expected_trajectory ?? [];
@@ -181,11 +196,14 @@ function trajectoryEvaluator(run, example) {
   };
 }
 ```
+</typescript>
 </code_evaluators>
 
 <upload>
-### Python Upload
+## Uploading Evaluators to LangSmith
 
+<python>
+Upload, list, and delete evaluators using the Python CLI script.
 ```bash
 python upload_evaluators.py list
 python upload_evaluators.py upload my_evaluators.py \
@@ -195,9 +213,10 @@ python upload_evaluators.py upload my_evaluators.py \
   --replace
 python upload_evaluators.py delete "Exact Match"
 ```
+</python>
 
-### JavaScript Upload
-
+<typescript>
+Upload, list, and delete evaluators using the TypeScript CLI script.
 ```bash
 npx tsx upload_evaluators.ts list
 npx tsx upload_evaluators.ts upload my_evaluators.js \
@@ -207,6 +226,7 @@ npx tsx upload_evaluators.ts upload my_evaluators.js \
   --replace
 npx tsx upload_evaluators.ts delete "Exact Match"
 ```
+</typescript>
 
 **IMPORTANT - Safety Prompts:**
 - The script prompts for confirmation before destructive operations
@@ -226,8 +246,10 @@ npx tsx upload_evaluators.ts delete "Exact Match"
 </best_practices>
 
 <example_workflow>
-### Python Evaluator Workflow
+## Complete Evaluator Workflow
 
+<python>
+Create and upload an exact match evaluator.
 ```bash
 cat > evaluators.py <<'EOF'
 def exact_match(run, example):
@@ -243,9 +265,10 @@ python upload_evaluators.py upload evaluators.py \
   --dataset "Skills: Final Response" \
   --replace
 ```
+</python>
 
-### JavaScript Evaluator Workflow
-
+<typescript>
+Create and upload an exact match evaluator.
 ```bash
 cat > evaluators.js <<'EOF'
 function exactMatch(run, example) {
@@ -262,11 +285,14 @@ npx tsx upload_evaluators.ts upload evaluators.js \
   --dataset "Skills: Final Response" \
   --replace
 ```
+</typescript>
 </example_workflow>
 
 <running_evaluations>
-### Python
+## Running Evaluations Programmatically
 
+<python>
+Run evaluations on a dataset using the LangSmith client.
 ```python
 from langsmith import Client
 
@@ -284,9 +310,10 @@ results = await client.aevaluate(
     max_concurrency=4
 )
 ```
+</python>
 
-### JavaScript
-
+<typescript>
+Run evaluations on a dataset using the LangSmith client.
 ```javascript
 import { Client } from "langsmith";
 
@@ -307,6 +334,7 @@ const results = await client.evaluate(
   }
 );
 ```
+</typescript>
 </running_evaluations>
 
 <resources>
