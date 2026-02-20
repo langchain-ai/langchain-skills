@@ -76,7 +76,11 @@ export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills (13)
+## Available Skills (15)
+
+### Getting Started
+- **framework-selection** - Choose between LangChain, LangGraph, and Deep Agents — load this first
+- **langchain-dependencies** - Package versions, dependency management, and environment setup (Python + TypeScript)
 
 ### Deep Agents
 - **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
