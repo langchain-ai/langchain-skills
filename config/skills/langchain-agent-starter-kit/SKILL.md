@@ -1,10 +1,10 @@
 ---
 name: LangChain Agent Starter Kit
-description: "ALWAYS START HERE for any LangChain open source agent project. Invoke this skill before any other skill and before writing any code. Combines framework selection (LangChain vs LangGraph vs Deep Agents) with full dependency setup for Python and TypeScript into a single starting reference."
+description: "ALWAYS START HERE for any LangChain, Deep Agents, or LangGraph open source agent project. It is the required starting point for any LangChain open source agent project. Invoke this skill before any other skill and before writing any code. Combines framework selection (LangChain vs LangGraph vs Deep Agents) with full dependency setup for Python and TypeScript into a single starting reference."
 ---
 
 <overview>
-**Always load this skill first.** It is the required starting point for any LangChain open source agent project — before choosing other skills, before writing code, before installing packages.
+**Always load this skill first.** This skill is the required starting point for any LangChain open source agent project — before choosing other skills, before writing code, before installing packages.
 
 It answers two questions that every project must resolve upfront:
 
@@ -33,18 +33,18 @@ The three frameworks are **layered**, not competing. Each builds on the one belo
 └─────────────────────────────────────────┘
 ```
 
-Higher layers depend on lower ones — which means you can mix them. A LangGraph graph can be a subagent inside Deep Agents; LangChain tools work inside both.
-
 <framework-decision>
 
 Answer these questions in order to land on the right choice:
 
 | Question | Yes → | No → |
 |----------|-------|-------|
-| Need planning, persistent memory, file management, or on-demand skills? | **Deep Agents** | ↓ |
-| Need custom control flow — loops, branching, parallel workers, or human-in-the-loop? | **LangGraph** | ↓ |
+| User wants to include or needs planning, persistent memory, complex task management, long running tasks, out-of-the-box file management, or on-demand skills? Or out of the box middleware? | **Deep Agents** | ↓ |
+| Need custom control flow and higher degrees of dereminism — specified loops, branching, determined parallel workers, or manually instrumented human-in-the-loop? | **LangGraph** | ↓ |
 | Single-purpose agent with a fixed set of tools? | **LangChain** (`create_agent`) | ↓ |
-| Pure model call, chain, or retrieval pipeline with no agent loop? | **LangChain** (LCEL / chain) | — |
+| ReACT style agent? | **LangChain** (LCEL / chain) | — |
+
+Higher layers depend on lower ones only when necessary — which means you can mix them. A LangGraph graph can be a subagent inside Deep Agents; LangChain tools work inside both.
 
 </framework-decision>
 
@@ -64,7 +64,7 @@ Answer these questions in order to land on the right choice:
 | **Setup complexity** | Low | Medium | Low |
 | **Next skill to load** | `langchain-agents` | `langgraph-fundamentals` | `deep-agents-core` |
 
-> **Middleware is a concept specific to LangChain (callbacks) and Deep Agents (explicit middleware layer). LangGraph has no middleware — behavior is wired directly into nodes and edges.**
+> **Middleware is a concept specific to LangChain (callbacks) and Deep Agents (explicit middleware layer). LangGraph has no middleware — behavior is wired directly into nodes and edges. If a user asks for built in hooks, route to LangChain or DeepAgents**
 
 </framework-profiles>
 
@@ -286,20 +286,4 @@ PINECONE_API_KEY=<your-key>
 
 ---
 
-## Step 4 — Load the Right Skill Next
-
-<next-steps>
-
-| Your choice | Invoke next |
-|-------------|-------------|
-| LangChain agent | `langchain-agents` |
-| LangChain RAG | `langchain-rag` |
-| LangChain models / streaming | `langchain-models` |
-| LangGraph | `langgraph-fundamentals` |
-| Deep Agents | `deep-agents-core` |
-| Tracing & observability | `langsmith-trace` |
-| Evaluation | `langsmith-evaluator` |
-| Detailed dependency reference | `langchain-dependencies` |
-| Framework choice deep-dive | `framework-selection` |
-
-</next-steps>
+## Step 4 — Load the Right Skill Next To Dive Deeper
