@@ -1,15 +1,14 @@
 ---
 name: langsmith-evaluator
-description: Use this skill for ANY question about CREATING evaluators. Covers creating custom metrics, LLM as Judge evaluators, code-based evaluators, and uploading evaluation logic to LangSmith. Includes basic usage of evaluators to run evaluations.
+description: "INVOKE THIS SKILL when creating evaluators for LangSmith OR running evaluations on datasets. Covers LLM-as-Judge evaluators, custom code evaluators, and uploading to LangSmith. Contains helper scripts to use or refer to."
 ---
 
-# LangSmith Evaluator
+<oneliner>
+Create evaluators to measure agent performance on your datasets. LangSmith supports two types: **LLM as Judge** (uses LLM to grade outputs) and **Custom Code** (deterministic logic). Evaluators can be written in Python or JavaScript: the language chosen should match what's being evaluated.
+</oneliner>
 
-Create evaluators to measure agent performance on your datasets. LangSmith supports two types: **LLM as Judge** (uses LLM to grade outputs) and **Custom Code** (deterministic logic).
-
-## Setup
-
-### Environment Variables
+<setup>
+Environment Variables
 
 ```bash
 LANGSMITH_API_KEY=lsv2_pt_your_api_key_here          # Required
@@ -17,40 +16,25 @@ LANGSMITH_WORKSPACE_ID=your-workspace-id              # Optional: for org-scoped
 OPENAI_API_KEY=your_openai_key                        # For LLM as Judge
 ```
 
-### Dependencies
-
+Python Dependencies
 ```bash
 pip install langsmith langchain-openai python-dotenv
 ```
 
-## Evaluator Format
-
-Evaluators support two function signatures:
-
-**Method 1: Dict Parameters (For running evaluations locally):**
-```python
-def evaluator_name(inputs: dict, outputs: dict, reference_outputs: dict = None) -> dict:
-    """Evaluate a single prediction."""
-    user_query = inputs.get("query", "")
-    agent_response = outputs.get("expected_response", "")
-    expected = reference_outputs.get("expected_response", "") if reference_outputs else None
-
-    return {
-        "key": "metric_name",    # Metric identifier
-        "score": 0.85,           # Number or boolean
-        "comment": "Reason..."   # Optional explanation
-    }
+JavaScript Dependencies
+```bash
+npm install langsmith commander chalk cli-table3 dotenv openai
 ```
+</setup>
 
-**Method 2: Run/Example Parameters (For uploading to LangSmith):**
+<evaluator_format>
+Evaluators use `(run, example)` signature for offline (dataset) evaluations.
+
+### Python Format
+
 ```python
 def evaluator_name(run, example):
-    """Evaluate using run/example dicts.
-
-    Args:
-        run: Dict with run["outputs"] containing agent outputs
-        example: Dict with example["outputs"] containing expected outputs
-    """
+    """Evaluate using run/example dicts."""
     agent_response = run["outputs"].get("expected_response", "")
     expected = example["outputs"].get("expected_response", "")
 
@@ -60,27 +44,42 @@ def evaluator_name(run, example):
     }
 ```
 
-## LLM as Judge Evaluators
+### JavaScript Format
 
-Use structured output for reliable grading:
+```javascript
+function evaluatorName(run, example) {
+  const agentResponse = run.outputs?.expected_response ?? "";
+  const expected = example.outputs?.expected_response ?? "";
+
+  const score = agentResponse === expected ? 1 : 0;
+  return { metric_name: score, comment: "Reason..." };
+}
+```
+</evaluator_format>
+
+<evaluator_types>
+- **LLM as Judge** - Uses an LLM to grade outputs. Best for subjective quality (accuracy, helpfulness, relevance).
+- **Custom Code** - Deterministic logic. Best for objective checks (exact match, trajectory validation, format compliance).
+- **Trajectory Evaluators** - Check tool call sequences.
+</evaluator_types>
+
+<llm_judge>
+### Python LLM as Judge
 
 ```python
 from typing import TypedDict, Annotated
 from langchain_openai import ChatOpenAI
 
 class AccuracyGrade(TypedDict):
-    """Structured evaluation output."""
     reasoning: Annotated[str, ..., "Explain your reasoning"]
     is_accurate: Annotated[bool, ..., "True if response is accurate"]
     confidence: Annotated[float, ..., "Confidence 0.0-1.0"]
 
-# Configure model with structured output
 judge = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(
     AccuracyGrade, method="json_schema", strict=True
 )
 
 async def accuracy_evaluator(run, example):
-    """Evaluate factual accuracy for LangSmith upload."""
     expected = example["outputs"].get('expected_response', '')
     agent_output = run["outputs"].get('expected_response', '')
 
@@ -96,217 +95,222 @@ Evaluate accuracy:"""
     }
 ```
 
-**Common Metrics:** Completeness, correctness, helpfulness, professionalism
+### JavaScript LLM as Judge
 
-## Custom Code Evaluators
+```javascript
+import OpenAI from "openai";
 
-### Exact Match
+const openai = new OpenAI();
+
+async function accuracyEvaluator(run, example) {
+  const expected = example.outputs?.expected_response ?? "";
+  const agentOutput = run.outputs?.expected_response ?? "";
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content: `You are an evaluator. Respond with JSON: {"is_accurate": boolean, "reasoning": string, "confidence": number}`
+      },
+      {
+        role: "user",
+        content: `Expected: ${expected}\nAgent Output: ${agentOutput}\n\nIs the agent output accurate?`
+      }
+    ]
+  });
+
+  const grade = JSON.parse(response.choices[0].message.content);
+  return {
+    accuracy: grade.is_accurate ? 1 : 0,
+    comment: `${grade.reasoning} (confidence: ${grade.confidence})`
+  };
+}
+```
+</llm_judge>
+
+<code_evaluators>
+### Python Exact Match
+
 ```python
 def exact_match_evaluator(run, example):
-    """Check if output exactly matches expected."""
     output = run["outputs"].get("expected_response", "").strip().lower()
     expected = example["outputs"].get("expected_response", "").strip().lower()
-
     match = output == expected
-    return {
-        "exact_match": 1 if match else 0,
-        "comment": f"Match: {match}"
-    }
+    return {"exact_match": 1 if match else 0, "comment": f"Match: {match}"}
 ```
 
-### Trajectory Validation
+### JavaScript Exact Match
+
+```javascript
+function exactMatchEvaluator(run, example) {
+  const output = (run.outputs?.expected_response ?? "").trim().toLowerCase();
+  const expected = (example.outputs?.expected_response ?? "").trim().toLowerCase();
+  const match = output === expected;
+  return { exact_match: match ? 1 : 0, comment: `Match: ${match}` };
+}
+```
+
+### Python Trajectory Validation
+
 ```python
 def trajectory_evaluator(run, example):
-    """Evaluate tool call sequence."""
     trajectory = run["outputs"].get("expected_trajectory", [])
     expected = example["outputs"].get("expected_trajectory", [])
-
-    # Exact sequence match
     exact = trajectory == expected
-
-    # All required tools used (order-agnostic)
     all_tools = set(expected).issubset(set(trajectory))
-
-    # Efficiency: count extra steps
-    extra_steps = len(trajectory) - len(expected)
-
     return {
         "trajectory_match": 1 if exact else 0,
-        "comment": f"Exact: {exact}, All tools: {all_tools}, Extra: {extra_steps}"
+        "comment": f"Exact: {exact}, All tools: {all_tools}"
     }
 ```
 
-### Single Step Validation
-```python
-def single_step_evaluator(run, example):
-    """Evaluate single node output."""
-    output = run["outputs"].get("output", {})
-    expected = example["outputs"].get("expected_output", {})
-    node_name = run["outputs"].get("node_name", "")
+### JavaScript Trajectory Validation
 
-    # For classification nodes
-    if "classification" in node_name:
-        classification = output.get("classification", "")
-        expected_class = expected.get("classification", "")
-        match = classification.lower() == expected_class.lower()
+```javascript
+function trajectoryEvaluator(run, example) {
+  const trajectory = run.outputs?.expected_trajectory ?? [];
+  const expected = example.outputs?.expected_trajectory ?? [];
+  const exact = JSON.stringify(trajectory) === JSON.stringify(expected);
+  const allTools = expected.every(tool => trajectory.includes(tool));
+  return {
+    trajectory_match: exact ? 1 : 0,
+    comment: `Exact: ${exact}, All tools: ${allTools}`
+  };
+}
+```
+</code_evaluators>
 
-        return {
-            "classification_correct": 1 if match else 0,
-            "comment": f"Output: {classification}, Expected: {expected_class}"
-        }
+<upload>
+### Python Upload
 
-    # For other nodes
+```bash
+python upload_evaluators.py list
+python upload_evaluators.py upload my_evaluators.py \
+  --name "Exact Match" \
+  --function exact_match \
+  --dataset "Skills: Final Response" \
+  --replace
+python upload_evaluators.py delete "Exact Match"
+```
+
+### JavaScript Upload
+
+```bash
+npx tsx upload_evaluators.ts list
+npx tsx upload_evaluators.ts upload my_evaluators.js \
+  --name "Exact Match" \
+  --function exactMatch \
+  --dataset "Skills: Final Response" \
+  --replace
+npx tsx upload_evaluators.ts delete "Exact Match"
+```
+
+**IMPORTANT - Safety Prompts:**
+- The script prompts for confirmation before destructive operations
+- **NEVER use `--yes` flag unless the user explicitly requests it**
+</upload>
+
+<best_practices>
+1. **Use structured output for LLM judges** - More reliable than parsing free-text
+2. **Match evaluator to dataset type**
+   - Final Response → LLM as Judge for quality
+   - Trajectory → Custom Code for sequence
+3. **Use async for LLM judges** - Enables parallel evaluation
+4. **Test evaluators independently** - Validate on known good/bad examples first
+5. **Choose the right language**
+   - Python: Use for Python agents, langchain integrations
+   - JavaScript: Use for TypeScript/Node.js agents
+</best_practices>
+
+<example_workflow>
+### Python Evaluator Workflow
+
+```bash
+cat > evaluators.py <<'EOF'
+def exact_match(run, example):
+    output = run["outputs"].get("expected_response", "").strip().lower()
+    expected = example["outputs"].get("expected_response", "").strip().lower()
     match = output == expected
-    return {
-        "output_match": 1 if match else 0,
-        "comment": f"Match: {match}"
-    }
+    return {"exact_match": 1 if match else 0, "comment": f"Match: {match}"}
+EOF
+
+python upload_evaluators.py upload evaluators.py \
+  --name "Exact Match" \
+  --function exact_match \
+  --dataset "Skills: Final Response" \
+  --replace
 ```
 
-## Running Evaluations
+### JavaScript Evaluator Workflow
+
+```bash
+cat > evaluators.js <<'EOF'
+function exactMatch(run, example) {
+  const output = (run.outputs?.expected_response ?? "").trim().toLowerCase();
+  const expected = (example.outputs?.expected_response ?? "").trim().toLowerCase();
+  const match = output === expected;
+  return { exact_match: match ? 1 : 0, comment: `Match: ${match}` };
+}
+EOF
+
+npx tsx upload_evaluators.ts upload evaluators.js \
+  --name "Exact Match" \
+  --function exactMatch \
+  --dataset "Skills: Final Response" \
+  --replace
+```
+</example_workflow>
+
+<running_evaluations>
+### Python
 
 ```python
 from langsmith import Client
 
 client = Client()
 
-# Define your agent function
 def run_agent(inputs: dict) -> dict:
-    """Your agent invocation logic."""
     result = your_agent.invoke(inputs)
     return {"expected_response": result}
 
-# Run evaluation
 results = await client.aevaluate(
     run_agent,
-    data="Skills: Final Response",              # Dataset name
-    evaluators=[
-        exact_match_evaluator,
-        accuracy_evaluator,
-        trajectory_evaluator
-    ],
+    data="Skills: Final Response",
+    evaluators=[exact_match_evaluator, accuracy_evaluator],
     experiment_prefix="skills-eval-v1",
     max_concurrency=4
 )
 ```
 
-## Upload Evaluators to LangSmith
+### JavaScript
 
-The upload script is a utility tool to deploy your custom evaluators to LangSmith. Write evaluators specific to your use case, then upload them.
+```javascript
+import { Client } from "langsmith";
 
-Navigate to `skills/langsmith-evaluator/scripts/` to upload evaluators.
+const client = new Client();
 
-**Important:** LangSmith API requires evaluators to use `(run, example)` signature where:
-- `run`: dict with `run["outputs"]` containing agent outputs
-- `example`: dict with `example["outputs"]` containing expected outputs
+async function runAgent(inputs) {
+  const result = await yourAgent.invoke(inputs);
+  return { expected_response: result };
+}
 
-### Create Evaluator File
-
-```python
-# my_project/evaluators/custom_evals.py
-
-def my_custom_evaluator(run, example):
-    """Your custom evaluation logic.
-
-    Args:
-        run: Dict with run["outputs"] - agent outputs
-        example: Dict with example["outputs"] - expected outputs
-
-    Returns:
-        Dict with metric_name as key, score as value, optional comment
-    """
-    # Extract relevant data
-    agent_output = run["outputs"].get("expected_trajectory", [])
-    expected = example["outputs"].get("expected_trajectory", [])
-
-    # Your custom logic here
-    match = agent_output == expected
-
-    return {
-        "my_metric": 1 if match else 0,
-        "comment": "Custom reasoning here"
-    }
+const results = await client.evaluate(
+  runAgent,
+  {
+    data: "Skills: Final Response",
+    evaluators: [exactMatchEvaluator, accuracyEvaluator],
+    experimentPrefix: "skills-eval-v1",
+    maxConcurrency: 4
+  }
+);
 ```
+</running_evaluations>
 
-### Upload
-
-```bash
-# List existing evaluators
-python upload_evaluators.py list
-
-# Upload evaluator
-python upload_evaluators.py upload my_evaluators.py \
-  --name "Trajectory Match" \
-  --function trajectory_match \
-  --dataset "Skills: Trajectory" \
-  --replace
-
-# Delete evaluator (will prompt for confirmation)
-python upload_evaluators.py delete "Trajectory Match"
-
-# Skip confirmation prompts (use with caution)
-python upload_evaluators.py delete "Trajectory Match" --yes
-python upload_evaluators.py upload my_evaluators.py \
-  --name "Trajectory Match" \
-  --function trajectory_match \
-  --replace --yes
-```
-
-**Options:**
-- `--name` - Display name in LangSmith
-- `--function` - Function name to extract
-- `--dataset` - Target dataset name
-- `--project` - Target project name
-- `--sample-rate` - Sampling rate (0.0-1.0)
-- `--replace` - Replace if exists (will prompt for confirmation)
-- `--yes` - Skip confirmation prompts for replace/delete operations
-
-**IMPORTANT - Safety Prompts:**
-- The script prompts for confirmation before any destructive operations (delete, replace)
-- **ALWAYS respect these prompts** - wait for user input before proceeding
-- **NEVER use `--yes` flag unless the user explicitly requests it**
-- The `--yes` flag skips all safety prompts and should only be used in automated workflows when explicitly authorized by the user
-
-## Best Practices
-
-1. **Use structured output for LLM judges** - More reliable than parsing free-text
-2. **Match evaluator to dataset type**
-   - Final Response → LLM as Judge for quality, Custom Code for format
-   - Single Step → Custom Code for exact match
-   - Trajectory → Custom Code for sequence/efficiency
-3. **Combine multiple evaluators** - Run both subjective (LLM) and objective (code)
-4. **Use async for LLM judges** - Enables parallel evaluation, much faster
-5. **Test evaluators independently** - Validate on known good/bad examples first
-6. **Upload to LangSmith** - Automatic evaluation on new runs
-
-## Example Workflow
-
-```bash
-# 1. Create evaluators file
-cat > evaluators.py <<'EOF'
-def exact_match(run, example):
-    """Check if output exactly matches expected."""
-    output = run["outputs"].get("expected_response", "").strip().lower()
-    expected = example["outputs"].get("expected_response", "").strip().lower()
-    match = output == expected
-    return {
-        "exact_match": 1 if match else 0,
-        "comment": f"Match: {match}"
-    }
-EOF
-
-# 2. Upload to LangSmith
-python upload_evaluators.py upload evaluators.py \
-  --name "Exact Match" \
-  --function exact_match \
-  --dataset "Skills: Final Response" \
-  --replace
-
-# 3. Evaluator runs automatically on new dataset runs
-```
-
-## Resources
-
+<resources>
 - [LangSmith Evaluation Concepts](https://docs.langchain.com/langsmith/evaluation-concepts)
 - [Custom Code Evaluators](https://changelog.langchain.com/announcements/custom-code-evaluators-in-langsmith)
 - [OpenEvals - Readymade Evaluators](https://github.com/langchain-ai/openevals)
+</resources>
