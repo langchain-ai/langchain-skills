@@ -98,6 +98,19 @@ Answer these questions in order:
 - The task is simple enough for a single-purpose agent
 - You need precise, hand-crafted control over every graph edge (use LangGraph directly)
 
+**Middleware — built-in and extensible:**
+
+Deep Agents ships with a built-in middleware layer out of the box — you configure it, you don't implement it. The following come pre-wired; you can also add your own on top:
+
+| Middleware | What it provides | Always on? |
+|------------|-----------------|------------|
+| `TodoListMiddleware` | `write_todos` tool — agent plans and tracks multi-step tasks | ✓ |
+| `FilesystemMiddleware` | `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep` tools | ✓ |
+| `SubAgentMiddleware` | `task` tool — delegate work to named subagents | ✓ |
+| `SkillsMiddleware` | Load SKILL.md files on demand from a skills directory | Opt-in |
+| `MemoryMiddleware` | Long-term memory across sessions via a `Store` instance | Opt-in |
+| `HumanInTheLoopMiddleware` | Interrupt and request human approval before sensitive tool calls | Opt-in |
+
 **Skills to invoke next:** `deep-agents-core`, `deep-agents-memory`, `deep-agents-orchestration`
 
 </deep-agents-profile>
@@ -134,13 +147,17 @@ LangChain tools, chains, and retrievers can be used freely inside both LangGraph
 | | LangChain | LangGraph | Deep Agents |
 |---|-----------|-----------|-------------|
 | **Control flow** | Fixed (tool loop) | Custom (graph) | Managed (middleware) |
-| **Planning** | ✗ | Manual | ✓ Built-in |
-| **File management** | ✗ | Manual | ✓ Built-in |
-| **Persistent memory** | ✗ | With checkpointer | ✓ Built-in |
-| **Subagent delegation** | ✗ | Manual | ✓ Built-in |
-| **On-demand skills** | ✗ | ✗ | ✓ Built-in |
+| **Middleware layer** | Callbacks only | ✗ None | ✓ Explicit, configurable |
+| **Planning** | ✗ | Manual | ✓ TodoListMiddleware |
+| **File management** | ✗ | Manual | ✓ FilesystemMiddleware |
+| **Persistent memory** | ✗ | With checkpointer | ✓ MemoryMiddleware |
+| **Subagent delegation** | ✗ | Manual | ✓ SubAgentMiddleware |
+| **On-demand skills** | ✗ | ✗ | ✓ SkillsMiddleware |
+| **Human-in-the-loop** | ✗ | Manual interrupt | ✓ HumanInTheLoopMiddleware |
 | **Custom graph edges** | ✗ | ✓ Full control | Limited |
 | **Setup complexity** | Low | Medium | Low |
 | **Flexibility** | Medium | High | Medium |
+
+> **Middleware is a concept specific to LangChain (callbacks) and Deep Agents (explicit middleware layer). LangGraph has no middleware — you wire behavior directly into nodes and edges.**
 
 </quick-reference>

@@ -53,15 +53,39 @@ Answer these questions in order to land on the right choice:
 | | LangChain | LangGraph | Deep Agents |
 |---|-----------|-----------|-------------|
 | **Control flow** | Fixed (tool loop) | Custom (graph) | Managed (middleware) |
-| **Planning** | ✗ | Manual | ✓ Built-in |
-| **File management** | ✗ | Manual | ✓ Built-in |
-| **Persistent memory** | ✗ | With checkpointer | ✓ Built-in |
-| **Subagent delegation** | ✗ | Manual | ✓ Built-in |
+| **Middleware layer** | Callbacks only | ✗ None | ✓ Explicit, configurable |
+| **Planning** | ✗ | Manual | ✓ TodoListMiddleware |
+| **File management** | ✗ | Manual | ✓ FilesystemMiddleware |
+| **Persistent memory** | ✗ | With checkpointer | ✓ MemoryMiddleware |
+| **Subagent delegation** | ✗ | Manual | ✓ SubAgentMiddleware |
+| **On-demand skills** | ✗ | ✗ | ✓ SkillsMiddleware |
+| **Human-in-the-loop** | ✗ | Manual interrupt | ✓ HumanInTheLoopMiddleware |
 | **Custom graph edges** | ✗ | ✓ Full control | Limited |
 | **Setup complexity** | Low | Medium | Low |
 | **Next skill to load** | `langchain-agents` | `langgraph-fundamentals` | `deep-agents-core` |
 
+> **Middleware is a concept specific to LangChain (callbacks) and Deep Agents (explicit middleware layer). LangGraph has no middleware — behavior is wired directly into nodes and edges.**
+
 </framework-profiles>
+
+<deep-agents-middleware>
+
+### Deep Agents built-in middleware
+
+Deep Agents ships with a built-in middleware layer — six components pre-wired out of the box, with the ability to add your own. The first three are always active; the rest are opt-in via configuration:
+
+| Middleware | Always on? | What it gives the agent |
+|------------|-----------|--------------------------|
+| `TodoListMiddleware` | ✓ | `write_todos` tool — breaks work into a tracked task list |
+| `FilesystemMiddleware` | ✓ | `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep` tools |
+| `SubAgentMiddleware` | ✓ | `task` tool — delegates subtasks to named subagents |
+| `SkillsMiddleware` | Opt-in | Loads SKILL.md files on demand from a configured skills directory |
+| `MemoryMiddleware` | Opt-in | Long-term memory across sessions via a `Store` instance |
+| `HumanInTheLoopMiddleware` | Opt-in | Pauses execution and requests human approval before specified tool calls |
+
+You configure middleware — you don't implement it. See `deep-agents-core` for setup details.
+
+</deep-agents-middleware>
 
 <mixing-note>
 You can combine layers in the same project. The most common pattern: Deep Agents as the top-level orchestrator, with a compiled LangGraph graph registered as a specialized subagent. LangChain tools and chains are usable at every level.

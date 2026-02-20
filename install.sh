@@ -202,11 +202,12 @@ else
 fi
 
 echo ""
-echo "Available skills (15 total):"
+echo "Available skills (16 total):"
 echo ""
 echo "  Getting Started:"
-echo "    - framework-selection: Choose between LangChain, LangGraph, and Deep Agents"
-echo "    - langchain-dependencies: Package versions and dependency management (Python + TypeScript)"
+echo "    - langchain-agent-starter-kit: ALWAYS START HERE — framework selection + dependency setup in one place"
+echo "    - framework-selection: Framework comparison reference (LangChain vs LangGraph vs Deep Agents)"
+echo "    - langchain-dependencies: Full dependency and package version reference (Python + TypeScript)"
 echo ""
 echo "  Deep Agents:"
 echo "    - deep-agents-core: Agent architecture and SKILL.md format"
