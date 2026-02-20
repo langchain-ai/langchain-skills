@@ -1,8 +1,8 @@
-# LangGraph + LangSmith Skills
+# LangChain Skills
 
 > **⚠️ ALPHA** — This project is in early development. APIs and skill content may change.
 
-Agent skills for building, observing, and evaluating LangGraph agents with LangSmith.
+Agent skills for building, observing, and evaluating agents with LangChain, LangGraph, LangSmith, and Deep Agents.
 
 ## Supported Coding Agents
 
@@ -66,31 +66,45 @@ Clone the repo and run the install script for more options:
 
 ## Usage
 
-After installation, set your LangSmith API key:
+After installation, set your API keys:
 
 ```bash
 export LANGSMITH_API_KEY=<your-key>
+export OPENAI_API_KEY=<your-key>      # For OpenAI models
+export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 ```
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills
+## Available Skills (16)
 
-- **langchain-agents** - Build agents with LangChain ecosystem (primitives, context management, multi-agent patterns)
-- **langsmith-trace** - Query and export traces from LangSmith
-- **langsmith-dataset** - Generate test/evaluation datasets from exported traces (final_response, single_step, trajectory, RAG types) and upload to LangSmith
-- **langsmith-evaluator** - Create custom evaluation metrics and link to datasets
+### Getting Started
+- **langchain-agent-starter-kit** - **Always start here** — framework selection + dependency setup combined into a single starting reference
+- **framework-selection** - Framework comparison reference (LangChain vs LangGraph vs Deep Agents)
+- **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
 
-**Note:** The LangSmith skills require the `click` and `langsmith` Python packages.
+### Deep Agents
+- **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
+- **deep-agents-memory** - Memory, persistence, filesystem middleware
+- **deep-agents-orchestration** - Subagents, task planning, human-in-the-loop
 
-## Roadmap
+### LangChain
+- **langchain-agents** - Agents and tools with create_react_agent, @tool decorator
+- **langchain-models** - Chat models, provider setup, streaming
+- **langchain-output** - Structured output with Pydantic, HITL middleware
+- **langchain-rag** - RAG pipeline (document loaders, embeddings, vector stores)
 
-| Feature | Status |
-|---------|--------|
-| JavaScript/TypeScript support | Planned |
-| More comprehensive LangGraph guidance | Planned |
-| More comprehensive DeepAgents guidance | Planned |
-| Additional LangSmith features | Planned |
+### LangGraph
+- **langgraph-fundamentals** - StateGraph, nodes, edges, state reducers
+- **langgraph-persistence** - Checkpointers, thread_id, cross-thread memory
+- **langgraph-execution** - Workflows, interrupts, streaming modes
+
+### LangSmith
+- **langsmith-trace** - Query and export traces (includes helper scripts)
+- **langsmith-dataset** - Generate evaluation datasets from traces (includes helper scripts)
+- **langsmith-evaluator** - Create custom evaluators (includes helper scripts)
+
+**Note:** LangSmith skills include Python and TypeScript helper scripts for common operations.
 
 ## Development
 
