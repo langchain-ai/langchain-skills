@@ -45,8 +45,8 @@ Optional variables:
 <trace_other_frameworks>
 For non-LangChain apps, use the traceable decorator/wrapper and wrap your LLM client.
 
-### For Python applications, see below
-
+<python>
+Use @traceable decorator and wrap_openai() for automatic tracing.
 ```python
 from langsmith import traceable
 from langsmith.wrappers import wrap_openai
@@ -76,9 +76,10 @@ def retrieve_docs(query: str) -> list[str]:
 def generate_answer(question: str, docs: list[str]) -> str:
     return client.chat.completions.create(...)
 ```
+</python>
 
-### For TypeScript applications, see below
-
+<typescript>
+Use traceable() wrapper and wrapOpenAI() for automatic tracing.
 ```typescript
 import { traceable } from "langsmith/traceable";
 import { wrapOpenAI } from "langsmith/wrappers";
@@ -108,6 +109,7 @@ const ragPipeline = traceable(async (question: string): Promise<string> => {
   return await generateAnswer(question, docs);
 }, { name: "rag_pipeline" });
 ```
+</typescript>
 
 Best Practices:
 - **Apply traceable to all nested functions** you want visible in LangSmith
@@ -157,8 +159,8 @@ query_traces.py / query_traces.ts
 Python and Typescript scripts are both provided, and identical in usage.
 You should use whichever script matches your current project context.
 
-### Python Script Usage
-
+<python>
+Query traces using the Python CLI script.
 ```bash
 # List recent traces (most common operation)
 python query_traces.py traces list --limit 10 --project my-project
@@ -186,9 +188,10 @@ python query_traces.py traces list --error --last-n-minutes 60     # Failed trac
 # List specific run types (flat list)
 python query_traces.py runs list --run-type llm --limit 20
 ```
+</python>
 
-### TypeScript Script Usage
-
+<typescript>
+Query traces using the TypeScript CLI script.
 ```bash
 # List recent traces (most common operation)
 npx tsx query_traces.ts traces list --limit 10 --project my-project
@@ -216,6 +219,7 @@ npx tsx query_traces.ts traces list --error --last-n-minutes 60     # Failed tra
 # List specific run types (flat list)
 npx tsx query_traces.ts runs list --run-type llm --limit 20
 ```
+</typescript>
 </querying_traces>
 
 <filters>
@@ -239,13 +243,19 @@ All commands support these filters (all AND together):
 **Advanced filter:**
 - `--filter QUERY` - Raw LangSmith filter query for complex cases (feedback, metadata, etc.)
 
+<python>
+Filter traces by feedback score using raw LangSmith query.
 ```bash
-# Example: Filter by feedback score (Python)
 python query_traces.py traces list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))'
+```
+</python>
 
-# Example: Filter by feedback score (TypeScript)
+<typescript>
+Filter traces by feedback score using raw LangSmith query.
+```bash
 npx tsx query_traces.ts traces list --filter 'and(eq(feedback_key, "correctness"), gte(feedback_score, 0.8))'
 ```
+</typescript>
 </filters>
 
 <export_format>
