@@ -1,5 +1,5 @@
 ---
-name: langchain-fundamentals
+name: LangChain Fundamentals
 description: Create LangChain agents with create_agent, define tools, and use middleware for human-in-the-loop and error handling
 ---
 

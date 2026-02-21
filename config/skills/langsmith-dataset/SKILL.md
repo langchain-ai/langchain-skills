@@ -1,5 +1,5 @@
 ---
-name: langsmith-dataset
+name: LangSmith Datasets
 description: "INVOKE THIS SKILL when creating evaluation datasets from traces OR uploading datasets to LangSmith. Covers dataset types (final_response, single_step, trajectory, RAG) and LangSmith upload. Contains helper scripts to use or refer to."
 ---
 
