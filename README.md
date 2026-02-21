@@ -90,7 +90,7 @@ Then run your coding agent from the directory where you installed (for local ins
 
 ### LangChain
 - **langchain-agents** - Agents and tools with create_react_agent, @tool decorator
-- **langchain-models** - Chat models, provider setup, streaming
+- **langchain-fundamentals** - Chat models, provider setup, streaming
 - **langchain-output** - Structured output with Pydantic, HITL middleware
 - **langchain-rag** - RAG pipeline (document loaders, embeddings, vector stores)
 
