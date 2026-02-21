@@ -76,10 +76,9 @@ export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills (16)
+## Available Skills (15)
 
 ### Getting Started
-- **langchain-agent-starter-kit** - **Always start here** — framework selection + dependency setup combined into a single starting reference
 - **framework-selection** - Framework comparison reference (LangChain vs LangGraph vs Deep Agents)
 - **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
 
