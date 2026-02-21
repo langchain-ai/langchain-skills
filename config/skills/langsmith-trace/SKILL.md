@@ -43,8 +43,9 @@ Optional variables:
 </trace_langchain_oss>
 
 <trace_other_frameworks>
-For non-LangChain apps, use the traceable decorator/wrapper and wrap your LLM client.
+For non-LangChain apps, if the framework has native OpenTelemetry support, use LangSmith's OpenTelemetry integration.
 
+If the app is NOT using a framework, or using one without automatic OTel support, use the traceable decorator/wrapper and wrap your LLM client.
 <python>
 Use @traceable decorator and wrap_openai() for automatic tracing.
 ```python
