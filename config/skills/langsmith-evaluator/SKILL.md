@@ -1,5 +1,5 @@
 ---
-name: langsmith-evaluator
+name: LangSmith Evaluators
 description: "INVOKE THIS SKILL when creating evaluators for LangSmith OR running evaluations on datasets. Covers LLM-as-Judge evaluators, custom code evaluators, and uploading to LangSmith. Contains helper scripts to use or refer to."
 ---
 
