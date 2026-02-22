@@ -242,18 +242,24 @@ function trajectoryEvaluator(run, example) {
 </typescript>
 
 <python>
-Capture full trajectory including subagent tool calls from LangSmith traces.
+Capture full trajectory including subagent tool calls using streaming.
 ```python
-def extract_full_trajectory(run_id: str) -> list[str]:
-    """Extract all tool calls from a trace, including subagent calls."""
-    from langsmith import Client
-    client = Client()
+import asyncio
 
+async def run_agent_with_trajectory(agent, inputs: dict) -> dict:
+    """Run agent and capture ALL tool calls including subagent calls."""
     trajectory = []
-    # Get all runs in the trace, not just top-level
-    for run in client.list_runs(trace_id=run_id, run_type="tool"):
-        trajectory.append(run.name)
-    return trajectory
+
+    # astream_events captures nested subagent tool calls
+    async for event in agent.astream_events(inputs, version="v2"):
+        if event["event"] == "on_tool_start":
+            trajectory.append(event["name"])
+
+    return {"trajectory": trajectory}
+
+def run_agent(inputs: dict) -> dict:
+    """Sync wrapper for use with evaluate()."""
+    return asyncio.run(run_agent_with_trajectory(agent, inputs))
 ```
 </python>
 </code_evaluators>
@@ -518,10 +524,10 @@ return {"trajectory": ["task", "task"]}  # Missing subagent internals!
 # 2. Return matching fields:
 return {"output": result, "trajectory": full_trajectory}
 
-# For full trajectory including subagent calls:
-from langsmith import Client
-client = Client()
-trajectory = [run.name for run in client.list_runs(trace_id=trace_id, run_type="tool")]
+# For full trajectory including subagent calls, use streaming:
+async for event in agent.astream_events(inputs, version="v2"):
+    if event["event"] == "on_tool_start":
+        trajectory.append(event["name"])
 ```
 </fix-run-output-dataset-mismatch>
 
