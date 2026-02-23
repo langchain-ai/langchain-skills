@@ -1,10 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Generate evaluation datasets from exported trace files.
- *
- * Workflow:
- *   1. Export traces using langsmith-trace skill: query_traces.ts export ./traces
- *   2. Generate datasets from those traces: generate_datasets.ts --input ./traces --type final_response
+ * Generate evaluation datasets from exported trace JSONL files.
  *
  * Dataset types:
  *   - final_response: Full conversation with expected output
