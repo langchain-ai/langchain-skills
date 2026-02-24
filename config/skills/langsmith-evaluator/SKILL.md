@@ -27,7 +27,7 @@ npm install langsmith commander chalk cli-table3 dotenv openai
 ```
 </setup>
 
-<workflow>
+<crucial_requirement>
 ## Golden Rule: Inspect Before You Implement
 
 **CRITICAL:** Before writing ANY evaluator or extraction logic, you MUST:
@@ -36,7 +36,7 @@ npm install langsmith commander chalk cli-table3 dotenv openai
 3. **Only then** write code that processes that output
 
 Output structures vary significantly by framework, agent type, and configuration. Never assume the shape - always verify first. Query LangSmith traces to when outputs don't contain needed data to understand how to extract from execution.
-</workflow>
+</crucial_requirement>
 
 <evaluator_format>
 ## Offline vs Online Evaluators

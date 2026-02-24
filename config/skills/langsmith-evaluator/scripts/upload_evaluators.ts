@@ -267,6 +267,15 @@ async function createCodePayload(options: {
   replace: boolean;
   skipConfirm: boolean;
 }): Promise<EvaluatorPayload | null> {
+  // CRITICAL: Block global evaluators - they cause signature mismatches
+  if (!options.targetDataset && !options.targetProject) {
+    throw new Error(
+      "Global evaluators are not supported. You MUST specify either " +
+        "targetDataset (for offline evaluators with run, example signature) or " +
+        "targetProject (for online evaluators with run-only signature).",
+    );
+  }
+
   // Resolve targets first (needed for existence check)
   let datasetId: string | undefined;
   let projectId: string | undefined;
@@ -326,6 +335,14 @@ async function createCodePayload(options: {
 export async function createEvaluator(
   payload: EvaluatorPayload,
 ): Promise<boolean> {
+  // CRITICAL: Block global evaluators at upload time
+  if (!payload.target_dataset_ids && !payload.target_project_ids) {
+    throw new Error(
+      "Global evaluators are not supported. Payload must have " +
+        "target_dataset_ids or target_project_ids set.",
+    );
+  }
+
   const url = `${LANGSMITH_API_URL}/runs/rules`;
 
   const data: Record<string, unknown> = {

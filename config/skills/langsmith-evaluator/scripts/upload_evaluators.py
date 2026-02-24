@@ -133,7 +133,18 @@ def create_code_payload(
         target_dataset: Optional dataset name to attach to
         target_project: Optional project name to attach to
         replace: If True, delete existing evaluator with same name AND target
+
+    Raises:
+        ValueError: If neither target_dataset nor target_project is specified
     """
+    # CRITICAL: Block global evaluators - they cause signature mismatches
+    if not target_dataset and not target_project:
+        raise ValueError(
+            "Global evaluators are not supported. You MUST specify either "
+            "target_dataset (for offline evaluators with run, example signature) or "
+            "target_project (for online evaluators with run-only signature)."
+        )
+
     # Resolve targets first (needed for existence check)
     dataset_id = None
     project_id = None
@@ -235,7 +246,18 @@ def delete_evaluator(name: str, confirm: bool = True) -> bool:
 
 
 def create_evaluator(payload: EvaluatorPayload) -> bool:
-    """Upload evaluator to LangSmith."""
+    """Upload evaluator to LangSmith.
+
+    Raises:
+        ValueError: If payload has no target (would create global evaluator)
+    """
+    # CRITICAL: Block global evaluators at upload time
+    if not payload.target_dataset_ids and not payload.target_project_ids:
+        raise ValueError(
+            "Global evaluators are not supported. Payload must have "
+            "target_dataset_ids or target_project_ids set."
+        )
+
     url = f"{LANGSMITH_API_URL}/runs/rules"
 
     # Convert payload to dict - use code_evaluators for code-based evaluators
