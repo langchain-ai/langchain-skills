@@ -348,6 +348,8 @@ export async function createEvaluator(
   const data: Record<string, unknown> = {
     display_name: payload.display_name,
     sampling_rate: payload.sampling_rate,
+    is_enabled: true,
+    include_extended_stats: false,
     code_evaluators: payload.evaluators.map((e) => ({
       code: e.code,
       language: e.language,
