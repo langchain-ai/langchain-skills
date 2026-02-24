@@ -264,6 +264,8 @@ def create_evaluator(payload: EvaluatorPayload) -> bool:
     data = {
         "display_name": payload.display_name,
         "sampling_rate": payload.sampling_rate,
+        "is_enabled": True,
+        "include_extended_stats": False,
         "code_evaluators": [{"code": e.code, "language": e.language} for e in payload.evaluators],
     }
 
