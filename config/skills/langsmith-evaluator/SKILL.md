@@ -102,19 +102,31 @@ def trajectory_evaluator(run, example):
 <run_functions>
 ## Defining Run Functions
 
-Run functions execute your agent and return outputs matching your dataset schema. Field names must match exactly.
+Run functions execute your agent and return outputs for evaluation.
+
+**CRITICAL - Test Your Run Function First:**
+Before writing evaluators, you MUST test your run function and inspect the actual output structure. Output shapes vary by framework, agent type, and configuration. Run your agent once and print/debug the output to understand:
+1. What fields are present
+2. What types they contain (strings, lists, nested objects)
+3. How they relate to your dataset schema
+
+**Try your hardest to match your run function output to your dataset schema.** This makes evaluators simple and reusable. If matching isn't possible, your evaluator must know how to extract and compare the right fields from each side.
 
 ```python
 def run_agent(inputs: dict) -> dict:
     result = your_agent.invoke(inputs)
-    return {"output": result}  # Field name must match dataset
+    # ALWAYS inspect output shape first
+    print(f"DEBUG - type: {type(result)}, value: {result}")
+    return {"output": result}
 ```
 
 ### Capturing Trajectories
 
 For trajectory evaluation, your run function must capture tool calls during execution.
 
-**LangGraph agents:** Use `stream_mode="debug"` with `subgraphs=True` to capture nested subagent tool calls.
+**CRITICAL:** Stream output formats vary significantly by framework and agent type. Always run your agent once and inspect the raw chunks before writing extraction logic.
+
+**LangGraph agents + LangChain OSS:** Use `stream_mode="debug"` with `subgraphs=True` to capture nested subagent tool calls.
 
 ```python
 import uuid
@@ -122,11 +134,15 @@ import uuid
 def run_agent_with_trajectory(agent, inputs: dict) -> dict:
     config = {"configurable": {"thread_id": f"eval-{uuid.uuid4()}"}}
     trajectory = []
+    final_result = None
 
     for chunk in agent.stream(inputs, config=config, stream_mode="debug", subgraphs=True):
-        # Chunk structure varies by agent - inspect to find tool_call names
-        # Example: chunk may contain {"payload": {"name": "tool_name", ...}}
-        pass
+        # IMPORTANT: Print chunks first to understand the structure
+        print(f"DEBUG chunk: {chunk}")
+
+        # Extract tool names based on observed chunk structure
+        # Structure varies - inspect output to find where tool names appear
+        # ... your extraction logic here ...
 
     return {"output": final_result, "trajectory": trajectory}
 ```
