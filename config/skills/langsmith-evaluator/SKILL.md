@@ -27,6 +27,17 @@ npm install langsmith commander chalk cli-table3 dotenv openai
 ```
 </setup>
 
+<workflow>
+## Golden Rule: Inspect Before You Implement
+
+**CRITICAL:** Before writing ANY evaluator or extraction logic, you MUST:
+1. **Run your agent** on sample inputs and capture the actual output
+2. **Inspect the output** - print it, query LangSmith traces, understand the exact structure
+3. **Only then** write code that processes that output
+
+Output structures vary significantly by framework, agent type, and configuration. Never assume the shape - always verify first. Query LangSmith traces to debug issues when outputs don't match expectations.
+</workflow>
+
 <evaluator_format>
 ## Offline vs Online Evaluators
 
@@ -85,7 +96,10 @@ async def accuracy_evaluator(run, example):
 <code_evaluators>
 ## Custom Code Evaluators
 
-**Inspect your dataset first** to understand field names. Your run function output must match the dataset schema.
+**Before writing an evaluator:**
+1. Inspect your dataset to understand expected field names (see Golden Rule above)
+2. Test your run function and verify its output structure matches the dataset schema
+3. Query LangSmith traces to debug any mismatches
 
 <python>
 ```python
@@ -105,28 +119,33 @@ def trajectory_evaluator(run, example):
 Run functions execute your agent and return outputs for evaluation.
 
 **CRITICAL - Test Your Run Function First:**
-Before writing evaluators, you MUST test your run function and inspect the actual output structure. Output shapes vary by framework, agent type, and configuration. Run your agent once and print/debug the output to understand:
-1. What fields are present
-2. What types they contain (strings, lists, nested objects)
-3. How they relate to your dataset schema
+Before writing evaluators, you MUST test your run function and inspect the actual output structure. Output shapes vary by framework, agent type, and configuration.
+
+**Debugging workflow:**
+1. Run your agent once on sample input
+2. Query the trace to see the execution structure
+3. Print the raw output and verify against trace to output contains the right data
+4. Adjust the run function as needed
+4. Verify your output matches your dataset schema
 
 **Try your hardest to match your run function output to your dataset schema.** This makes evaluators simple and reusable. If matching isn't possible, your evaluator must know how to extract and compare the right fields from each side.
 
 ```python
 def run_agent(inputs: dict) -> dict:
-    result = your_agent.invoke(inputs)
-    # ALWAYS inspect output shape first
-    print(f"DEBUG - type: {type(result)}, value: {result}")
-    return {"output": result}
+    result = your_agent.run(inputs)
+    # ALWAYS inspect output shape first - run this, check the print, query traces
+    print(f"DEBUG - type: {type(result)}, keys: {result.keys() if hasattr(result, 'keys') else 'N/A'}")
+    print(f"DEBUG - value: {result}")
+    return {"output": result}  # Adjust to match your dataset schema
 ```
 
 ### Capturing Trajectories
 
 For trajectory evaluation, your run function must capture tool calls during execution.
 
-**CRITICAL:** Stream output formats vary significantly by framework and agent type. Always run your agent once and inspect the raw chunks before writing extraction logic.
+**CRITICAL:** Run output formats vary significantly by framework and agent type. You MUST inspect before implementing:
 
-**LangGraph agents + LangChain OSS:** Use `stream_mode="debug"` with `subgraphs=True` to capture nested subagent tool calls.
+**LangGraph agents (LangChain OSS):** Use `stream_mode="debug"` with `subgraphs=True` to capture nested subagent tool calls.
 
 ```python
 import uuid
@@ -137,12 +156,18 @@ def run_agent_with_trajectory(agent, inputs: dict) -> dict:
     final_result = None
 
     for chunk in agent.stream(inputs, config=config, stream_mode="debug", subgraphs=True):
-        # IMPORTANT: Print chunks first to understand the structure
-        print(f"DEBUG chunk: {chunk}")
+        # STEP 1: ALWAYS print chunks first to understand the structure
+        # Run this, examine output, then write extraction logic
+        print(f"DEBUG chunk type: {type(chunk)}")
+        print(f"DEBUG chunk value: {chunk}")
 
-        # Extract tool names based on observed chunk structure
-        # Structure varies - inspect output to find where tool names appear
-        # ... your extraction logic here ...
+        # STEP 2: After inspecting, write extraction based on observed structure
+        # Common patterns to look for:
+        # - chunk[1]['payload']['input']['tool_call']['name']  (debug mode)
+        # - chunk.get('tool_calls', [{}])[0].get('name')       (messages mode)
+        # Your structure WILL vary - always verify first
+
+        # ... your extraction logic here based on what you observed ...
 
     return {"output": final_result, "trajectory": trajectory}
 ```
@@ -231,6 +256,8 @@ results = evaluate(run_agent, data="My Dataset", evaluators=[my_evaluator], expe
 
 <troubleshooting>
 ## Common Issues
+
+**Output doesn't match what you expect:** Query the LangSmith trace. It shows exact inputs/outputs at each step - compare what you find to what you're trying to extract.
 
 **One metric per evaluator:** Return `{"score": value, "comment": "..."}`. For multiple metrics, create separate functions.
 
