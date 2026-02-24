@@ -398,12 +398,13 @@ program
       const name = rule.display_name || "";
       const rate = rule.sampling_rate || 1.0;
 
+      // API returns dataset_id/session_id for individual rule targets
       const targets: string[] = [];
-      if (rule.target_dataset_ids && rule.target_dataset_ids.length > 0) {
-        targets.push(`${rule.target_dataset_ids.length} datasets`);
+      if (rule.dataset_id) {
+        targets.push("1 dataset");
       }
-      if (rule.target_project_ids && rule.target_project_ids.length > 0) {
-        targets.push(`${rule.target_project_ids.length} projects`);
+      if (rule.session_id) {
+        targets.push("1 project");
       }
 
       table.push([

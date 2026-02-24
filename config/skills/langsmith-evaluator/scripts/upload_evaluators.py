@@ -293,11 +293,12 @@ def list():
         name = rule.get("display_name", "")
         rate = rule.get("sampling_rate", 1.0)
 
+        # API returns dataset_id/session_id for individual rule targets
         targets = []
-        if rule.get("target_dataset_ids"):
-            targets.append(f"{len(rule['target_dataset_ids'])} datasets")
-        if rule.get("target_project_ids"):
-            targets.append(f"{len(rule['target_project_ids'])} projects")
+        if rule.get("dataset_id"):
+            targets.append("1 dataset")
+        if rule.get("session_id"):
+            targets.append("1 project")
 
         table.add_row(name, f"{rate:.1%}", ", ".join(targets) if targets else "All runs")
 
