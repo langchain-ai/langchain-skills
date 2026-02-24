@@ -1,10 +1,10 @@
 ---
 name: LangSmith Evaluators
-description: "INVOKE THIS SKILL when creating evaluators for LangSmith OR running evaluations on datasets. Covers two main topics: (1) Creating Evaluators - LLM-as-Judge, custom code, trajectory evaluators; (2) Running Evaluations - uploading to LangSmith (auto-run) vs running locally. Contains helper scripts."
+description: "INVOKE THIS SKILL when building evaluation pipelines for LangSmith. Covers three core components: (1) Creating Evaluators - LLM-as-Judge, custom code; (2) Defining Run Functions - how to capture outputs and trajectories from your agent; (3) Running Evaluations - locally with evaluate() or auto-run via LangSmith. Contains helper scripts."
 ---
 
 <oneliner>
-Two main topics: **(1) Creating & Uploading Evaluators** - LLM-as-Judge, custom code, trajectory evaluators, plus how to upload to LangSmith; **(2) Running Evaluations** - uploaded evaluators auto-run on experiments, or run locally with `evaluate()`. Python and TypeScript examples included.
+Three core components: **(1) Creating Evaluators** - LLM-as-Judge, custom code; **(2) Defining Run Functions** - capture agent outputs/trajectories for evaluation; **(3) Running Evaluations** - locally with `evaluate()` or auto-run via uploaded evaluators. Python and TypeScript examples included.
 </oneliner>
 
 <setup>
@@ -75,7 +75,6 @@ function evaluatorName(run, example) {
 <evaluator_types>
 - **LLM as Judge** - Uses an LLM to grade outputs. Best for subjective quality (accuracy, helpfulness, relevance).
 - **Custom Code** - Deterministic logic. Best for objective checks (exact match, trajectory validation, format compliance).
-- **Trajectory Evaluators** - Check tool call sequences.
 </evaluator_types>
 
 <runtree_vs_dict>
@@ -221,7 +220,7 @@ def trajectory_evaluator(run, example):
     example_outputs = example.outputs if hasattr(example, "outputs") else example.get("outputs", {}) or {}
 
     actual = run_outputs.get("trajectory", [])  # from run
-    expected = example_outputs.get("trajectory", [])  # from dataset
+    expected = example_outputs.get("expected_trajectory", [])  # from dataset
     exact = actual == expected
     all_tools = set(expected).issubset(set(actual))
     return {"score": 1 if exact else 0, "comment": f"Exact: {exact}, All tools: {all_tools}"}
@@ -233,7 +232,7 @@ Validate tool call sequence matches expected trajectory.
 ```javascript
 function trajectoryEvaluator(run, example) {
   const actual = run.outputs?.trajectory ?? [];  // Actual from run
-  const expected = example.outputs?.trajectory ?? [];  // Reference from dataset
+  const expected = example.outputs?.expected_trajectory ?? [];  // Reference from dataset
   const exact = JSON.stringify(actual) === JSON.stringify(expected);
   const allTools = expected.every(tool => actual.includes(tool));
   return { score: exact ? 1 : 0, comment: `Exact: ${exact}, All tools: ${allTools}` };
@@ -241,28 +240,73 @@ function trajectoryEvaluator(run, example) {
 ```
 </typescript>
 
+</code_evaluators>
+
+<run_functions>
+## Defining Run Functions
+
+Run functions execute your agent and return outputs that match your dataset schema. The `evaluate()` function calls your run function for each example in the dataset.
+
+### Basic Run Function (Final Response / Single Step)
+
 <python>
-Capture full trajectory including subagent tool calls using streaming.
 ```python
-import asyncio
-
-async def run_agent_with_trajectory(agent, inputs: dict) -> dict:
-    """Run agent and capture ALL tool calls including subagent calls."""
-    trajectory = []
-
-    # astream_events captures nested subagent tool calls
-    async for event in agent.astream_events(inputs, version="v2"):
-        if event["event"] == "on_tool_start":
-            trajectory.append(event["name"])
-
-    return {"trajectory": trajectory}
-
 def run_agent(inputs: dict) -> dict:
-    """Sync wrapper for use with evaluate()."""
-    return asyncio.run(run_agent_with_trajectory(agent, inputs))
+    """Run agent and return output matching dataset schema."""
+    result = your_agent.invoke(inputs)
+    return {"output": result}  # Field name must match dataset
 ```
 </python>
-</code_evaluators>
+
+<typescript>
+```javascript
+async function runAgent(inputs) {
+  const result = await yourAgent.invoke(inputs);
+  return { output: result };  // Field name must match dataset
+}
+```
+</typescript>
+
+### Capturing Trajectories
+
+For trajectory evaluation, your run function must capture tool calls. How you do this depends on your agent framework.
+
+#### LangChain OSS Agents (LangGraph, Deep Agents)
+
+Use `stream_mode="debug"` with `subgraphs=True` to capture nested subagent tool calls.
+
+<python>
+```python
+import uuid
+
+def run_agent_with_trajectory(agent, inputs: dict) -> dict:
+    """Capture trajectory from LangGraph/Deep Agents."""
+    config = {"configurable": {"thread_id": f"eval-{uuid.uuid4()}"}}
+    trajectory = []
+
+    for chunk in agent.stream(
+        inputs,
+        config=config,
+        stream_mode="debug",
+        subgraphs=True,  # Required to see inside subagents
+    ):
+        # Inspect chunk structure - format varies by agent
+        # Look for tool_call names in the payload
+        pass
+
+    return {"trajectory": trajectory}
+```
+</python>
+
+#### Custom / Non-LangChain Agents
+
+For custom agents, use one of these approaches:
+
+- **Callbacks/Hooks**: If your framework supports execution callbacks, register a hook that records tool names on each invocation
+- **Parse execution logs**: After the run completes, extract tool names from structured logs or trace data
+
+The key is to capture the tool name at execution time, not at definition time.
+</run_functions>
 
 <upload>
 ## Uploading Evaluators to LangSmith
@@ -316,54 +360,14 @@ npx tsx upload_evaluators.ts delete "Exact Match"
 <example_workflow>
 ## Complete Evaluator Workflow
 
-<python>
-Create and upload an exact match evaluator.
-```bash
-cat > evaluators.py <<'EOF'
-def exact_match(run, example):
-    # Handle both RunTree (local) and dict (uploaded)
-    run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
-    example_outputs = example.outputs if hasattr(example, "outputs") else example.get("outputs", {}) or {}
-
-    output = run_outputs.get("output", "").strip().lower()
-    expected = example_outputs.get("output", "").strip().lower()
-    match = output == expected
-    return {"score": 1 if match else 0, "comment": f"Match: {match}"}
-EOF
-
-python upload_evaluators.py upload evaluators.py \
-  --name "Exact Match" \
-  --function exact_match \
-  --dataset "Skills: Final Response" \
-  --replace
-```
-</python>
-
-<typescript>
-Create and upload an exact match evaluator.
-```bash
-cat > evaluators.js <<'EOF'
-function exactMatch(run, example) {
-  const output = (run.outputs?.output ?? "").trim().toLowerCase();
-  const expected = (example.outputs?.output ?? "").trim().toLowerCase();
-  const match = output === expected;
-  return { score: match ? 1 : 0, comment: `Match: ${match}` };
-}
-EOF
-
-npx tsx upload_evaluators.ts upload evaluators.js \
-  --name "Exact Match" \
-  --function exactMatch \
-  --dataset "Skills: Final Response" \
-  --replace
-```
-</typescript>
+1. **Create evaluator** - See `<code_evaluators>` for examples (exact match, trajectory)
+2. **Upload to LangSmith** - See `<upload>` for CLI commands
+3. **Define run function** - See `<run_functions>` for basic and trajectory examples
+4. **Run evaluation** - See `<running_evaluations>` below
 </example_workflow>
 
 <running_evaluations>
 ## Running Evaluations
-
-Two ways to run evaluations:
 
 | Method | When to use | Evaluator receives |
 |--------|-------------|-------------------|
@@ -372,55 +376,20 @@ Two ways to run evaluations:
 
 ### Option 1: Uploaded Evaluators (Recommended for Production)
 
-Upload evaluators to a dataset - they **auto-run** on every experiment:
-
-<python>
-```bash
-python upload_evaluators.py upload my_eval.py --name "My Eval" --dataset "My Dataset"
-```
-</python>
-
-<typescript>
-```bash
-npx tsx upload_evaluators.ts upload my_eval.js --name "My Eval" --dataset "My Dataset"
-```
-</typescript>
-
-Then just run your agent - no evaluators needed in code:
+Upload evaluators (see `<upload>`), then run - no evaluators needed in code:
 
 <python>
 ```python
 from langsmith import evaluate
 
-def run_agent(inputs: dict) -> dict:
-    result = your_agent.invoke(inputs)
-    return {"output": result}  # Use "output", not "output"
-
 # Uploaded evaluators run automatically!
 results = evaluate(
-    run_agent,
+    run_agent,  # See <run_functions> for examples
     data="My Dataset",
     experiment_prefix="eval-v1",
 )
 ```
 </python>
-
-<typescript>
-```javascript
-import { evaluate } from "langsmith/evaluation";
-
-async function runAgent(inputs) {
-  const result = await yourAgent.invoke(inputs);
-  return { output: result };
-}
-
-// Uploaded evaluators run automatically!
-const results = await evaluate(runAgent, {
-  data: "My Dataset",
-  experimentPrefix: "eval-v1",
-});
-```
-</typescript>
 
 ### Option 2: Local Evaluators (Development/Testing)
 
@@ -430,27 +399,18 @@ Pass evaluators directly - useful for iterating on evaluator logic:
 ```python
 from langsmith import evaluate
 
-# When running locally, evaluator receives RunTree objects
 results = evaluate(
     run_agent,
     data="My Dataset",
     evaluators=[my_evaluator],  # Local functions
     experiment_prefix="eval-v1",
 )
-
-for result in results:
-    print(result)
 ```
 </python>
 
 <typescript>
 ```javascript
 import { evaluate } from "langsmith/evaluation";
-
-async function runAgent(inputs) {
-  const result = await yourAgent.invoke(inputs);
-  return { output: result };
-}
 
 const results = await evaluate(runAgent, {
   data: "My Dataset",
@@ -524,10 +484,7 @@ return {"trajectory": ["task", "task"]}  # Missing subagent internals!
 # 2. Return matching fields:
 return {"output": result, "trajectory": full_trajectory}
 
-# For full trajectory including subagent calls, use streaming:
-async for event in agent.astream_events(inputs, version="v2"):
-    if event["event"] == "on_tool_start":
-        trajectory.append(event["name"])
+# For trajectory capture, see "Capturing Trajectories" section above
 ```
 </fix-run-output-dataset-mismatch>
 
