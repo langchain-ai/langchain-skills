@@ -402,15 +402,50 @@ program
 // upload command
 program
   .command("upload <evaluatorFile>")
-  .description("Upload a JavaScript evaluator from a .js or .ts file")
+  .description(
+    `Upload a JavaScript evaluator from a .js or .ts file.
+
+IMPORTANT: You must specify either --dataset or --project.
+  --dataset: Offline evaluator. Function signature: (run, example)
+  --project: Online evaluator. Function signature: (run)
+
+Global evaluators (no target) are not supported to prevent signature mismatches.`,
+  )
   .requiredOption("--name <name>", "Display name for evaluator")
   .requiredOption("--function <name>", "Function name to extract from file")
-  .option("--dataset <name>", "Target dataset name")
-  .option("--project <name>", "Target project name")
+  .option(
+    "--dataset <name>",
+    "Target dataset name (offline evaluator - receives run, example)",
+  )
+  .option(
+    "--project <name>",
+    "Target project name (online evaluator - receives run only)",
+  )
   .option("--sample-rate <rate>", "Sampling rate (0.0-1.0)", "1.0")
   .option("--replace", "Replace if exists")
   .option("--yes", "Skip confirmation prompts")
   .action(async (evaluatorFile, opts) => {
+    // Require either dataset or project to prevent global evaluators
+    if (!opts.dataset && !opts.project) {
+      console.log(
+        chalk.red("Error: You must specify either --dataset or --project."),
+      );
+      console.log(
+        chalk.yellow(
+          "  --dataset: Offline evaluator with (run, example) signature",
+        ),
+      );
+      console.log(
+        chalk.yellow("  --project: Online evaluator with (run) signature"),
+      );
+      console.log(
+        chalk.dim(
+          "Global evaluators are not supported to prevent signature mismatches.",
+        ),
+      );
+      return;
+    }
+
     // Read the file
     if (!fs.existsSync(evaluatorFile)) {
       console.log(chalk.red(`File not found: ${evaluatorFile}`));

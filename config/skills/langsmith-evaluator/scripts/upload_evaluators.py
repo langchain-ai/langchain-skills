@@ -280,8 +280,8 @@ def delete(name: str, yes: bool):
 @click.argument("evaluator_file")
 @click.option("--name", required=True, help="Display name for evaluator")
 @click.option("--function", required=True, help="Function name to extract from file")
-@click.option("--dataset", help="Target dataset name")
-@click.option("--project", help="Target project name")
+@click.option("--dataset", help="Target dataset name (offline evaluator - receives run, example)")
+@click.option("--project", help="Target project name (online evaluator - receives run only)")
 @click.option("--sample-rate", default=1.0, type=float, help="Sampling rate (0.0-1.0)")
 @click.option("--replace", is_flag=True, help="Replace if exists")
 @click.option("--yes", is_flag=True, help="Skip confirmation prompts")
@@ -297,6 +297,12 @@ def upload(
 ):
     """Upload an evaluator from a Python file.
 
+    IMPORTANT: You must specify either --dataset or --project.
+    - --dataset: Offline evaluator. Function signature: (run, example)
+    - --project: Online evaluator. Function signature: (run)
+
+    Global evaluators (no target) are not supported to prevent signature mismatches.
+
     Example:
         python upload_evaluators.py upload my_evaluators.py \\
             --name "Trajectory Match" \\
@@ -304,6 +310,15 @@ def upload(
             --dataset "Skills: Trajectory" \\
             --replace
     """
+    # Require either dataset or project to prevent global evaluators
+    if not dataset and not project:
+        console.print(
+            "[red]Error: You must specify either --dataset or --project.[/red]\n"
+            "[yellow]  --dataset: Offline evaluator with (run, example) signature[/yellow]\n"
+            "[yellow]  --project: Online evaluator with (run) signature[/yellow]\n"
+            "[dim]Global evaluators are not supported to prevent signature mismatches.[/dim]"
+        )
+        return
     # Load the Python file
     import importlib.util
 
