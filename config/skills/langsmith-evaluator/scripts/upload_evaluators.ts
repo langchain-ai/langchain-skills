@@ -59,6 +59,8 @@ export interface Rule {
   id: string;
   display_name: string;
   sampling_rate: number;
+  dataset_id?: string;
+  session_id?: string;
   target_dataset_ids?: string[];
   target_project_ids?: string[];
 }
@@ -90,6 +92,37 @@ export async function getRules(): Promise<Rule[]> {
 export async function evaluatorExists(name: string): Promise<boolean> {
   const rules = await getRules();
   return rules.some((rule) => rule.display_name === name);
+}
+
+export async function findEvaluator(
+  name: string,
+  datasetId?: string,
+  projectId?: string,
+): Promise<Rule | null> {
+  const rules = await getRules();
+  for (const rule of rules) {
+    if (rule.display_name !== name) continue;
+    // Check target matches (API uses session_id for project)
+    if (datasetId && rule.dataset_id === datasetId) return rule;
+    if (projectId && rule.session_id === projectId) return rule;
+  }
+  return null;
+}
+
+async function deleteEvaluatorById(
+  ruleId: string,
+  name: string,
+): Promise<boolean> {
+  const deleteUrl = `${LANGSMITH_API_URL}/runs/rules/${ruleId}`;
+  const response = await fetch(deleteUrl, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to delete: ${response.statusText}`);
+  }
+  console.log(chalk.green(`✓ Deleted evaluator '${name}'`));
+  return true;
 }
 
 async function resolveDatasetId(datasetName: string): Promise<string | null> {
@@ -164,18 +197,7 @@ export async function deleteEvaluator(
     }
   }
 
-  const deleteUrl = `${LANGSMITH_API_URL}/runs/rules/${rule.id}`;
-  const response = await fetch(deleteUrl, {
-    method: "DELETE",
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete: ${response.statusText}`);
-  }
-
-  console.log(chalk.green(`✓ Deleted evaluator '${name}'`));
-  return true;
+  return deleteEvaluatorById(rule.id, name);
 }
 
 function extractJavaScriptFunction(
@@ -245,19 +267,51 @@ async function createCodePayload(options: {
   replace: boolean;
   skipConfirm: boolean;
 }): Promise<EvaluatorPayload | null> {
-  // Check if exists
-  if (await evaluatorExists(options.name)) {
+  // CRITICAL: Block global evaluators - they cause signature mismatches
+  if (!options.targetDataset && !options.targetProject) {
+    throw new Error(
+      "Global evaluators are not supported. You MUST specify either " +
+        "targetDataset (for offline evaluators with run, example signature) or " +
+        "targetProject (for online evaluators with run-only signature).",
+    );
+  }
+
+  // Resolve targets first (needed for existence check)
+  let datasetId: string | undefined;
+  let projectId: string | undefined;
+
+  if (options.targetDataset) {
+    const resolved = await resolveDatasetId(options.targetDataset);
+    if (!resolved) return null; // Dataset not found, warning already printed
+    datasetId = resolved;
+  }
+
+  if (options.targetProject) {
+    const resolved = await resolveProjectId(options.targetProject);
+    if (!resolved) return null; // Project not found, warning already printed
+    projectId = resolved;
+  }
+
+  // Check if evaluator exists with same name AND target
+  const existing = await findEvaluator(options.name, datasetId, projectId);
+
+  if (existing) {
     if (!options.replace) {
+      const targetDesc = options.targetDataset
+        ? `dataset '${options.targetDataset}'`
+        : `project '${options.targetProject}'`;
       console.log(
         chalk.yellow(
-          `Evaluator '${options.name}' already exists. Use --replace to overwrite.`,
+          `Evaluator '${options.name}' already exists for ${targetDesc}. Use --replace to overwrite.`,
         ),
       );
       return null;
     } else {
       if (!options.skipConfirm) {
         console.log(
-          chalk.yellow(`Evaluator '${options.name}' already exists.`),
+          chalk.yellow(
+            `Evaluator '${options.name}' already exists with same target.`,
+          ),
         );
         const confirmed = await promptConfirm("Replace existing evaluator?");
         if (!confirmed) {
@@ -265,25 +319,7 @@ async function createCodePayload(options: {
           return null;
         }
       }
-      await deleteEvaluator(options.name, false);
-    }
-  }
-
-  // Resolve targets
-  const datasetIds: string[] = [];
-  const projectIds: string[] = [];
-
-  if (options.targetDataset) {
-    const datasetId = await resolveDatasetId(options.targetDataset);
-    if (datasetId) {
-      datasetIds.push(datasetId);
-    }
-  }
-
-  if (options.targetProject) {
-    const projectId = await resolveProjectId(options.targetProject);
-    if (projectId) {
-      projectIds.push(projectId);
+      await deleteEvaluatorById(existing.id, options.name);
     }
   }
 
@@ -291,14 +327,22 @@ async function createCodePayload(options: {
     display_name: options.name,
     evaluators: [{ code: options.source, language: "javascript" }],
     sampling_rate: options.sampleRate,
-    target_dataset_ids: datasetIds.length > 0 ? datasetIds : undefined,
-    target_project_ids: projectIds.length > 0 ? projectIds : undefined,
+    target_dataset_ids: datasetId ? [datasetId] : undefined,
+    target_project_ids: projectId ? [projectId] : undefined,
   };
 }
 
 export async function createEvaluator(
   payload: EvaluatorPayload,
 ): Promise<boolean> {
+  // CRITICAL: Block global evaluators at upload time
+  if (!payload.target_dataset_ids && !payload.target_project_ids) {
+    throw new Error(
+      "Global evaluators are not supported. Payload must have " +
+        "target_dataset_ids or target_project_ids set.",
+    );
+  }
+
   const url = `${LANGSMITH_API_URL}/runs/rules`;
 
   const data: Record<string, unknown> = {
@@ -371,12 +415,13 @@ program
       const name = rule.display_name || "";
       const rate = rule.sampling_rate || 1.0;
 
+      // API returns dataset_id/session_id for individual rule targets
       const targets: string[] = [];
-      if (rule.target_dataset_ids && rule.target_dataset_ids.length > 0) {
-        targets.push(`${rule.target_dataset_ids.length} datasets`);
+      if (rule.dataset_id) {
+        targets.push("1 dataset");
       }
-      if (rule.target_project_ids && rule.target_project_ids.length > 0) {
-        targets.push(`${rule.target_project_ids.length} projects`);
+      if (rule.session_id) {
+        targets.push("1 project");
       }
 
       table.push([
@@ -402,15 +447,50 @@ program
 // upload command
 program
   .command("upload <evaluatorFile>")
-  .description("Upload a JavaScript evaluator from a .js or .ts file")
+  .description(
+    `Upload a JavaScript evaluator from a .js or .ts file.
+
+IMPORTANT: You must specify either --dataset or --project.
+  --dataset: Offline evaluator. Function signature: (run, example)
+  --project: Online evaluator. Function signature: (run)
+
+Global evaluators (no target) are not supported to prevent signature mismatches.`,
+  )
   .requiredOption("--name <name>", "Display name for evaluator")
   .requiredOption("--function <name>", "Function name to extract from file")
-  .option("--dataset <name>", "Target dataset name")
-  .option("--project <name>", "Target project name")
+  .option(
+    "--dataset <name>",
+    "Target dataset name (offline evaluator - receives run, example)",
+  )
+  .option(
+    "--project <name>",
+    "Target project name (online evaluator - receives run only)",
+  )
   .option("--sample-rate <rate>", "Sampling rate (0.0-1.0)", "1.0")
   .option("--replace", "Replace if exists")
   .option("--yes", "Skip confirmation prompts")
   .action(async (evaluatorFile, opts) => {
+    // Require either dataset or project to prevent global evaluators
+    if (!opts.dataset && !opts.project) {
+      console.log(
+        chalk.red("Error: You must specify either --dataset or --project."),
+      );
+      console.log(
+        chalk.yellow(
+          "  --dataset: Offline evaluator with (run, example) signature",
+        ),
+      );
+      console.log(
+        chalk.yellow("  --project: Online evaluator with (run) signature"),
+      );
+      console.log(
+        chalk.dim(
+          "Global evaluators are not supported to prevent signature mismatches.",
+        ),
+      );
+      return;
+    }
+
     // Read the file
     if (!fs.existsSync(evaluatorFile)) {
       console.log(chalk.red(`File not found: ${evaluatorFile}`));
