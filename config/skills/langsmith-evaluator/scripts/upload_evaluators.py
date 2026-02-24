@@ -53,8 +53,34 @@ def get_headers() -> dict:
     return headers
 
 
+def find_evaluator(
+    name: str, dataset_id: str | None = None, project_id: str | None = None
+) -> dict | None:
+    """Find evaluator by name and target.
+
+    Returns the matching rule if found, None otherwise.
+    Matches by name AND target (dataset_id or project_id).
+    """
+    url = f"{LANGSMITH_API_URL}/runs/rules"
+    response = requests.get(url, headers=get_headers())
+    response.raise_for_status()
+
+    rules = response.json()
+    for rule in rules:
+        if rule.get("display_name") != name:
+            continue
+        # Check target matches
+        rule_dataset = rule.get("dataset_id")
+        rule_project = rule.get("session_id")  # API uses session_id for project
+        if dataset_id and rule_dataset == dataset_id:
+            return rule
+        if project_id and rule_project == project_id:
+            return rule
+    return None
+
+
 def evaluator_exists(name: str) -> bool:
-    """Check if evaluator already exists."""
+    """Check if evaluator with this name exists (any target)."""
     url = f"{LANGSMITH_API_URL}/runs/rules"
     response = requests.get(url, headers=get_headers())
     response.raise_for_status()
@@ -106,23 +132,45 @@ def create_code_payload(
         sample_rate: Sampling rate (0.0-1.0)
         target_dataset: Optional dataset name to attach to
         target_project: Optional project name to attach to
-        replace: If True, delete existing evaluator first
+        replace: If True, delete existing evaluator with same name AND target
     """
-    # Check if exists
-    if evaluator_exists(name):
+    # Resolve targets first (needed for existence check)
+    dataset_id = None
+    project_id = None
+
+    if target_dataset:
+        dataset_id = resolve_dataset_id(target_dataset)
+        if not dataset_id:
+            return None  # Dataset not found, warning already printed
+
+    if target_project:
+        project_id = resolve_project_id(target_project)
+        if not project_id:
+            return None  # Project not found, warning already printed
+
+    # Check if evaluator exists with same name AND target
+    existing = find_evaluator(name, dataset_id=dataset_id, project_id=project_id)
+
+    if existing:
         if not replace:
+            target_desc = (
+                f"dataset '{target_dataset}'" if target_dataset else f"project '{target_project}'"
+            )
             console.print(
-                f"[yellow]Evaluator '{name}' already exists. Use --replace to overwrite.[/yellow]"
+                f"[yellow]Evaluator '{name}' already exists for {target_desc}. "
+                f"Use --replace to overwrite.[/yellow]"
             )
             return None
         else:
             if not skip_confirm:
-                console.print(f"[yellow]⚠️  Evaluator '{name}' already exists.[/yellow]")
+                console.print(
+                    f"[yellow]⚠️  Evaluator '{name}' already exists with same target.[/yellow]"
+                )
                 response_text = input("Replace existing evaluator? (y/n): ").lower().strip()
                 if response_text != "y":
                     console.print("[yellow]Upload cancelled[/yellow]")
                     return None
-            delete_evaluator(name, confirm=False)  # Already confirmed above or skipped
+            delete_evaluator_by_id(existing.get("id"), name)
 
     # Get function source code
     source = inspect.getsource(func)
@@ -138,31 +186,26 @@ def create_code_payload(
     # Create evaluator
     code_evaluator = CodeEvaluator(code=source, language="python")
 
-    # Resolve targets
-    dataset_ids = []
-    project_ids = []
-
-    if target_dataset:
-        dataset_id = resolve_dataset_id(target_dataset)
-        if dataset_id:
-            dataset_ids.append(dataset_id)
-
-    if target_project:
-        project_id = resolve_project_id(target_project)
-        if project_id:
-            project_ids.append(project_id)
-
     return EvaluatorPayload(
         display_name=name,
         evaluators=[code_evaluator],
         sampling_rate=sample_rate,
-        target_dataset_ids=dataset_ids if dataset_ids else None,
-        target_project_ids=project_ids if project_ids else None,
+        target_dataset_ids=[dataset_id] if dataset_id else None,
+        target_project_ids=[project_id] if project_id else None,
     )
 
 
+def delete_evaluator_by_id(rule_id: str, name: str) -> bool:
+    """Delete an evaluator by its ID."""
+    delete_url = f"{LANGSMITH_API_URL}/runs/rules/{rule_id}"
+    response = requests.delete(delete_url, headers=get_headers())
+    response.raise_for_status()
+    console.print(f"[green]✓ Deleted evaluator '{name}'[/green]")
+    return True
+
+
 def delete_evaluator(name: str, confirm: bool = True) -> bool:
-    """Delete an evaluator by name.
+    """Delete an evaluator by name (for CLI delete command).
 
     Args:
         name: Evaluator name
@@ -188,14 +231,7 @@ def delete_evaluator(name: str, confirm: bool = True) -> bool:
             console.print("[yellow]Deletion cancelled[/yellow]")
             return False
 
-    # Delete the rule
-    rule_id = rule.get("id")
-    delete_url = f"{LANGSMITH_API_URL}/runs/rules/{rule_id}"
-    response = requests.delete(delete_url, headers=get_headers())
-    response.raise_for_status()
-
-    console.print(f"[green]✓ Deleted evaluator '{name}'[/green]")
-    return True
+    return delete_evaluator_by_id(rule.get("id"), name)
 
 
 def create_evaluator(payload: EvaluatorPayload) -> bool:
