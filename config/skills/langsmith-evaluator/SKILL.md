@@ -35,7 +35,7 @@ npm install langsmith commander chalk cli-table3 dotenv openai
 2. **Inspect the output** - print it, query LangSmith traces, understand the exact structure
 3. **Only then** write code that processes that output
 
-Output structures vary significantly by framework, agent type, and configuration. Never assume the shape - always verify first. Query LangSmith traces to debug issues when outputs don't match expectations.
+Output structures vary significantly by framework, agent type, and configuration. Never assume the shape - always verify first. Query LangSmith traces to when outputs don't contain needed data to understand how to extract from execution.
 </workflow>
 
 <evaluator_format>
@@ -106,8 +106,12 @@ async def accuracy_evaluator(run, example):
 def trajectory_evaluator(run, example):
     run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
     example_outputs = example.outputs if hasattr(example, "outputs") else example.get("outputs", {}) or {}
-    actual = run_outputs.get("trajectory", [])
-    expected = example_outputs.get("expected_trajectory", [])
+    # IMPORTANT: Replace these placeholders with your actual field names
+    # 1. Query your LangSmith trace to see what fields exist in run outputs
+    # 2. Check your dataset schema for expected field names
+    # Note: Trajectory data may not appear in default output - verify against trace!
+    actual = run_outputs.get("YOUR_TRAJECTORY_FIELD", [])
+    expected = example_outputs.get("YOUR_EXPECTED_FIELD", [])
     return {"score": 1 if actual == expected else 0, "comment": f"Expected {expected}, got {actual}"}
 ```
 </python>
@@ -156,19 +160,15 @@ def run_agent_with_trajectory(agent, inputs: dict) -> dict:
     final_result = None
 
     for chunk in agent.stream(inputs, config=config, stream_mode="debug", subgraphs=True):
-        # STEP 1: ALWAYS print chunks first to understand the structure
-        # Run this, examine output, then write extraction logic
-        print(f"DEBUG chunk type: {type(chunk)}")
-        print(f"DEBUG chunk value: {chunk}")
+        # STEP 1: Print chunks to understand the structure
+        print(f"DEBUG chunk: {chunk}")
 
-        # STEP 2: After inspecting, write extraction based on observed structure
-        # Common patterns to look for:
-        # - chunk[1]['payload']['input']['tool_call']['name']  (debug mode)
-        # - chunk.get('tool_calls', [{}])[0].get('name')       (messages mode)
-        # Your structure WILL vary - always verify first
+        # STEP 2: Write extraction based on YOUR observed structure
+        # ... your extraction logic here ...
 
-        # ... your extraction logic here based on what you observed ...
-
+    # IMPORTANT: After running, query the LangSmith trace to verify
+    # your trajectory data is complete. Default output may be missing
+    # tool calls that appear in the trace.
     return {"output": final_result, "trajectory": trajectory}
 ```
 
