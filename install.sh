@@ -202,7 +202,7 @@ else
 fi
 
 echo ""
-echo "Available skills (15 total):"
+echo "Available skills (14 total):"
 echo ""
 echo "  Getting Started:"
 echo "    - framework-selection: Framework comparison reference (LangChain vs LangGraph vs Deep Agents)"
@@ -214,8 +214,7 @@ echo "    - deep-agents-memory: Memory, persistence, and filesystem"
 echo "    - deep-agents-orchestration: Subagents, task planning, HITL"
 echo ""
 echo "  LangChain:"
-echo "    - langchain-agents: Agents and tools"
-echo "    - langchain-models: Chat models and streaming"
+echo "    - langchain-fundamentals: Chat models, provider setup, streaming, agents and tools"
 echo "    - langchain-output: Structured output and HITL"
 echo "    - langchain-rag: RAG pipeline (loaders, embeddings, vector stores)"
 echo ""

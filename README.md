@@ -90,7 +90,7 @@ export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills (15)
+## Available Skills (14)
 
 ### Getting Started
 - **framework-selection** - Framework comparison reference (LangChain vs LangGraph vs Deep Agents)
@@ -102,8 +102,7 @@ Then run your coding agent from the directory where you installed (for local ins
 - **deep-agents-orchestration** - Subagents, task planning, human-in-the-loop
 
 ### LangChain
-- **langchain-agents** - Agents and tools with create_react_agent, @tool decorator
-- **langchain-fundamentals** - Chat models, provider setup, streaming
+- **langchain-fundamentals** - Chat models, provider setup, streaming, agents and tools
 - **langchain-output** - Structured output with Pydantic, HITL middleware
 - **langchain-rag** - RAG pipeline (document loaders, embeddings, vector stores)
 
