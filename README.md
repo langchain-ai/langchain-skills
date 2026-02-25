@@ -18,7 +18,7 @@ These skills can be installed for the following AI coding agents:
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/claude-code) or [DeepAgents CLI](https://github.com/anthropics/deepagents-cli) installed
-- A LangSmith API key (for tracing and evaluation features)
+- A LangSmith API key (for LangSmith skills)
 
 ## Installation
 
