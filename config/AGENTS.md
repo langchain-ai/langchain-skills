@@ -1,64 +1,45 @@
-# LangChain + LangSmith Development Guide
+# LangChain + LangSmith + DeepAgents Development Guide
 
 This project uses skills that contain up-to-date patterns and working reference scripts.
 
 ## CRITICAL: Invoke Skills BEFORE Writing Code
 
-**ALWAYS** invoke the relevant skill first - skills have the correct imports, patterns, and scripts that prevent common mistakes. The skills available to you are:
+**ALWAYS** invoke the relevant skill first - skills have the correct imports, patterns, and scripts that prevent common mistakes.
 
-- **langchain-agents** - Invoke for ANY LangChain/LangGraph agent code
+### Getting Started
+- **framework-selection** - Invoke when choosing between LangChain, LangGraph, and Deep Agents
+- **langchain-dependencies** - Invoke before installing packages or when resolving version issues (Python + TypeScript)
+
+### LangSmith Skills
 - **langsmith-trace** - Invoke for ANY trace querying or analysis
-- **langsmith-dataset** - Invoke for ANY dataset creation from traces. Using langsmith-trace is strongly recommended to coordinate with this skill.
-- **langsmith-evaluator** - Invoke for ANY evaluator creation. Using langsmith-dataset is strongly recommended to coordinate with this skill.
+- **langsmith-dataset** - Invoke for ANY dataset creation from traces
+- **langsmith-evaluator** - Invoke for ANY evaluator creation
 
-Each skill includes reference scripts in `scripts/` - use these instead of writing from scratch.
+### LangChain Skills
+- **langchain-fundamentals** - Invoke for create_agent, @tool decorator, middleware patterns
+- **langchain-rag** - Invoke for RAG pipelines, vector stores, embeddings
+- **langchain-output** - Invoke for structured output with Pydantic
 
-## Modern LangChain Patterns
+### LangGraph Skills
+- **langgraph-fundamentals** - Invoke for StateGraph, state schemas, reducers
+- **langgraph-persistence** - Invoke for checkpointers, thread_id, memory
+- **langgraph-execution** - Invoke for workflows, interrupts, streaming
 
-Use LangGraph for agent orchestration and `langchain_openai`/`langchain_anthropic` for models:
+### DeepAgents Skills
+- **deep-agents-core** - Invoke for DeepAgents harness architecture
+- **deep-agents-memory** - Invoke for long-term memory with StoreBackend
+- **deep-agents-orchestration** - Invoke for multi-agent coordination
 
-```python
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain.agents import create_agent
-from langchain_core.tools import tool
+## Debugging Flow: Build → Trace → Dataset → Evaluate
 
-@tool
-def my_tool(query: str) -> str:
-    """Tool description."""
-    return result
-
-model = ChatOpenAI(model="gpt-4o-mini")
-agent = create_agent(model=model, tools=[my_tool], system_prompt="Your guidelines here.")
-```
-
-## Skill Synergies
-
-### Build → Trace → Dataset → Evaluate Pipeline
-
-1. **Build agent** using `langchain-agents` patterns
+When stuck or debugging, use this powerful workflow:
+1. **Build agent** using LangChain, DeepAgents, or LangGraph patterns
 2. **Run agent** to generate traces in LangSmith
 3. **Query traces** using `langsmith-trace` to find interesting examples
 4. **Create dataset** using `langsmith-dataset` from those traces
 5. **Build evaluator** using `langsmith-evaluator` to measure quality
 
-### Common Workflows
-
-**Debugging a failing agent:**
-1. Use `langsmith-trace` to query recent error traces
-2. Examine the trace hierarchy to find where it failed
-3. Fix the agent code using `langchain-agents` patterns
-
-**Setting up evaluation:**
-1. Generate traces by running your agent on test cases
-2. Use `langsmith-dataset` to create a dataset and upload it to LangSmith
-3. Use `langsmith-evaluator` to create an evaluator, upload it to LangSmith, and link it to your dataset
-
-**Iterating on agent quality:**
-1. Run evaluation to get baseline scores
-2. Analyze low-scoring traces with `langsmith-trace`
-3. Improve agent using `langchain-agents` best practices
-4. Re-run evaluation to measure improvement
+Each skill includes reference scripts in `scripts/` - use these instead of writing from scratch.
 
 ## Environment Setup
 
@@ -69,7 +50,3 @@ LANGSMITH_PROJECT=<project-name>  # Optional, defaults to "default"
 OPENAI_API_KEY=<your-key>  # For OpenAI models
 ANTHROPIC_API_KEY=<your-key>  # For Anthropic models
 ```
-
-## Reference Scripts
-
-When you invoke a skill, check its `scripts/` directory for working implementations you can adapt. These scripts handle common edge cases and use tested patterns.
