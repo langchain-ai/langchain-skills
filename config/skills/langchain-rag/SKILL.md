@@ -75,8 +75,8 @@ response = model.invoke([
 End-to-end RAG pipeline: load documents, split into chunks, embed, store, retrieve, and generate a response.
 ```typescript
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { Document } from "@langchain/core/documents";
 
 // 1. Load documents
