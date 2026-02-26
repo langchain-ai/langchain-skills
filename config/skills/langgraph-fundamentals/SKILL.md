@@ -233,6 +233,7 @@ from langgraph.graph import StateGraph, START, END
 class State(TypedDict):
     query: str
     route: str
+    result: str
 
 def classify(state: State) -> dict:
     if "weather" in state["query"].lower():
@@ -264,6 +265,7 @@ import { z } from "zod";
 const State = new StateSchema({
   query: z.string(),
   route: z.string().default(""),
+  result: z.string().default(""),
 });
 
 const classify = async (state: typeof State.State) => {

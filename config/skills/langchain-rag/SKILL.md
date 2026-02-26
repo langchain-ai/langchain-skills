@@ -57,7 +57,7 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 vectorstore = InMemoryVectorStore.from_documents(splits, embeddings)
 
 # 4. Create retriever
-retriever = vectorstore.as_retriever(k=4)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 # 5. Use in RAG
 model = ChatOpenAI(model="gpt-4.1")

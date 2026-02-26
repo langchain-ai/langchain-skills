@@ -111,6 +111,7 @@ import operator
 class OrchestratorState(TypedDict):
     tasks: list[str]
     results: Annotated[list, operator.add]
+    summary: str
 
 def orchestrator(state: OrchestratorState):
     """Fan out tasks to workers."""
@@ -147,6 +148,7 @@ const State = new StateSchema({
     z.array(z.string()).default(() => []),
     { reducer: (curr, upd) => curr.concat(upd) }
   ),
+  summary: z.string().default(""),
 });
 
 const orchestrator = (state: typeof State.State) => {

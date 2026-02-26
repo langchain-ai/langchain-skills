@@ -1,5 +1,5 @@
 ---
-name: LangSmith Traces
+name: Langsmith Traces
 description: "INVOKE THIS SKILL when working with LangSmith tracing OR querying traces. Covers adding tracing to applications and querying/exporting trace data. Contains helper scripts to use or refer to"
 ---
 
@@ -46,6 +46,7 @@ Optional variables:
 For non-LangChain apps, if the framework has native OpenTelemetry support, use LangSmith's OpenTelemetry integration.
 
 If the app is NOT using a framework, or using one without automatic OTel support, use the traceable decorator/wrapper and wrap your LLM client.
+
 <python>
 Use @traceable decorator and wrap_openai() for automatic tracing.
 ```python
@@ -102,7 +103,11 @@ const retrieveDocs = traceable(async (query: string): Promise<string[]> => {
 }, { name: "retrieve_docs" });
 
 const generateAnswer = traceable(async (question: string, docs: string[]): Promise<string> => {
-  return await client.chat.completions.create(...);
+  const resp = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: `${question}\nContext: ${docs.join("\n")}` }],
+  });
+  return resp.choices[0].message.content || "";
 }, { name: "generate_answer" });
 
 const ragPipeline = traceable(async (question: string): Promise<string> => {
