@@ -60,7 +60,7 @@ vectorstore = InMemoryVectorStore.from_documents(splits, embeddings)
 retriever = vectorstore.as_retriever(k=4)
 
 # 5. Use in RAG
-model = ChatOpenAI(model="gpt-4")
+model = ChatOpenAI(model="gpt-4.1")
 query = "What is RAG?"
 relevant_docs = retriever.invoke(query)
 
@@ -97,7 +97,7 @@ const vectorstore = await MemoryVectorStore.fromDocuments(splits, embeddings);
 const retriever = vectorstore.asRetriever({ k: 4 });
 
 // 5. Use in RAG
-const model = new ChatOpenAI({ model: "gpt-4" });
+const model = new ChatOpenAI({ model: "gpt-4.1" });
 const query = "What is RAG?";
 const relevantDocs = await retriever.invoke(query);
 

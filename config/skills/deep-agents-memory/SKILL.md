@@ -180,7 +180,7 @@ def save_user_preference(key: str, value: str, runtime: ToolRuntime) -> str:
 store = InMemoryStore()
 
 agent = create_agent(
-    model="gpt-4",
+    model="gpt-4.1",
     tools=[get_user_preference, save_user_preference],
     store=store
 )
