@@ -60,7 +60,7 @@ Answer these questions in order:
 - State needs to persist across multiple sessions
 - Control flow is conditional or iterative
 
-**Skills to invoke next:** `langchain-models`, `langchain-rag`, `langchain-output`
+**Skills to invoke next:** `langchain-models`, `langchain-rag`, `langchain-middleware`
 
 </langchain-profile>
 

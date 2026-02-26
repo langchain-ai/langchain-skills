@@ -102,8 +102,8 @@ Then run your coding agent from the directory where you installed (for local ins
 - **deep-agents-orchestration** - Subagents, task planning, human-in-the-loop
 
 ### LangChain
-- **langchain-fundamentals** - Chat models, provider setup, streaming, agents and tools
-- **langchain-output** - Structured output with Pydantic, HITL middleware
+- **langchain-fundamentals** - Agents with create_agent, tools, structured output, middleware basics
+- **langchain-middleware** - Human-in-the-loop approval, custom middleware, Command resume patterns
 - **langchain-rag** - RAG pipeline (document loaders, embeddings, vector stores)
 
 ### LangGraph

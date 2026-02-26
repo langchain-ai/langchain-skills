@@ -18,7 +18,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 ### LangChain Skills
 - **langchain-fundamentals** - Invoke for create_agent, @tool decorator, middleware patterns
 - **langchain-rag** - Invoke for RAG pipelines, vector stores, embeddings
-- **langchain-output** - Invoke for structured output with Pydantic
+- **langchain-middleware** - Invoke for structured output with Pydantic
 
 ### LangGraph Skills
 - **langgraph-fundamentals** - Invoke for StateGraph, state schemas, reducers
