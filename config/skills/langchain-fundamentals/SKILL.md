@@ -7,58 +7,6 @@ description: Create LangChain agents with create_agent, define tools, and use mi
 Build production agents using `create_agent()`, middleware patterns, and the `@tool` decorator / `tool()` function. When creating LangChain agents, you MUST use create_agent(), with middleware for custom flows. All other alternatives are outdated.
 </oneliner>
 
-<quick_start>
-<python>
-Create and invoke a basic agent with tools using create_agent.
-```python
-from langchain.agents import create_agent
-from langchain_core.tools import tool
-
-@tool
-def search(query: str) -> str:
-    """Search for information on the web.
-
-    Args:
-        query: The search query
-    """
-    return f"Results for: {query}"
-
-agent = create_agent(
-    model="anthropic:claude-sonnet-4-5",
-    tools=[search],
-    system_prompt="You are a helpful assistant."
-)
-
-result = agent.invoke({"messages": [("user", "Search for LangChain docs")]})
-```
-</python>
-<typescript>
-Create and invoke a basic agent with tools using createAgent.
-```typescript
-import { createAgent } from "langchain";
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
-
-const search = tool(
-  async ({ query }) => `Results for: ${query}`,
-  {
-    name: "search",
-    description: "Search for information on the web.",
-    schema: z.object({ query: z.string().describe("The search query") }),
-  }
-);
-
-const agent = createAgent({
-  model: "anthropic:claude-sonnet-4-5",
-  tools: [search],
-  systemPrompt: "You are a helpful assistant.",
-});
-
-const result = await agent.invoke({ messages: [["user", "Search for LangChain docs"]] });
-```
-</typescript>
-</quick_start>
-
 <create_agent>
 ## Creating Agents with create_agent
 
@@ -77,7 +25,6 @@ const result = await agent.invoke({ messages: [["user", "Search for LangChain do
 
 <ex-basic-agent>
 <python>
-Create a basic agent with a weather tool and invoke it with a user query.
 ```python
 from langchain.agents import create_agent
 from langchain_core.tools import tool
@@ -104,7 +51,6 @@ print(result["messages"][-1].content)
 ```
 </python>
 <typescript>
-Create a basic agent with a weather tool and invoke it with a user query.
 ```typescript
 import { createAgent } from "langchain";
 import { tool } from "@langchain/core/tools";
@@ -184,47 +130,29 @@ Tools are functions that agents can call. Use the `@tool` decorator (Python) or 
 
 <ex-basic-tool>
 <python>
-Define a calculator tool using the @tool decorator with parameter types.
 ```python
 from langchain_core.tools import tool
 
 @tool
 def calculate(expression: str) -> str:
-    """Evaluate a mathematical expression safely.
+    """Evaluate a mathematical expression.
 
     Args:
         expression: Math expression like "2 + 2" or "10 * 5"
     """
-    allowed = set('0123456789+-*/(). ')
-    if not all(c in allowed for c in expression):
-        return "Error: Invalid characters in expression"
-    try:
-        return str(eval(expression))
-    except Exception as e:
-        return f"Error: {e}"
+    return str(eval(expression))
 ```
 </python>
 <typescript>
-Define a calculator tool using the tool() function with Zod schema validation.
 ```typescript
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
 const calculate = tool(
-  async ({ expression }) => {
-    const allowed = new Set("0123456789+-*/(). ".split(""));
-    if (![...expression].every((c) => allowed.has(c))) {
-      return "Error: Invalid characters in expression";
-    }
-    try {
-      return String(eval(expression));
-    } catch (e) {
-      return `Error: ${e}`;
-    }
-  },
+  async ({ expression }) => String(eval(expression)),
   {
     name: "calculate",
-    description: "Evaluate a mathematical expression safely.",
+    description: "Evaluate a mathematical expression.",
     schema: z.object({
       expression: z.string().describe("Math expression like '2 + 2' or '10 * 5'"),
     }),
@@ -404,35 +332,68 @@ const agent = createAgent({
 <model_config>
 ## Model Configuration
 
-`create_agent` accepts model strings in `provider:model` format:
+`create_agent` accepts model strings (`"anthropic:claude-sonnet-4-5"`, `"openai:gpt-4.1"`) or model instances for custom settings:
 
-```
-"anthropic:claude-sonnet-4-5"
-"openai:gpt-4.1"
-"bedrock:anthropic.claude-3-5-sonnet-20241022-v2:0"
+```python
+from langchain_anthropic import ChatAnthropic
+agent = create_agent(model=ChatAnthropic(model="claude-sonnet-4-5", temperature=0), tools=[...])
 ```
 </model_config>
 
-<ex-model-instance>
-<python>
-Pass a model instance with custom settings instead of a model string.
-```python
-from langchain_anthropic import ChatAnthropic
+<ex-custom-middleware>
+## Defining Custom Middleware
 
-model = ChatAnthropic(model="claude-sonnet-4-5", temperature=0)
-agent = create_agent(model=model, tools=[...])
+Middleware hooks: `before_model`, `after_model`, `wrap_tool_call`, `before_agent`, `after_agent`, `wrap_model_call`.
+
+<python>
+```python
+from langchain.agents.middleware import wrap_tool_call
+
+# @wrap_tool_call creates middleware from a function
+@wrap_tool_call
+async def retry_on_error(request, handler):
+    """Retry failed tool calls once before giving up."""
+    try:
+        return await handler(request)
+    except Exception:
+        return await handler(request)  # Retry once
+
+# Apply to specific tools only
+@wrap_tool_call(tools=[flaky_api_tool], name="RetryFlaky")
+async def retry_flaky(request, handler):
+    return await handler(request)
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-5",
+    tools=[flaky_api_tool, stable_tool],
+    middleware=[retry_on_error],
+)
 ```
 </python>
 <typescript>
-Pass a model instance with custom settings instead of a model string.
 ```typescript
-import { ChatAnthropic } from "@langchain/anthropic";
+import { createMiddleware } from "langchain";
 
-const model = new ChatAnthropic({ model: "claude-sonnet-4-5", temperature: 0 });
-const agent = createAgent({ model, tools: [...] });
+// createMiddleware accepts hook functions
+const retryOnError = createMiddleware({
+  name: "RetryOnError",
+  wrapToolCall: async (request, handler) => {
+    try {
+      return await handler(request);
+    } catch {
+      return await handler(request); // Retry once
+    }
+  },
+});
+
+const agent = createAgent({
+  model: "anthropic:claude-sonnet-4-5",
+  tools: [flakyApiTool, stableTool],
+  middleware: [retryOnError],
+});
 ```
 </typescript>
-</ex-model-instance>
+</ex-custom-middleware>
 
 <fix-missing-tool-description>
 <python>
