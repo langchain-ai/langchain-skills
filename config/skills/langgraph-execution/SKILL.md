@@ -32,7 +32,7 @@ Build a ReAct agent that dynamically decides when to call tools based on model r
 ```python
 from langchain.tools import tool
 from langchain.chat_models import init_chat_model
-from langchain.messages import ToolMessage
+from langchain_core.messages import ToolMessage
 from langgraph.graph import StateGraph, START, END
 from typing import Annotated
 import operator
@@ -400,10 +400,10 @@ for chunk in graph.stream({"data": "test"}, stream_mode="custom"):
 <typescript>
 Emit custom progress updates from within nodes using the stream writer.
 ```typescript
-import { getStreamWriter } from "@langchain/langgraph";
+import { getWriter } from "@langchain/langgraph";
 
 const myNode = async (state: typeof State.State) => {
-  const writer = getStreamWriter();
+  const writer = getWriter();
   writer("Processing step 1...");
   // Do work
   writer("Complete!");

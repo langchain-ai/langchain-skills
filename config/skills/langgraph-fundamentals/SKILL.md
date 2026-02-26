@@ -76,7 +76,7 @@ Messages accumulate via reducer - new messages append, not overwrite.
 ```python
 from typing import Annotated
 import operator
-from langchain.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 
 class MessagesState(TypedDict):
     messages: Annotated[list[BaseMessage], operator.add]
@@ -374,7 +374,7 @@ const nodeA = async (state: typeof State.State) => {
 };
 
 const graph = new StateGraph(State)
-  .addNode("node_a", nodeA)
+  .addNode("node_a", nodeA, { ends: ["node_b", "node_c"] })
   .addNode("node_b", async () => ({ result: "B" }))
   .addNode("node_c", async () => ({ result: "C" }))
   .addEdge(START, "node_a")

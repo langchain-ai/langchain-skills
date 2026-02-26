@@ -12,7 +12,7 @@ Two critical patterns for production agents:
 **Key Concepts:**
 - **response_format**: Define expected output schema
 - **with_structured_output()**: Model method for direct structured output
-- **human_in_the_loop_middleware**: Pauses execution for human decisions
+- **HumanInTheLoopMiddleware**: Pauses execution for human decisions
 </overview>
 
 <when-to-use-structured-output>
@@ -177,7 +177,8 @@ class Person(BaseModel):
 <python>
 Set up an agent with HITL middleware that pauses before sending emails for approval.
 ```python
-from langchain.agents import create_agent, human_in_the_loop_middleware
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
 from langgraph.checkpoint.memory import MemorySaver
 from langchain.tools import tool
 
@@ -191,7 +192,7 @@ agent = create_agent(
     tools=[send_email],
     checkpointer=MemorySaver(),  # Required for HITL
     middleware=[
-        human_in_the_loop_middleware(
+        HumanInTheLoopMiddleware(
             interrupt_on={
                 "send_email": {"allowed_decisions": ["approve", "edit", "reject"]},
             }
@@ -326,7 +327,7 @@ agent = create_agent(
     tools=[send_email, read_email, delete_email],
     checkpointer=MemorySaver(),
     middleware=[
-        human_in_the_loop_middleware(
+        HumanInTheLoopMiddleware(
             interrupt_on={
                 "send_email": {"allowed_decisions": ["approve", "edit", "reject"]},
                 "delete_email": {"allowed_decisions": ["approve", "reject"]},  # No edit
@@ -421,13 +422,13 @@ class Data(BaseModel):
 HITL middleware requires a checkpointer to persist state.
 ```python
 # WRONG
-agent = create_agent(model="gpt-4", tools=[send_email], middleware=[human_in_the_loop_middleware({...})])
+agent = create_agent(model="gpt-4", tools=[send_email], middleware=[HumanInTheLoopMiddleware({...})])
 
 # CORRECT
 agent = create_agent(
     model="gpt-4", tools=[send_email],
     checkpointer=MemorySaver(),  # Required
-    middleware=[human_in_the_loop_middleware({...})]
+    middleware=[HumanInTheLoopMiddleware({...})]
 )
 ```
 </python>
