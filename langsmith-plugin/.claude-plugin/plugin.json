@@ -1,0 +1,8 @@
+{
+    "name": "langsmith-plugin",
+    "description": "Gives Claude deep knowledge of LangSmith for observability and evaluation. Includes helper scripts for querying traces, datasets, and experiments.",
+    "version": "1.0.0",
+    "author": { "name": "Nick Huang" },
+    "repository": "https://github.com/langchain-ai/langchain-skills",
+    "keywords": ["langsmith", "tracing", "evaluation", "observability", "agents"]
+}
