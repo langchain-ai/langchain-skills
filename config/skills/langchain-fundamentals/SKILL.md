@@ -296,6 +296,57 @@ const agent = createAgent({
 });
 ```
 </typescript>
+
+### Resuming After HITL Interrupt
+
+When middleware interrupts, the result contains `__interrupt__`. Resume with `Command(resume=...)`:
+
+<python>
+```python
+from langgraph.types import Command
+
+config = {"configurable": {"thread_id": "session-1"}}
+
+# Initial request triggers interrupt on dangerous tool
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "Delete record 123"}]}, config=config
+)
+
+# Check for interrupt
+if "__interrupt__" in result:
+    print("Approval needed:", result["__interrupt__"])
+
+    # Approve and resume
+    result = agent.invoke(
+        Command(resume={"decisions": [{"type": "approve"}]}), config=config
+    )
+    # Other options:
+    # Command(resume={"decisions": [{"type": "reject", "message": "Not allowed"}]})
+    # Command(resume={"decisions": [{"type": "edit", "args": {"record_id": "456"}}]})
+```
+</python>
+<typescript>
+```typescript
+import { Command } from "@langchain/langgraph";
+
+const config = { configurable: { thread_id: "session-1" } };
+
+// Initial request triggers interrupt on dangerous tool
+const result = await agent.invoke(
+  { messages: [{ role: "user", content: "Delete record 123" }] }, config
+);
+
+// Check for interrupt
+if ("__interrupt__" in result) {
+  console.log("Approval needed:", result.__interrupt__);
+
+  // Approve and resume
+  const resumed = await agent.invoke(
+    new Command({ resume: { decisions: [{ type: "approve" }] } }), config
+  );
+}
+```
+</typescript>
 </ex-hitl-middleware>
 
 <ex-error-middleware>
