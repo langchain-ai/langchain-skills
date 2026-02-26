@@ -48,7 +48,7 @@ agent = create_agent(
 <typescript>
 Set up an agent with HITL that pauses before sending emails for human approval.
 ```typescript
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent, humanInTheLoopMiddleware } from "langchain";
 import { MemorySaver } from "@langchain/langgraph";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
@@ -62,11 +62,15 @@ const sendEmail = tool(
   }
 );
 
-const agent = createReactAgent({
-  llm: model,
+const agent = createAgent({
+  model: "anthropic:claude-sonnet-4-5",
   tools: [sendEmail],
-  checkpointer: new MemorySaver(),  // Required for HITL
-  interruptBefore: ["send_email"],
+  checkpointer: new MemorySaver(),
+  middleware: [
+    humanInTheLoopMiddleware({
+      interruptOn: { send_email: { allowedDecisions: ["approve", "edit", "reject"] } },
+    }),
+  ],
 });
 ```
 </typescript>
@@ -216,14 +220,17 @@ agent = create_agent(
 <typescript>
 HITL requires a checkpointer to persist state.
 ```typescript
-// WRONG
-const agent = createReactAgent({ llm: model, tools: [sendEmail], interruptBefore: ["send_email"] });
+// WRONG: No checkpointer
+const agent = createAgent({
+  model: "anthropic:claude-sonnet-4-5", tools: [sendEmail],
+  middleware: [humanInTheLoopMiddleware({ interruptOn: { send_email: true } })],
+});
 
-// CORRECT
-const agent = createReactAgent({
-  llm: model, tools: [sendEmail],
-  checkpointer: new MemorySaver(),  // Required
-  interruptBefore: ["send_email"]
+// CORRECT: Add checkpointer
+const agent = createAgent({
+  model: "anthropic:claude-sonnet-4-5", tools: [sendEmail],
+  checkpointer: new MemorySaver(),
+  middleware: [humanInTheLoopMiddleware({ interruptOn: { send_email: true } })],
 });
 ```
 </typescript>
