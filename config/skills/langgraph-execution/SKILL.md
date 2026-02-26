@@ -28,43 +28,31 @@ LangGraph provides execution control patterns for complex agent orchestration:
 
 <ex-dynamic-agent>
 <python>
-Build a ReAct agent that dynamically decides when to call tools based on model responses.
+ReAct agent pattern: model decides when to call tools, loop until done.
 ```python
-from langchain.tools import tool
-from langchain.chat_models import init_chat_model
-from langchain_core.messages import ToolMessage
 from langgraph.graph import StateGraph, START, END
+from langchain_core.messages import ToolMessage
 from typing import Annotated
 import operator
-
-@tool
-def search(query: str) -> str:
-    """Search for information."""
-    return f"Results for: {query}"
 
 class AgentState(TypedDict):
     messages: Annotated[list, operator.add]
 
-model = init_chat_model("gpt-4")
 model_with_tools = model.bind_tools([search])
 
 def agent_node(state: AgentState) -> dict:
-    response = model_with_tools.invoke(state["messages"])
-    return {"messages": [response]}
+    return {"messages": [model_with_tools.invoke(state["messages"])]}
 
 def tool_node(state: AgentState) -> dict:
-    tools_by_name = {"search": search}
+    """Execute tool calls from the last AI message."""
     result = []
-    for tool_call in state["messages"][-1].tool_calls:
-        tool = tools_by_name[tool_call["name"]]
-        observation = tool.invoke(tool_call["args"])
-        result.append(ToolMessage(content=observation, tool_call_id=tool_call["id"]))
+    for tc in state["messages"][-1].tool_calls:
+        observation = tools_by_name[tc["name"]].invoke(tc["args"])
+        result.append(ToolMessage(content=observation, tool_call_id=tc["id"]))
     return {"messages": result}
 
 def should_continue(state: AgentState):
-    if state["messages"][-1].tool_calls:
-        return "tools"
-    return END
+    return "tools" if state["messages"][-1].tool_calls else END
 
 agent = (
     StateGraph(AgentState)
@@ -72,49 +60,34 @@ agent = (
     .add_node("tools", tool_node)
     .add_edge(START, "agent")
     .add_conditional_edges("agent", should_continue)
-    .add_edge("tools", "agent")
+    .add_edge("tools", "agent")  # Loop back after tool execution
     .compile()
 )
 ```
 </python>
 <typescript>
-Build a ReAct agent that dynamically decides when to call tools based on model responses.
+ReAct agent pattern: model decides when to call tools, loop until done.
 ```typescript
-import { tool } from "@langchain/core/tools";
-import { ChatOpenAI } from "@langchain/openai";
-import { ToolMessage } from "@langchain/core/messages";
 import { StateGraph, StateSchema, MessagesValue, START, END } from "@langchain/langgraph";
-import { z } from "zod";
-
-const searchTool = tool(
-  async ({ query }) => `Results for: ${query}`,
-  { name: "search", description: "Search for information", schema: z.object({ query: z.string() }) }
-);
+import { ToolMessage } from "@langchain/core/messages";
 
 const State = new StateSchema({ messages: MessagesValue });
-
-const model = new ChatOpenAI({ model: "gpt-4" });
 const modelWithTools = model.bindTools([searchTool]);
 
-const agentNode = async (state: typeof State.State) => {
-  const response = await modelWithTools.invoke(state.messages);
-  return { messages: [response] };
-};
+const agentNode = async (state: typeof State.State) => ({
+  messages: [await modelWithTools.invoke(state.messages)]
+});
 
-const toolNode = async (state: typeof State.State) => {
-  const lastMessage = state.messages.at(-1);
-  const results = [];
-  for (const toolCall of lastMessage.tool_calls ?? []) {
-    const observation = await searchTool.invoke(toolCall.args);
-    results.push(new ToolMessage({ content: observation, tool_call_id: toolCall.id }));
-  }
-  return { messages: results };
-};
+const toolNode = async (state: typeof State.State) => ({
+  messages: await Promise.all(
+    (state.messages.at(-1)?.tool_calls ?? []).map(async (tc) =>
+      new ToolMessage({ content: await searchTool.invoke(tc.args), tool_call_id: tc.id })
+    )
+  )
+});
 
-const shouldContinue = (state: typeof State.State) => {
-  const lastMessage = state.messages.at(-1);
-  return lastMessage?.tool_calls?.length ? "tools" : END;
-};
+const shouldContinue = (state: typeof State.State) =>
+  state.messages.at(-1)?.tool_calls?.length ? "tools" : END;
 
 const agent = new StateGraph(State)
   .addNode("agent", agentNode)

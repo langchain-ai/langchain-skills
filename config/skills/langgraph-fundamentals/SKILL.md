@@ -70,42 +70,6 @@ const State = new StateSchema({
 </typescript>
 </ex-state-with-reducer>
 
-<ex-messages-accumulating>
-<python>
-Messages accumulate via reducer - new messages append, not overwrite.
-```python
-from typing import Annotated
-import operator
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-
-class MessagesState(TypedDict):
-    messages: Annotated[list[BaseMessage], operator.add]
-
-def add_response(state: MessagesState) -> dict:
-    user_msg = state["messages"][-1].content
-    return {"messages": [AIMessage(content=f"Response to: {user_msg}")]}
-
-# After invoke: messages list has BOTH original + response (not overwritten)
-```
-</python>
-<typescript>
-MessagesValue provides built-in accumulation for message arrays.
-```typescript
-import { StateSchema, MessagesValue, StateGraph, START, END } from "@langchain/langgraph";
-import { HumanMessage, AIMessage } from "@langchain/core/messages";
-
-const State = new StateSchema({ messages: MessagesValue });
-
-const addResponse = async (state: typeof State.State) => {
-  const lastMessage = state.messages.at(-1);
-  return { messages: [new AIMessage({ content: `Response to: ${lastMessage?.content}` })] };
-};
-
-// After invoke: messages list has BOTH original + response
-```
-</typescript>
-</ex-messages-accumulating>
-
 <fix-forgot-reducer-for-list>
 <python>
 Without a reducer, returning a list overwrites previous values.
@@ -386,61 +350,7 @@ const graph = new StateGraph(State)
 </ex-command-state-and-routing>
 
 <ex-map-reduce-with-send>
-<python>
-Send creates parallel workers; reducer accumulates their results.
-```python
-from langgraph.graph import StateGraph, START, END
-from langgraph.types import Send
-from typing import Annotated
-import operator
-
-class State(TypedDict):
-    items: list[str]
-    results: Annotated[list, operator.add]  # Accumulates from parallel workers
-
-def fan_out(state: State):
-    return [Send("worker", {"item": item}) for item in state["items"]]
-
-def worker(state: dict) -> dict:
-    return {"results": [f"Processed: {state['item']}"]}
-
-graph = (
-    StateGraph(State)
-    .add_node("worker", worker)
-    .add_conditional_edges(START, fan_out, ["worker"])
-    .add_edge("worker", END)
-    .compile()
-)
-# invoke({"items": ["a", "b", "c"]}) -> results: ["Processed: a", "Processed: b", "Processed: c"]
-```
-</python>
-<typescript>
-Map items to Send objects for parallel execution.
-```typescript
-import { StateGraph, StateSchema, START, END, Send, ReducedValue } from "@langchain/langgraph";
-import { z } from "zod";
-
-const State = new StateSchema({
-  items: z.array(z.string()),
-  results: new ReducedValue(z.array(z.string()).default(() => []), {
-    reducer: (current, update) => current.concat(update)
-  }),
-});
-
-const fanOut = (state: typeof State.State) =>
-  state.items.map((item) => new Send("worker", { item }));
-
-const worker = async (state: { item: string }) =>
-  ({ results: [`Processed: ${state.item}`] });
-
-const graph = new StateGraph(State)
-  .addNode("worker", worker)
-  .addConditionalEdges(START, fanOut, ["worker"])
-  .addEdge("worker", END)
-  .compile();
-// invoke({ items: ["a", "b", "c"] }) -> results: ["Processed: a", "Processed: b", "Processed: c"]
-```
-</typescript>
+Fan-out with Send: return `[Send("worker", {...})]` from a conditional edge to spawn parallel workers. Requires a reducer on the results field. A deep understanding of Send and execution patterns is essential for complex workflows.
 </ex-map-reduce-with-send>
 
 <ex-graph-with-loop>
@@ -556,90 +466,45 @@ builder.addConditionalEdges("node_a", (state) => state.count > 10 ? END : "node_
 </typescript>
 </fix-infinite-loop-needs-exit>
 
-<fix-conditional-edge-destinations>
-<python>
-Router must return names of nodes that exist in the graph.
+<fix-common-mistakes>
+Other common mistakes:
 ```python
-# WRONG: missing_node not added to graph
-builder.add_conditional_edges("node_a", router, ["missing_node"])
+# Router must return names of nodes that exist in the graph
+builder.add_node("my_node", func)  # Add node BEFORE referencing in edges
+builder.add_conditional_edges("node_a", router, ["my_node"])
 
-# CORRECT: Add destination nodes first
-builder.add_node("missing_node", func)
-builder.add_conditional_edges("node_a", router, ["missing_node"])
-```
-</python>
-</fix-conditional-edge-destinations>
-
-<fix-command-type-annotation>
-<python>
-Command return type needs Literal for routing destinations.
-```python
-# WRONG
-def node_a(state) -> Command:
-    return Command(goto="node_b")
-
-# CORRECT
+# Command return type needs Literal for routing destinations (Python)
 def node_a(state) -> Command[Literal["node_b", "node_c"]]:
     return Command(goto="node_b")
+
+# START is entry-only - cannot route back to it
+builder.add_edge("node_a", START)  # WRONG!
+builder.add_edge("node_a", "entry")  # Use a named entry node instead
+
+# Reducer expects matching types
+return {"items": ["item"]}  # List for list reducer, not a string
 ```
-</python>
-</fix-command-type-annotation>
-
-<fix-reducer-type-mismatch>
-<python>
-Reducer expects specific type - return value must match.
-```python
-# WRONG: Reducer expects list
-return {"items": "not a list"}  # Type error!
-
-# CORRECT
-return {"items": ["item"]}
-```
-</python>
-</fix-reducer-type-mismatch>
-
-<fix-start-not-destination>
-<python>
-START is entry-only - cannot route back to it.
-```python
-# WRONG
-builder.add_edge("node_a", START)  # Error!
-
-# CORRECT: Use a named entry node for loops
-builder.add_node("entry", entry_func)
-builder.add_edge(START, "entry")
-builder.add_edge("node_a", "entry")
-```
-</python>
-</fix-start-not-destination>
-
-<fix-always-await-nodes>
-<typescript>
-Always await graph.invoke() - it returns a Promise.
 ```typescript
-// WRONG
-const result = graph.invoke({ input: "test" });  // Promise!
-
-// CORRECT
+// Always await graph.invoke() - it returns a Promise
 const result = await graph.invoke({ input: "test" });
+
+// TS Command nodes need { ends } to declare routing destinations
+builder.addNode("router", routerFn, { ends: ["node_b", "node_c"] });
 ```
-</typescript>
-</fix-always-await-nodes>
+</fix-common-mistakes>
 
 <boundaries>
 ### What You CAN Configure
 
 - Define custom state schemas with TypedDict/StateSchema
 - Add reducers to control how state updates are merged
-- Create nodes (any function)
-- Add static and conditional edges
-- Use Command for combined state/routing
+- Create nodes (any function) and add static/conditional edges
+- Use Command for combined state update + routing
 - Create loops with conditional termination
 
 ### What You CANNOT Configure
 
 - Modify START/END behavior
-- Change the Pregel execution model
 - Access state outside node functions
-- Modify state directly (must return updates)
+- Modify state directly (must return partial update dicts)
 </boundaries>
