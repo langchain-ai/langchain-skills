@@ -32,7 +32,7 @@ def send_email(to: str, subject: str, body: str) -> str:
     return f"Email sent to {to}"
 
 agent = create_agent(
-    model="gpt-4",
+    model="gpt-4.1",
     tools=[send_email],
     checkpointer=MemorySaver(),  # Required for HITL
     middleware=[
@@ -207,11 +207,11 @@ agent = create_agent(
 HITL middleware requires a checkpointer to persist state.
 ```python
 # WRONG
-agent = create_agent(model="gpt-4", tools=[send_email], middleware=[HumanInTheLoopMiddleware({...})])
+agent = create_agent(model="gpt-4.1", tools=[send_email], middleware=[HumanInTheLoopMiddleware({...})])
 
 # CORRECT
 agent = create_agent(
-    model="gpt-4", tools=[send_email],
+    model="gpt-4.1", tools=[send_email],
     checkpointer=MemorySaver(),  # Required
     middleware=[HumanInTheLoopMiddleware({...})]
 )
