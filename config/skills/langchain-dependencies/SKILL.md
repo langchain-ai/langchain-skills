@@ -1,6 +1,6 @@
 ---
 name: LangChain Dependencies
-description: "INVOKE THIS SKILL when setting up a NEW project or when asked about package versions, installation, or dependency management for LangChain, LangGraph, LangSmith, or Deep Agents. Covers required packages, minimum versions, environment requirements, versioning best practices, and common community tool packages for both Python and TypeScript. Not opinionated about which package manager to use."
+description: "INVOKE THIS SKILL when setting up a new project or when asked about package versions, installation, or dependency management for LangChain, LangGraph, LangSmith, or Deep Agents. Covers required packages, minimum versions, environment requirements, versioning best practices, and common community tool packages for both Python and TypeScript."
 ---
 
 <overview>
@@ -87,7 +87,7 @@ These packages have tighter compatibility requirements — use the latest availa
 
 | Package | Adds | Notes |
 |---------|------|-------|
-| `langchain-tavily` | Tavily web search tool | Dedicated integration package; prefer latest |
+| `langchain-tavily` | Tavily web search (`TavilySearch`) | Dedicated integration package; prefer latest |
 | `langchain-text-splitters` | Text chunking utilities | Semver, keep current |
 | `langchain-community` | 1000+ integrations (fallback) | **NOT semver — pin to minor series** |
 | `faiss-cpu` | FAISS vector store (local) | Via `langchain-community`; use latest |
@@ -136,7 +136,7 @@ These packages have tighter compatibility requirements — use the latest availa
 
 | Package | Adds | Notes |
 |---------|------|-------|
-| `@langchain/tavily` | Tavily web search tool | Dedicated integration package; prefer latest |
+| `@langchain/tavily` | Tavily web search (`TavilySearch`) | Dedicated integration package; prefer latest |
 | `@langchain/community` | Broad set of community integrations | Use sparingly; prefer dedicated packages |
 | `@langchain/pinecone` | Pinecone vector store | Dedicated integration package; prefer latest |
 | `@langchain/qdrant` | Qdrant vector store | Dedicated integration package; prefer latest |
@@ -351,6 +351,29 @@ langchain-tavily==0.0.1
 langchain-tavily>=0.1
 ```
 </fix-community-tool-outdated>
+
+<fix-community-import-deprecated>
+Many tools that used to live in `langchain-community` now have dedicated packages with updated import paths. Always prefer the dedicated package import.
+
+```python
+# WRONG — deprecated community import path
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import Pinecone
+
+# CORRECT — use dedicated package imports
+from langchain_tavily import TavilySearch                  # pip: langchain-tavily (TavilySearchResults is deprecated)
+from langchain_community.tools import WikipediaQueryRun  # no dedicated pkg yet
+from langchain_chroma import Chroma                       # pip: langchain-chroma
+from langchain_pinecone import PineconeVectorStore        # pip: langchain-pinecone
+```
+
+To find the current canonical import for any integration, search the integrations directory:
+https://python.langchain.com/docs/integrations/tools/
+
+Each entry shows the correct package and import path. If a dedicated package exists, use it — the community path may still work but is considered legacy.
+</fix-community-import-deprecated>
 
 <fix-core-not-installed>
 <typescript>

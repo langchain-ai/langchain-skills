@@ -35,7 +35,7 @@ result = agent.invoke({"messages": [("user", "Search for LangChain docs")]})
 <typescript>
 Create and invoke a basic agent with tools using createAgent.
 ```typescript
-import { createAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
@@ -72,8 +72,7 @@ const result = await agent.invoke({ messages: [["user", "Search for LangChain do
 | `tools` | List of tools | `[search, calculator]` |
 | `system_prompt` / `systemPrompt` | Agent instructions | `"You are a helpful assistant"` |
 | `checkpointer` | State persistence | `MemorySaver()` |
-| `middleware` | Processing hooks | `[human_in_the_loop_middleware]` |
-| `max_iterations` / `maxIterations` | Loop limit | `10` |
+| `middleware` | Processing hooks | `[HumanInTheLoopMiddleware]` (Python) / `[humanInTheLoopMiddleware({...})]` (TypeScript) |
 </create_agent>
 
 <ex-basic-agent>
@@ -107,7 +106,7 @@ print(result["messages"][-1].content)
 <typescript>
 Create a basic agent with a weather tool and invoke it with a user query.
 ```typescript
-import { createAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
@@ -158,7 +157,7 @@ result = agent.invoke({"messages": [{"role": "user", "content": "What's my name?
 <typescript>
 Add MemorySaver checkpointer to maintain conversation state across invocations.
 ```typescript
-import { createAgent } from "@langchain/langgraph/prebuilt";
+import { createAgent } from "langchain";
 import { MemorySaver } from "@langchain/langgraph";
 
 const checkpointer = new MemorySaver();
@@ -245,7 +244,8 @@ Middleware intercepts the agent loop to add human approval, error handling, logg
 <python>
 Require human approval before executing sensitive tools like delete operations.
 ```python
-from langchain.agents import create_agent, human_in_the_loop_middleware
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
 
 @tool
 def delete_record(record_id: str) -> str:
@@ -261,8 +261,8 @@ agent = create_agent(
     model="anthropic:claude-sonnet-4-5",
     tools=[delete_record, search],
     middleware=[
-        human_in_the_loop_middleware(
-            tools_requiring_approval=["delete_record"]
+        HumanInTheLoopMiddleware(
+            interrupt_on={"delete_record": True}
         )
     ],
 )
@@ -271,7 +271,7 @@ agent = create_agent(
 <typescript>
 Require human approval before executing sensitive tools like delete operations.
 ```typescript
-import { createAgent, humanInTheLoopMiddleware } from "@langchain/langgraph/prebuilt";
+import { createAgent, humanInTheLoopMiddleware } from "langchain";
 
 const deleteRecord = tool(
   async ({ recordId }) => {
@@ -302,7 +302,8 @@ const agent = createAgent({
 <python>
 Catch and handle tool errors gracefully with custom middleware.
 ```python
-from langchain.agents import create_agent, wrap_tool_call
+from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_tool_call
 
 @wrap_tool_call
 async def error_handler(tool_call, handler):
@@ -324,17 +325,20 @@ agent = create_agent(
 <typescript>
 Catch and handle tool errors gracefully with custom middleware.
 ```typescript
-import { createAgent, wrapToolCall } from "@langchain/langgraph/prebuilt";
+import { createAgent, createMiddleware } from "langchain";
 
-const errorHandler = wrapToolCall(async (toolCall, handler) => {
-  try {
-    return await handler(toolCall);
-  } catch (error) {
-    return {
-      ...toolCall,
-      content: `Tool error: ${error}. Please try a different approach.`,
-    };
-  }
+const errorHandler = createMiddleware({
+  name: "ErrorHandler",
+  wrapToolCall: async (request, handler) => {
+    try {
+      return await handler(request);
+    } catch (error) {
+      return {
+        ...request.toolCall,
+        content: `Tool error: ${error}. Please try a different approach.`,
+      };
+    }
+  },
 });
 
 const agent = createAgent({
@@ -475,31 +479,29 @@ await agent.invoke({ messages: [{ role: "user", content: "What's my name?" }] },
 
 <fix-infinite-loop>
 <python>
-Set max_iterations to prevent runaway agent loops.
+Set recursion_limit in the invoke config to prevent runaway agent loops.
 ```python
 # WRONG: No iteration limit - could loop forever
-agent = create_agent(model="anthropic:claude-sonnet-4-5", tools=[search])
+result = agent.invoke({"messages": [("user", "Do research")]})
 
-# CORRECT: Set max_iterations
-agent = create_agent(
-    model="anthropic:claude-sonnet-4-5",
-    tools=[search],
-    max_iterations=10,  # Stop after 10 tool calls
+# CORRECT: Set recursion_limit in config
+result = agent.invoke(
+    {"messages": [("user", "Do research")]},
+    config={"recursion_limit": 10},  # Stop after 10 steps
 )
 ```
 </python>
 <typescript>
-Set maxIterations to prevent runaway agent loops.
+Set recursionLimit in the invoke config to prevent runaway agent loops.
 ```typescript
 // WRONG: No iteration limit
-const agent = createAgent({ model: "anthropic:claude-sonnet-4-5", tools: [search] });
+const result = await agent.invoke({ messages: [["user", "Do research"]] });
 
-// CORRECT: Set maxIterations
-const agent = createAgent({
-  model: "anthropic:claude-sonnet-4-5",
-  tools: [search],
-  maxIterations: 10, // Stop after 10 tool calls
-});
+// CORRECT: Set recursionLimit in config
+const result = await agent.invoke(
+  { messages: [["user", "Do research"]] },
+  { recursionLimit: 10 }, // Stop after 10 steps
+);
 ```
 </typescript>
 </fix-infinite-loop>

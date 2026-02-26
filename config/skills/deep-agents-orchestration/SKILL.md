@@ -293,7 +293,7 @@ Complete workflow: trigger an interrupt, check state, approve action, and resume
 ```python
 from deepagents import create_deep_agent
 from langgraph.checkpoint.memory import MemorySaver
-from langchain.schema import Command
+from langgraph.types import Command
 
 agent = create_deep_agent(
     interrupt_on={"write_file": True},
