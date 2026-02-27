@@ -240,6 +240,24 @@ list_runs(trace_ids="<trace_id>", run_type="tool")
 
 ---
 
+## Discovering What to Evaluate
+
+When the user generically asks to "write evals" or "test my agent" **without specifying what to test**, don't write generic placeholder tests. Instead, use their tracing project to discover real problems and scope evals from actual agent behavior.
+
+**Two paths into evals:**
+1. **User tells you something specific** — write targeted evals for that issue directly.
+2. **Generic request** — follow the discovery steps below first, then write evals for what you find.
+
+**Discovery steps:**
+
+1. **Find the tracing project** — check `LANGSMITH_PROJECT` in `.env` or environment. If not set, **ask the user** for the name of their LangSmith tracing project so you can look at existing traces.
+2. **Look for problems** — prioritize errored traces (`list_traces(error=true)`), slow traces (`list_traces(min_latency=10.0)`), and failed tool calls (`list_runs(run_type="tool", error=true)`).
+3. **Drill into interesting traces** — use `get_trace(trace_id="<id>", include_io=true)` and look for: errors, wrong tool selection, hallucinations, loops/retries, poor output quality, edge case inputs.
+4. **Propose evals to the user** — group findings into categories (error handling, correctness, tool use, regression, edge cases) and describe what you'll test and why before writing code.
+5. **Write targeted tests** — each eval should be tied to a real problem from the traces, use realistic inputs inspired by actual trace data, and assert against the specific failure mode observed.
+
+---
+
 ## Querying Datasets
 
 Use the `list_datasets` and `show_dataset` MCP tools to inspect LangSmith datasets.
