@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "langsmith-tools": {
+      "command": "bash",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-server.sh"],
+      "env": {
+        "LANGSMITH_API_KEY": "${LANGSMITH_API_KEY}",
+        "LANGSMITH_PROJECT": "${LANGSMITH_PROJECT}",
+        "LANGSMITH_ENDPOINT": "${LANGSMITH_ENDPOINT}"
+      }
+    }
+  }
+}

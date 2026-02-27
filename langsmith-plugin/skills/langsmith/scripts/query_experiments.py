@@ -39,10 +39,13 @@ def get_client() -> Client:
     return Client(api_key=api_key)
 
 
-def format_duration(seconds: float | None) -> str:
-    """Format seconds as human-readable duration."""
+def format_duration(seconds) -> str:
+    """Format seconds (float or timedelta) as human-readable duration."""
     if seconds is None:
         return "N/A"
+    # Handle timedelta objects from some API versions
+    if hasattr(seconds, "total_seconds"):
+        seconds = seconds.total_seconds()
     if seconds < 1:
         return f"{seconds * 1000:.0f}ms"
     return f"{seconds:.2f}s"

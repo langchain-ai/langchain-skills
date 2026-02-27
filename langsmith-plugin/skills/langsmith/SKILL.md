@@ -1,6 +1,6 @@
 ---
 name: langsmith
-description: "This skill shows you how to use LangSmith. You should load this skill anytime the user is working on an LLM-backed AI agent or LLM application, or mentions anything remotely related to tracing, evaluation, experiments, or LangSmith. Use the included helper scripts to query traces, inspect runs, check experiments, and manage datasets."
+description: "This skill shows you how to use LangSmith. You should load this skill anytime the user is working on an LLM-backed AI agent or LLM application, or mentions anything remotely related to tracing, evaluation, experiments, or LangSmith. Use the bundled MCP tools (list_traces, get_trace, list_runs, get_run, list_datasets, show_dataset, list_experiments, show_experiment) to query LangSmith data directly."
 ---
 
 # What is LangSmith
@@ -20,7 +20,7 @@ This skill enables two core flows:
 
 ### Environment Variables
 
-> **IMPORTANT — Check this first:** Before doing ANY LangSmith work, verify that `LANGSMITH_API_KEY` is set by checking `.env`, the shell environment (`echo $LANGSMITH_API_KEY`), or asking the user. If it is missing or empty, **stop and tell the user** — all scripts and SDK calls will fail without it. Direct them to https://smith.langchain.com/settings to create an API key, then have them set it:
+> **IMPORTANT — Check this first:** Before doing ANY LangSmith work, verify that `LANGSMITH_API_KEY` is set by checking `.env`, the shell environment (`echo $LANGSMITH_API_KEY`), or asking the user. If it is missing or empty, **stop and tell the user** — all MCP tools and SDK calls will fail without it. Direct them to https://smith.langchain.com/settings to create an API key, then have them set it:
 > ```bash
 > export LANGSMITH_API_KEY=lsv2_pt_...
 > ```
@@ -32,7 +32,7 @@ LANGSMITH_TRACING=true                          # Enables tracing
 LANGSMITH_PROJECT=your-project-name             # Names the project traces go to (defaults to "default")
 ```
 
-If `LANGSMITH_PROJECT` is not set, set it in the project's `.env` file so traces are organized by project. The query scripts use `LANGSMITH_PROJECT` by default.
+If `LANGSMITH_PROJECT` is not set, set it in the project's `.env` file so traces are organized by project. The MCP tools use `LANGSMITH_PROJECT` by default when no project is specified.
 
 ### Dependencies
 
@@ -48,14 +48,6 @@ uv add "langsmith[pytest]"
 **JavaScript/TypeScript:**
 ```bash
 npm install langsmith
-```
-
-### Script Dependencies
-
-The helper scripts in this plugin require additional Python packages. Install them before running:
-
-```bash
-uv add langsmith click rich python-dotenv
 ```
 
 ---
@@ -176,37 +168,35 @@ This is the core observability workflow. **After every agent run, you should fet
 - **Trace** = A complete execution tree (root run + all child runs). A trace represents one full agent invocation with all its LLM calls, tool calls, and nested operations.
 - **Run** = A single node in the tree (one LLM call, one tool call, etc.)
 
-### Script Reference
+### MCP Tools Reference
 
-The `query_traces.py` script has two command groups:
+This plugin provides the following MCP tools for querying LangSmith. Call them directly — no scripts or file paths needed.
 
-```
-query_traces.py traces ...    # Operations on trace trees (root + children)
-  traces list                 # List traces matching filters
-  traces get <trace-id>       # Get single trace with full hierarchy
-  traces export <dir>         # Export traces to JSONL files
+**Trace tools:**
+- `list_traces` — List traces matching filters (filters apply to root run)
+- `get_trace` — Get a specific trace by ID with full run hierarchy
 
-query_traces.py runs ...      # Operations on individual runs (flat)
-  runs list                   # List runs matching filters
-  runs get <run-id>           # Get single run by ID
-  runs export <file>          # Export runs to JSONL file
-```
+**Run tools:**
+- `list_runs` — List individual runs matching filters (flat list)
+- `get_run` — Get a specific run by ID
 
-Key difference: `traces` filters apply to the ROOT RUN and return full hierarchy; `runs` filters apply to ANY run and return a flat list.
+**Dataset tools:**
+- `list_datasets` — List all LangSmith datasets
+- `show_dataset` — Show examples from a dataset
+
+**Experiment tools:**
+- `list_experiments` — List experiments for a dataset with aggregate metrics
+- `show_experiment` — Show detailed stats for a specific experiment
+
+Key difference: `list_traces` filters apply to the ROOT RUN and return full hierarchy; `list_runs` filters apply to ANY run and return a flat list.
 
 ### The Analysis Workflow
 
 **Do this after every agent run — it should be second nature:**
 
-1. **Fetch the latest trace:**
-   ```bash
-   python query_traces.py traces list --limit 1
-   ```
+1. **Fetch the latest trace** using the `list_traces` MCP tool with `limit=1`
 
-2. **Drill into it** — get the full run tree:
-   ```bash
-   python query_traces.py traces get <trace_id_from_step_1> --full
-   ```
+2. **Drill into it** using the `get_trace` MCP tool with the trace_id from step 1 (include_io=true for full details)
 
 3. **Analyze the trace:**
    - Look at the LLM inputs and outputs — what prompts were sent? What did the model respond?
@@ -225,68 +215,43 @@ Key difference: `traces` filters apply to the ROOT RUN and return full hierarchy
 
 ### Common Filtering Patterns
 
-```bash
+```
 # 5 most recent traces
-python query_traces.py traces list --limit 5
+list_traces(limit=5)
 
 # Traces with errors in the last hour
-python query_traces.py traces list --error --last-n-minutes 60
+list_traces(error=true, last_n_minutes=60)
 
 # Slow traces (>= 5 seconds)
-python query_traces.py traces list --min-latency 5
+list_traces(min_latency=5.0)
 
 # Traces with full hierarchy expanded
-python query_traces.py traces list --limit 3 --show-hierarchy
+list_traces(limit=3, show_hierarchy=true)
 
 # Only LLM runs (flat list)
-python query_traces.py runs list --run-type llm --limit 20
+list_runs(run_type="llm", limit=20)
 
 # Failed tool calls
-python query_traces.py runs list --run-type tool --error
+list_runs(run_type="tool", error=true)
 
 # Runs from a specific trace
-python query_traces.py runs list --trace-ids <trace_id> --run-type tool
-
-# Export traces for offline analysis
-python query_traces.py traces export ./traces --limit 10 --full
-
-# JSON output for programmatic use
-python query_traces.py traces list --limit 5 --format json
+list_runs(trace_ids="<trace_id>", run_type="tool")
 ```
 
 ---
 
 ## Querying Datasets
 
-Use `query_datasets.py` to inspect LangSmith datasets and local dataset files.
-
-### Script Reference
-
-```
-query_datasets.py list-datasets                  # List all LangSmith datasets
-query_datasets.py show <dataset_name>            # Show examples from a dataset
-query_datasets.py view-file <file_path>          # View local dataset file (JSON/CSV)
-query_datasets.py structure <file_path>          # Analyze structure of a dataset file
-query_datasets.py export <dataset_name> <file>   # Export dataset to local file
-```
+Use the `list_datasets` and `show_dataset` MCP tools to inspect LangSmith datasets.
 
 ### Common Patterns
 
-```bash
+```
 # List all datasets in the workspace
-python query_datasets.py list-datasets
+list_datasets()
 
 # Show first 5 examples from a dataset
-python query_datasets.py show "My Agent Tests" --limit 5
-
-# Export dataset for local use
-python query_datasets.py export "My Agent Tests" ./dataset.json --limit 100
-
-# Inspect a local dataset file structure
-python query_datasets.py structure ./dataset.json
-
-# View local dataset file
-python query_datasets.py view-file ./dataset.json --format json
+show_dataset(dataset_name="My Agent Tests", limit=5)
 ```
 
 ---
@@ -742,29 +707,24 @@ Every `ls.test()` call automatically:
 
 ### Checking Experiment Results
 
-After running tests, use the `query_experiments.py` script to inspect the results.
+After running tests, use the `list_experiments` and `show_experiment` MCP tools to inspect the results.
 
 #### Listing Experiments
 
 List all experiments for a test suite / dataset:
 
-```bash
-python query_experiments.py list "My Agent Tests"
+```
+list_experiments(dataset_name="My Agent Tests")
 ```
 
 This returns all experiment runs against that dataset, including run counts, latency, cost, error rates, and feedback scores.
-
-Options:
-- `--limit 5` — only show the 5 most recent experiments
-- `--format json` — JSON output for programmatic use
-- `--no-stats` — skip stats (faster)
 
 #### Showing Detailed Stats
 
 Get full details for a specific experiment:
 
-```bash
-python query_experiments.py show "My Agent Tests" "v2-prompt-change"
+```
+show_experiment(dataset_name="My Agent Tests", experiment_name="v2-prompt-change")
 ```
 
 Shows latency (p50/p99), token usage, total cost, error rate, and all feedback keys with aggregate scores.
@@ -773,9 +733,8 @@ Shows latency (p50/p99), token usage, total cost, error rate, and all feedback k
 
 After making a change and re-running tests, compare experiments:
 
-```bash
-# List experiments to compare pass rates, feedback scores, latency
-python query_experiments.py list "My Agent Tests" --limit 5
+```
+list_experiments(dataset_name="My Agent Tests", limit=5)
 ```
 
 Look at:
@@ -788,15 +747,15 @@ Look at:
 
 Each experiment is a project in LangSmith. To inspect individual test case traces:
 
-```bash
+```
 # List traces from a specific experiment
-python query_traces.py traces list --project "v2-prompt-change" --limit 10
+list_traces(project="v2-prompt-change", limit=10)
 
 # Find failed test cases
-python query_traces.py traces list --project "v2-prompt-change" --error
+list_traces(project="v2-prompt-change", error=true)
 
 # Get full details of a specific test case trace
-python query_traces.py traces get <trace_id> --full
+get_trace(trace_id="<trace_id>")
 ```
 
 ### Test File Organization
@@ -833,14 +792,8 @@ This is the core autonomous workflow you should follow when helping a user build
 
 ### 2. RUN & OBSERVE
 - Run the user's agent
-- **Immediately** fetch the latest trace:
-  ```bash
-  python query_traces.py traces list --limit 1
-  ```
-- Drill into the trace:
-  ```bash
-  python query_traces.py traces get <trace_id> --full
-  ```
+- **Immediately** fetch the latest trace using `list_traces(limit=1)`
+- Drill into the trace using `get_trace(trace_id="<id>", include_io=true)`
 - Explain to the user: "Here's what your agent did..." — walk through the LLM calls, tool calls, and decisions
 
 ### 3. GET USER FEEDBACK
@@ -859,20 +812,10 @@ This is the core autonomous workflow you should follow when helping a user build
 - Each test captures a scenario that should keep working
 - Python: `LANGSMITH_TEST_SUITE="My Agent" pytest tests/test_evals.py`
 - JS/TS: `vitest run --config ls.vitest.config.ts` (or `jest --config ls.jest.config.cjs`)
-- Check results:
-  ```bash
-  python query_experiments.py list "My Agent"
-  ```
+- Check results using `list_experiments(dataset_name="My Agent")`
 
 ### 6. ONGOING
 - Next time a change is made, run the test suite to catch regressions
-- If a test fails, inspect the experiment:
-  ```bash
-  python query_experiments.py show "My Agent" "<experiment-name>"
-  ```
-- Drill into failing traces:
-  ```bash
-  python query_traces.py traces list --project "<experiment-name>" --error
-  python query_traces.py traces get <trace_id> --full
-  ```
+- If a test fails, inspect the experiment using `show_experiment(dataset_name="My Agent", experiment_name="<experiment-name>")`
+- Drill into failing traces using `list_traces(project="<experiment-name>", error=true)` then `get_trace(trace_id="<id>", include_io=true)`
 - Fix, re-run, iterate
