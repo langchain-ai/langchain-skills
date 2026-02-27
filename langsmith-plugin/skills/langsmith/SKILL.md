@@ -24,7 +24,7 @@ This skill enables two core flows:
 > ```bash
 > export LANGSMITH_API_KEY=lsv2_pt_...
 > ```
-> `LANGSMITH_ENDPOINT` is optional and only needed for self-hosted LangSmith instances. If unset, the SDK defaults to `https://api.smith.langchain.com`.
+> `LANGSMITH_ENDPOINT` is optional and only needed for self-hosted or local LangSmith instances. If unset, the SDK defaults to `https://api.smith.langchain.com`. **The MCP tools bundled with this skill also respect `LANGSMITH_ENDPOINT`** — if it points to a local instance (e.g., `http://localhost:1980`), all MCP tool calls (`list_traces`, `get_trace`, etc.) will query the local LangSmith, not cloud. Do not assume MCP tools only work with cloud LangSmith.
 
 ```bash
 LANGSMITH_API_KEY=lsv2_pt_your_api_key_here   # Required — check for this before doing any LangSmith work
@@ -745,10 +745,16 @@ Look at:
 
 #### Drilling Into Experiment Traces
 
-Each experiment is a project in LangSmith. To inspect individual test case traces:
+> **Key concept: each experiment IS a tracing project.** When LangSmith runs an experiment, it creates a tracing project whose name is the experiment name (e.g., `"ample-bibliography-31"`). This means you use the experiment name as the `project` parameter when querying traces. Do NOT search for traces using your `LANGSMITH_PROJECT` value — that's the main application project, not the experiment project.
+
+To find the experiment name, first call `list_experiments(dataset_name="...")` — each returned experiment has a name. Then use that name to query traces:
 
 ```
-# List traces from a specific experiment
+# Step 1: Find experiment names for a dataset
+list_experiments(dataset_name="My Agent Tests")
+# Returns experiments like: "v2-prompt-change", "ample-bibliography-31", etc.
+
+# Step 2: List traces from a specific experiment (use experiment name as project)
 list_traces(project="v2-prompt-change", limit=10)
 
 # Find failed test cases
@@ -817,5 +823,6 @@ This is the core autonomous workflow you should follow when helping a user build
 ### 6. ONGOING
 - Next time a change is made, run the test suite to catch regressions
 - If a test fails, inspect the experiment using `show_experiment(dataset_name="My Agent", experiment_name="<experiment-name>")`
+- Remember: each experiment IS a tracing project — use the experiment name as the `project` parameter when querying traces
 - Drill into failing traces using `list_traces(project="<experiment-name>", error=true)` then `get_trace(trace_id="<id>", include_io=true)`
 - Fix, re-run, iterate
