@@ -1,6 +1,6 @@
 ---
 name: LangGraph Persistence & Memory
-description: "INVOKE THIS SKILL when your LangGraph needs to remember state across calls, use memory, or persist conversations. Covers checkpointers (MemorySaver, Postgres), thread_id configuration, and Store for long-term memory. CRITICAL: Fixes for missing thread_id, checkpointer placement, and cross-thread memory access."
+description: "INVOKE THIS SKILL when your LangGraph needs to remember state across calls, use memory, or persist conversations. Covers checkpointers (MemorySaver, Postgres), thread_id configuration, and Store for long-term memory."
 ---
 
 <overview>
@@ -102,11 +102,12 @@ Configure PostgreSQL-backed checkpointing for production deployments.
 ```python
 from langgraph.checkpoint.postgres import PostgresSaver
 
-checkpointer = PostgresSaver.from_conn_string(
+# from_conn_string returns a context manager in v3+
+with PostgresSaver.from_conn_string(
     "postgresql://user:pass@localhost/db"
-)
-
-graph = builder.compile(checkpointer=checkpointer)
+) as checkpointer:
+    checkpointer.setup()  # only needed on first use to create tables
+    graph = builder.compile(checkpointer=checkpointer)
 ```
 </python>
 <typescript>
@@ -117,6 +118,7 @@ import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 const checkpointer = PostgresSaver.fromConnString(
   "postgresql://user:pass@localhost/db"
 );
+await checkpointer.setup(); // only needed on first use to create tables
 
 const graph = builder.compile({ checkpointer });
 ```
@@ -156,36 +158,49 @@ await graph.invoke({ messages: [new HumanMessage("Hi from Bob")] }, bobConfig);
 </typescript>
 </ex-separate-threads>
 
-<ex-resuming-execution>
+<ex-resume-from-checkpoint>
 <python>
-Resume graph execution from a checkpoint by passing None as input.
+Time travel: browse checkpoint history and replay or fork from a past state.
 ```python
 config = {"configurable": {"thread_id": "session-1"}}
 
-result = graph.invoke({"data": "start"}, config)  # Run until breakpoint
+result = graph.invoke({"messages": ["start"]}, config)
 
-state = graph.get_state(config)
-print(state.values)  # Current state
-print(state.next)    # Next nodes to execute
+# Browse checkpoint history
+states = list(graph.get_state_history(config))
 
-result = graph.invoke(None, config)  # Resume with None (not new input!)
+# Replay from a past checkpoint
+past = states[-2]
+result = graph.invoke(None, past.config)  # None = resume from checkpoint
+
+# Or fork: update state at a past checkpoint, then resume
+fork_config = graph.update_state(past.config, {"messages": ["edited"]})
+result = graph.invoke(None, fork_config)
 ```
 </python>
 <typescript>
-Resume graph execution from a checkpoint by passing null as input.
+Time travel: browse checkpoint history and replay or fork from a past state.
 ```typescript
 const config = { configurable: { thread_id: "session-1" } };
 
-const result = await graph.invoke({ data: "start" }, config);  // Run until breakpoint
+const result = await graph.invoke({ messages: ["start"] }, config);
 
-const state = await graph.getState(config);
-console.log(state.values);  // Current state
-console.log(state.next);    // Next nodes to execute
+// Browse checkpoint history (async iterable, collect to array)
+const states: Awaited<ReturnType<typeof graph.getState>>[] = [];
+for await (const state of graph.getStateHistory(config)) {
+  states.push(state);
+}
 
-const resumed = await graph.invoke(null, config);  // Resume with null (not new input!)
+// Replay from a past checkpoint
+const past = states[states.length - 2];
+const replayed = await graph.invoke(null, past.config);  // null = resume from checkpoint
+
+// Or fork: update state at a past checkpoint, then resume
+const forkConfig = await graph.updateState(past.config, { messages: ["edited"] });
+const forked = await graph.invoke(null, forkConfig);
 ```
 </typescript>
-</ex-resuming-execution>
+</ex-resume-from-checkpoint>
 
 <ex-update-state>
 <python>
@@ -232,7 +247,7 @@ store.put(("alice", "preferences"), "language", {"preference": "short responses"
 # Node with store injection
 def respond(state, *, store):
     prefs = store.get((state["user_id"], "preferences"), "language")
-    return {"response": f"Using preference: {prefs}"}
+    return {"response": f"Using preference: {prefs.value}"}
 
 # Compile with BOTH checkpointer and store
 graph = builder.compile(checkpointer=checkpointer, store=store)
@@ -328,30 +343,6 @@ await graph.invoke({ messages: [new HumanMessage("What did I say?")] }, config);
 </typescript>
 </fix-thread-id-required>
 
-<fix-checkpointer-at-compile>
-<python>
-Pass checkpointer during compile(), not after.
-```python
-# WRONG: Checkpointer assigned after compile
-graph = builder.compile()
-graph.checkpointer = checkpointer  # Too late! Doesn't work
-
-# CORRECT: Pass checkpointer during compile
-graph = builder.compile(checkpointer=checkpointer)
-```
-</python>
-<typescript>
-Pass checkpointer during compile(), not after.
-```typescript
-// WRONG: Checkpointer assigned after compile
-const graph = builder.compile();
-graph.checkpointer = checkpointer;  // Too late!
-
-// CORRECT: Pass checkpointer during compile
-const graph = builder.compile({ checkpointer });
-```
-</typescript>
-</fix-checkpointer-at-compile>
 
 <fix-inmemory-not-for-production>
 <python>
@@ -362,7 +353,9 @@ checkpointer = InMemorySaver()  # In-memory only!
 
 # CORRECT: Use persistent storage for production
 from langgraph.checkpoint.postgres import PostgresSaver
-checkpointer = PostgresSaver.from_conn_string("postgresql://...")
+with PostgresSaver.from_conn_string("postgresql://...") as checkpointer:
+    checkpointer.setup()  # only needed on first use to create tables
+    graph = builder.compile(checkpointer=checkpointer)
 ```
 </python>
 <typescript>
@@ -374,6 +367,7 @@ const checkpointer = new MemorySaver();  // In-memory only!
 // CORRECT: Use persistent storage for production
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 const checkpointer = PostgresSaver.fromConnString("postgresql://...");
+await checkpointer.setup(); // only needed on first use to create tables
 ```
 </typescript>
 </fix-inmemory-not-for-production>
@@ -417,6 +411,21 @@ graph.update_state(config, {"items": ["C"]})  # Result: ["A", "B", "C"] - Append
 graph.update_state(config, {"items": Overwrite(["C"])})  # Result: ["C"] - Replaced
 ```
 </python>
+<typescript>
+Use Overwrite to replace state values instead of passing through reducers.
+```typescript
+import { Overwrite } from "@langchain/langgraph";
+
+// State with reducer: items uses concat reducer
+// Current state: { items: ["A", "B"] }
+
+// updateState PASSES THROUGH reducers
+await graph.updateState(config, { items: ["C"] });  // Result: ["A", "B", "C"] - Appended!
+
+// To REPLACE instead, use Overwrite
+await graph.updateState(config, { items: new Overwrite(["C"]) });  // Result: ["C"] - Replaced
+```
+</typescript>
 </fix-update-state-with-reducers>
 
 <fix-store-injection>

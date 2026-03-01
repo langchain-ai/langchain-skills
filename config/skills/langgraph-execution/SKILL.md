@@ -1,6 +1,6 @@
 ---
 name: LangGraph Execution Control
-description: "INVOKE THIS SKILL for LangGraph workflows, parallel execution, interrupts, or streaming. Covers Send API for fan-out, interrupt() for human-in-the-loop, Command for resuming, and stream modes (values/updates/messages). CRITICAL: Fixes for interrupt without checkpointer, missing reducers for Send, and stream mode tuple unpacking."
+description: "INVOKE THIS SKILL for LangGraph workflows, parallel execution, interrupts, or streaming. Covers Send API for fan-out, interrupt() for human-in-the-loop, Command for resuming, and stream modes (values/updates/messages)."
 ---
 
 <overview>
@@ -182,9 +182,9 @@ const graph = new StateGraph(State)
 
 | Type | When Set | Use Case |
 |------|----------|----------|
-| Dynamic (`interrupt()`) | Inside node code | Conditional pausing |
-| Static (`interrupt_before`) | At compile time | Debug before nodes |
-| Static (`interrupt_after`) | At compile time | Review after nodes |
+| **`interrupt()` (recommended)** | Inside node code | Human-in-the-loop, conditional pausing. Resume with `Command(resume=value)` |
+| `interrupt_before` | At compile time | **Debugging only, not for HITL.** Resume with `invoke(None, config)` |
+| `interrupt_after` | At compile time | **Debugging only, not for HITL.** Resume with `invoke(None, config)` |
 
 </interrupt-type-selection>
 
@@ -270,7 +270,7 @@ result = await graph.invoke(new Command({ resume: "approve" }), config);
 
 <ex-static-breakpoints>
 <python>
-Set compile-time breakpoints to pause before specific nodes.
+Set compile-time breakpoints for debugging. Not recommended for human-in-the-loop — use `interrupt()` instead.
 ```python
 graph = (
     StateGraph(State)
@@ -291,7 +291,7 @@ graph.invoke(None, config)  # Resume
 ```
 </python>
 <typescript>
-Set compile-time breakpoints to pause before specific nodes.
+Set compile-time breakpoints for debugging. Not recommended for human-in-the-loop — use `interrupt()` instead.
 ```typescript
 const graph = new StateGraph(State)
   .addNode("step1", step1)

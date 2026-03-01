@@ -1,6 +1,6 @@
 ---
 name: LangGraph Fundamentals
-description: "INVOKE THIS SKILL when writing ANY LangGraph code. Covers StateGraph creation, node functions, edges, state schemas with reducers (Annotated), and the Command API. CRITICAL: Contains fixes for returning partial state updates (not full state), missing reducers, and mutable defaults."
+description: "INVOKE THIS SKILL when writing ANY LangGraph code. Covers StateGraph creation, node functions, edges, state schemas with reducers (Annotated), and the Command API."
 ---
 
 <overview>
@@ -20,7 +20,7 @@ Graphs must be `compile()`d before execution.
 | Use LangGraph When | Use Alternatives When |
 |-------------------|----------------------|
 | Need fine-grained control over agent orchestration | Quick prototyping → LangChain agents |
-| Building complex workflows with branching/loops | Simple stateless workflows → LCEL |
+| Building complex workflows with branching/loops | Simple stateless workflows → LangChain direct |
 | Require human-in-the-loop, persistence | Batteries-included features → Deep Agents |
 
 </when-to-use-langgraph>

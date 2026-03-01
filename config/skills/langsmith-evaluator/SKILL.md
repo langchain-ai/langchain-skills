@@ -200,26 +200,48 @@ Uploaded evaluators have very limited package access for security reasons! DO NO
 
 You must specify one. Global evaluators are not supported.
 
-```bash
-# Python: python upload_evaluators.py ...
-# TypeScript: npx tsx upload_evaluators.ts ...
+<python>
 
+```bash
 # List all evaluators
-upload_evaluators.py list
+python upload_evaluators.py list
 
 # Upload offline evaluator (attached to dataset)
-upload_evaluators.py upload my_evaluators.py \
+python upload_evaluators.py upload my_evaluators.py \
   --name "Trajectory Match" --function trajectory_evaluator \
   --dataset "My Dataset" --replace
 
 # Upload online evaluator (attached to project)
-upload_evaluators.py upload my_evaluators.py \
+python upload_evaluators.py upload my_evaluators.py \
   --name "Quality Check" --function quality_check \
   --project "Production Agent" --replace
 
 # Delete
-upload_evaluators.py delete "Trajectory Match"
+python upload_evaluators.py delete "Trajectory Match"
 ```
+
+</python>
+<typescript>
+
+```bash
+# List all evaluators
+npx tsx upload_evaluators.ts list
+
+# Upload offline evaluator (attached to dataset)
+npx tsx upload_evaluators.ts upload my_evaluators.js \
+  --name "Trajectory Match" --function trajectoryEvaluator \
+  --dataset "My Dataset" --replace
+
+# Upload online evaluator (attached to project)
+npx tsx upload_evaluators.ts upload my_evaluators.js \
+  --name "Quality Check" --function qualityCheck \
+  --project "Production Agent" --replace
+
+# Delete
+npx tsx upload_evaluators.ts delete "Trajectory Match"
+```
+
+</typescript>
 
 **IMPORTANT - Safety Prompts:**
 - The script prompts for confirmation before destructive operations
