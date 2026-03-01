@@ -1,6 +1,6 @@
 ---
 name: LangChain Fundamentals
-description: Create LangChain agents with create_agent, define tools, and use middleware for human-in-the-loop and error handling
+description: Create LangChain agents with create_agent, define tools, and use middleware for human-in-the-loop and error handling.
 ---
 
 <oneliner>
@@ -390,10 +390,3 @@ console.log(result.messages[result.messages.length - 1].content); // Last messag
 ```
 </typescript>
 </fix-accessing-result-wrong>
-
-<related_skills>
-- **langgraph-fundamentals**: For custom graph-based agents with StateGraph
-- **langgraph-persistence**: For advanced persistence patterns with checkpointers
-- **langchain-middleware**: For HITL approval, custom middleware, and structured output
-- **langchain-rag**: For RAG pipelines with vector stores
-</related_skills>

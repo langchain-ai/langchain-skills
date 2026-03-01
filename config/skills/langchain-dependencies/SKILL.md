@@ -24,7 +24,7 @@ The LangChain ecosystem is split into focused, independently-versioned packages.
 |-------------|--------|-------------------|
 | Runtime minimum | **Python 3.10+** | **Node.js 20+** |
 | LangChain | **1.0+ (LTS)** | **1.0+ (LTS)** |
-| LangSmith SDK | >= 0.1.99 | >= 0.1.99 |
+| LangSmith SDK | >= 0.3.0 | >= 0.3.0 |
 
 </environment-requirements>
 
@@ -55,7 +55,7 @@ Both sit on top of `langchain` + `langchain-core` + `langsmith`.
 |---------|------|-------------|
 | `langchain` | Agents, chains, retrieval | 1.0 |
 | `langchain-core` | Base types & interfaces (peer dep) | 1.0 |
-| `langsmith` | Tracing, evaluation, datasets | 0.1.99 |
+| `langsmith` | Tracing, evaluation, datasets | 0.3.0 |
 
 ### Python — orchestration (pick one)
 
@@ -109,7 +109,7 @@ These packages have tighter compatibility requirements — use the latest availa
 |---------|------|-------------|
 | `@langchain/core` | Base types & interfaces (peer dep) | 1.0 |
 | `langchain` | Agents, chains, retrieval | 1.0 |
-| `langsmith` | Tracing, evaluation, datasets | 0.1.99 |
+| `langsmith` | Tracing, evaluation, datasets | 0.3.0 |
 
 ### TypeScript — orchestration (pick one)
 
@@ -158,7 +158,7 @@ Minimal dependency set for a LangGraph project (provider-agnostic).
 langchain>=1.0,<2.0
 langchain-core>=1.0,<2.0
 langgraph>=1.0,<2.0
-langsmith>=0.1.99
+langsmith>=0.3.0
 
 # Add your model provider, e.g.:
 # langchain-openai
@@ -177,7 +177,7 @@ Minimal package.json dependencies for a LangGraph project (provider-agnostic).
     "@langchain/core": "^1.0.0",
     "langchain": "^1.0.0",
     "@langchain/langgraph": "^1.0.0",
-    "langsmith": "^0.1.99"
+    "langsmith": "^0.3.0"
   }
 }
 ```
@@ -192,7 +192,7 @@ Minimal dependency set for a Deep Agents project (provider-agnostic).
 deepagents            # bundles langgraph internally
 langchain>=1.0,<2.0
 langchain-core>=1.0,<2.0
-langsmith>=0.1.99
+langsmith>=0.3.0
 
 # Add your model provider, e.g.:
 # langchain-anthropic
@@ -210,7 +210,7 @@ Minimal package.json dependencies for a Deep Agents project (provider-agnostic).
     "deepagents": "latest",
     "@langchain/core": "^1.0.0",
     "langchain": "^1.0.0",
-    "langsmith": "^0.1.99"
+    "langsmith": "^0.3.0"
   }
 }
 ```
@@ -225,7 +225,7 @@ Adding Tavily search and a vector store to a LangGraph project.
 langchain>=1.0,<2.0
 langchain-core>=1.0,<2.0
 langgraph>=1.0,<2.0
-langsmith>=0.1.99
+langsmith>=0.3.0
 
 # Web search
 langchain-tavily          # use latest; partner package, semver
@@ -253,7 +253,7 @@ Adding Tavily search and a vector store to a LangGraph project.
     "@langchain/core": "^1.0.0",
     "langchain": "^1.0.0",
     "@langchain/langgraph": "^1.0.0",
-    "langsmith": "^0.1.99",
+    "langsmith": "^0.3.0",
     "@langchain/tavily": "latest",
     "@langchain/pinecone": "latest"
   }
@@ -272,7 +272,7 @@ Adding Tavily search and a vector store to a LangGraph project.
 |---------------|------------|-----------------------|
 | `langchain`, `langchain-core` | Strict semver (1.0 LTS) | Allow minor: `>=1.0,<2.0` |
 | `langgraph` / `@langchain/langgraph` | Strict semver (v1 LTS) | Allow minor: `>=1.0,<2.0` |
-| `langsmith` | Strict semver | Allow minor: `>=0.1.99` |
+| `langsmith` | Strict semver | Allow minor: `>=0.3.0` |
 | Dedicated integration packages (e.g. `langchain-tavily`, `langchain-chroma`) | Independently versioned | Allow minor updates; use latest |
 | `langchain-community` | **NOT semver** | Pin exact minor: `>=0.4.0,<0.5.0` |
 | `deepagents` | Follow project releases | Pin to tested version in production |
