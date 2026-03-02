@@ -1,6 +1,6 @@
 ---
 name: langsmith
-description: "This skill shows you how to use LangSmith. You should load this skill anytime the user is working on an LLM-backed AI agent or LLM application, or mentions anything remotely related to tracing, evaluation, experiments, or LangSmith. Use the bundled MCP tools (list_traces, get_trace, list_runs, get_run, list_datasets, show_dataset, list_experiments, show_experiment) to query LangSmith data directly."
+description: "This skill shows you how to use LangSmith. You should load this skill anytime the user is working on an LLM-backed AI agent or LLM application, or mentions anything remotely related to tracing, evaluation, experiments, or LangSmith. IMPORTANT: When this skill is loaded, you MUST immediately and thoroughly read the entire SKILL.md file before taking any action. Do not skim or skip sections — read every section in full, as each contains critical instructions, API patterns, and workflows you need to follow precisely. Use the bundled MCP tools (list_traces, get_trace, list_runs, get_run, list_datasets, show_dataset, list_experiments, show_experiment) to query LangSmith data directly."
 ---
 
 # What is LangSmith
@@ -36,18 +36,28 @@ If `LANGSMITH_PROJECT` is not set, set it in the project's `.env` file so traces
 
 ### Dependencies
 
-**Python:**
-```bash
-# For tracing only
-uv add langsmith
+Install the following packages using whatever package manager your project uses.
 
-# For tracing + pytest evaluations
+**Python** — install `langsmith` (or `langsmith[pytest]` if you plan to write pytest evaluations):
+```bash
+# Examples — use whichever package manager the project already uses
+pip install langsmith
+pip install "langsmith[pytest]"    # includes pytest plugin
+
+uv add langsmith
 uv add "langsmith[pytest]"
+
+poetry add langsmith
+poetry add "langsmith[pytest]"
 ```
 
-**JavaScript/TypeScript:**
+**JavaScript/TypeScript** — install `langsmith`:
 ```bash
+# Examples — use whichever package manager the project already uses
 npm install langsmith
+yarn add langsmith
+pnpm add langsmith
+bun add langsmith
 ```
 
 ---
@@ -284,9 +294,7 @@ Based on `langsmith[pytest]` — the recommended way to write LangSmith regressi
 
 #### Setup
 
-```bash
-uv add "langsmith[pytest]"
-```
+Ensure `langsmith[pytest]` is installed (e.g. `pip install "langsmith[pytest]"`, `uv add "langsmith[pytest]"`, `poetry add "langsmith[pytest]"`, etc.).
 
 #### Environment Variables
 
@@ -424,14 +432,17 @@ Based on the `langsmith` JS SDK (`>= 0.3.1`) — the recommended way to write La
 
 #### Setup
 
+Ensure `langsmith` is installed along with your test runner (`vitest` or `jest`) and `dotenv`. For example:
 ```bash
-# Vitest
-npm install -D vitest dotenv
-npm install langsmith
+# Vitest — use whichever package manager the project already uses
+npm install -D vitest dotenv && npm install langsmith
+yarn add -D vitest dotenv && yarn add langsmith
+pnpm add -D vitest dotenv && pnpm add langsmith
 
-# Jest
-npm install -D jest dotenv
-npm install langsmith
+# Jest — same idea
+npm install -D jest dotenv && npm install langsmith
+yarn add -D jest dotenv && yarn add langsmith
+pnpm add -D jest dotenv && pnpm add langsmith
 ```
 
 #### Config Files
@@ -812,7 +823,7 @@ This is the core autonomous workflow you should follow when helping a user build
 ### 1. SETUP
 - Ensure tracing is enabled (env vars set, `@traceable`/`traceable()` if non-LangChain)
 - Set `LANGSMITH_PROJECT` in `.env` if not already set
-- Install dependencies — Python: `langsmith` / `langsmith[pytest]`; JS/TS: `langsmith` + vitest or jest
+- Install dependencies using whatever package manager the project uses — Python: `langsmith` / `langsmith[pytest]`; JS/TS: `langsmith` + vitest or jest
 
 ### 2. RUN & OBSERVE
 - Run the user's agent
@@ -837,10 +848,12 @@ This is the core autonomous workflow you should follow when helping a user build
 - Python: `LANGSMITH_TEST_SUITE="My Agent" pytest tests/test_evals.py`
 - JS/TS: `vitest run --config ls.vitest.config.ts` (or `jest --config ls.jest.config.cjs`)
 - Check results using `list_experiments(dataset_name="My Agent")`
+- **Even when all tests pass, analyze the traces.** A passing test only means assertions passed — it does not mean the agent behaved correctly. The agent may have taken unnecessary steps, made redundant LLM calls, used the wrong tools before arriving at the right answer, or produced correct output through flawed reasoning. Always drill into experiment traces after a test run to verify that the agent's actual execution path is what you expect, not just that the final output is correct.
 
 ### 6. ONGOING
 - Next time a change is made, run the test suite to catch regressions
 - If a test fails, inspect the experiment using `show_experiment(dataset_name="My Agent", experiment_name="<experiment-name>")`
 - Remember: each experiment IS a tracing project — use the experiment name as the `project` parameter when querying traces
 - Drill into failing traces using `list_traces(project="<experiment-name>", error=true)` then `get_trace(trace_id="<id>", include_io=true)`
+- **Don't stop at failing traces — also spot-check passing ones.** Tests can pass for the wrong reasons (e.g., the agent hallucinated but happened to include the right keyword, or took a wildly inefficient path). After each test run, pick a few passing traces and review them with `get_trace(trace_id="<id>", include_io=true)` to confirm the agent's reasoning and execution path are sound.
 - Fix, re-run, iterate
