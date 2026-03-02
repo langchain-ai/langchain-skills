@@ -22,7 +22,7 @@ dotenv.config();
 
 export const LANGSMITH_API_KEY = process.env.LANGSMITH_API_KEY;
 export const LANGSMITH_API_URL =
-  process.env.LANGSMITH_API_URL || "https://api.smith.langchain.com";
+  process.env.LANGSMITH_ENDPOINT || "https://api.smith.langchain.com";
 export const LANGSMITH_WORKSPACE_ID = process.env.LANGSMITH_WORKSPACE_ID;
 
 // Only validate API key when running as CLI (not when imported for testing)
