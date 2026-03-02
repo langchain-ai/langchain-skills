@@ -1,6 +1,6 @@
 # LangChain Skills
 
-> **⚠️ ALPHA** — This project is in early development. APIs and skill content may change.
+> **⚠️** — This project is in early development. APIs and skill content may change.
 
 Agent skills for building, observing, and evaluating agents with LangChain, LangGraph, LangSmith, and Deep Agents.
 
