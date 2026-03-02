@@ -1,6 +1,6 @@
 ---
 name: LangGraph Persistence & Memory
-description: "INVOKE THIS SKILL when your LangGraph needs to remember state across calls, use memory, or persist conversations. Covers checkpointers (MemorySaver, Postgres), thread_id configuration, and Store for long-term memory."
+description: "INVOKE THIS SKILL when your LangGraph needs to persist state, remember conversations, travel through history, or configure subgraph checkpointer scoping. Covers checkpointers, thread_id, time travel, Store, and subgraph persistence modes."
 ---
 
 <overview>
@@ -19,7 +19,7 @@ LangGraph's persistence layer enables durable execution by checkpointing graph s
 
 | Checkpointer | Use Case | Production Ready |
 |--------------|----------|------------------|
-| `MemorySaver` | Testing, development | No |
+| `InMemorySaver` | Testing, development | No |
 | `SqliteSaver` | Local development | Partial |
 | `PostgresSaver` | Production | Yes |
 
@@ -102,7 +102,6 @@ Configure PostgreSQL-backed checkpointing for production deployments.
 ```python
 from langgraph.checkpoint.postgres import PostgresSaver
 
-# from_conn_string returns a context manager in v3+
 with PostgresSaver.from_conn_string(
     "postgresql://user:pass@localhost/db"
 ) as checkpointer:
@@ -157,6 +156,10 @@ await graph.invoke({ messages: [new HumanMessage("Hi from Bob")] }, bobConfig);
 ```
 </typescript>
 </ex-separate-threads>
+
+---
+
+## State History & Time Travel
 
 <ex-resume-from-checkpoint>
 <python>
@@ -231,6 +234,124 @@ const result = await graph.invoke(null, config);
 
 ---
 
+## Subgraph Checkpointer Scoping
+
+When compiling a subgraph, the `checkpointer` parameter controls persistence behavior. This is critical for subgraphs that use interrupts, need multi-turn memory, or run in parallel.
+
+<subgraph-checkpointer-scoping-table>
+
+| Feature | `checkpointer=False` | `None` (default) | `True` |
+|---|---|---|---|
+| Interrupts (HITL) | No | Yes | Yes |
+| Multi-turn memory | No | No | Yes |
+| Multiple calls (different subgraphs) | Yes | Yes | Warning (namespace conflicts possible) |
+| Multiple calls (same subgraph) | Yes | Yes | No |
+| State inspection | No | Warning (current invocation only) | Yes |
+
+</subgraph-checkpointer-scoping-table>
+
+<subgraph-checkpointer-when-to-use>
+
+### When to use each mode
+
+- **`checkpointer=False`** — Subgraph doesn't need interrupts or persistence. Simplest option, no checkpoint overhead.
+- **`None` (default / omit `checkpointer`)** — Subgraph needs `interrupt()` but not multi-turn memory. Each invocation starts fresh but can pause/resume. Parallel execution works because each invocation gets a unique namespace.
+- **`checkpointer=True`** — Subgraph needs to remember state across invocations (multi-turn conversations). Each call picks up where the last left off.
+
+</subgraph-checkpointer-when-to-use>
+
+<warning-stateful-subgraphs-parallel>
+
+**Warning**: Stateful subgraphs (`checkpointer=True`) do NOT support calling the same subgraph instance multiple times within a single node — the calls write to the same checkpoint namespace and conflict.
+
+</warning-stateful-subgraphs-parallel>
+
+<ex-subgraph-checkpointer-modes>
+<python>
+Choose the right checkpointer mode for your subgraph.
+```python
+# No interrupts needed — opt out of checkpointing
+subgraph = subgraph_builder.compile(checkpointer=False)
+
+# Need interrupts but not cross-invocation persistence (default)
+subgraph = subgraph_builder.compile()
+
+# Need cross-invocation persistence (stateful)
+subgraph = subgraph_builder.compile(checkpointer=True)
+```
+</python>
+<typescript>
+Choose the right checkpointer mode for your subgraph.
+```typescript
+// No interrupts needed — opt out of checkpointing
+const subgraph = subgraphBuilder.compile({ checkpointer: false });
+
+// Need interrupts but not cross-invocation persistence (default)
+const subgraph = subgraphBuilder.compile();
+
+// Need cross-invocation persistence (stateful)
+const subgraph = subgraphBuilder.compile({ checkpointer: true });
+```
+</typescript>
+</ex-subgraph-checkpointer-modes>
+
+<parallel-subgraph-namespacing>
+
+### Parallel subgraph namespacing
+
+When multiple **different** stateful subgraphs run in parallel, wrap each in its own `StateGraph` with a unique node name for stable namespace isolation:
+
+<python>
+```python
+from langgraph.graph import MessagesState, StateGraph
+
+def create_sub_agent(model, *, name, **kwargs):
+    """Wrap an agent with a unique node name for namespace isolation."""
+    agent = create_agent(model=model, name=name, **kwargs)
+    return (
+        StateGraph(MessagesState)
+        .add_node(name, agent)  # unique name -> stable namespace
+        .add_edge("__start__", name)
+        .compile()
+    )
+
+fruit_agent = create_sub_agent(
+    "gpt-4.1-mini", name="fruit_agent",
+    tools=[fruit_info], prompt="...", checkpointer=True,
+)
+veggie_agent = create_sub_agent(
+    "gpt-4.1-mini", name="veggie_agent",
+    tools=[veggie_info], prompt="...", checkpointer=True,
+)
+```
+</python>
+<typescript>
+```typescript
+import { StateGraph, StateSchema, MessagesValue, START } from "@langchain/langgraph";
+
+function createSubAgent(model: string, { name, ...kwargs }: { name: string; [key: string]: any }) {
+  const agent = createAgent({ model, name, ...kwargs });
+  return new StateGraph(new StateSchema({ messages: MessagesValue }))
+    .addNode(name, agent)  // unique name -> stable namespace
+    .addEdge(START, name)
+    .compile();
+}
+
+const fruitAgent = createSubAgent("gpt-4.1-mini", {
+  name: "fruit_agent", tools: [fruitInfo], prompt: "...", checkpointer: true,
+});
+const veggieAgent = createSubAgent("gpt-4.1-mini", {
+  name: "veggie_agent", tools: [veggieInfo], prompt: "...", checkpointer: true,
+});
+```
+</typescript>
+
+Note: Subgraphs added as nodes (via `add_node`) already get name-based namespaces automatically and don't need this wrapper.
+
+</parallel-subgraph-namespacing>
+
+---
+
 ## Long-Term Memory (Store)
 
 <ex-long-term-memory-store>
@@ -244,9 +365,11 @@ store = InMemoryStore()
 # Save user preference (available across ALL threads)
 store.put(("alice", "preferences"), "language", {"preference": "short responses"})
 
-# Node with store injection
-def respond(state, *, store):
-    prefs = store.get((state["user_id"], "preferences"), "language")
+# Node with store — access via runtime
+from langgraph.runtime import Runtime
+
+def respond(state, runtime: Runtime):
+    prefs = runtime.store.get((state["user_id"], "preferences"), "language")
     return {"response": f"Using preference: {prefs.value}"}
 
 # Compile with BOTH checkpointer and store
@@ -299,20 +422,9 @@ store.delete(("user-123", "facts"), "location")  # Delete
 </python>
 </ex-store-operations>
 
-<boundaries>
-### What You CAN Configure
+---
 
-- Choose checkpointer implementation
-- Specify thread IDs for conversation isolation
-- Retrieve/update state at any checkpoint
-- Use stores for cross-thread memory
-
-### What You CANNOT Configure
-
-- Checkpoint timing (happens every super-step)
-- Share short-term memory across threads
-- Skip checkpointer for persistence features
-</boundaries>
+## Fixes
 
 <fix-thread-id-required>
 <python>
@@ -374,20 +486,20 @@ await checkpointer.setup(); // only needed on first use to create tables
 
 <fix-resume-with-none>
 <python>
-Pass None to resume from checkpoint instead of providing new input.
+Pass None to resume from checkpoint — providing new input starts a new run from `__start__`.
 ```python
-# WRONG: Providing new input restarts from beginning
-graph.invoke({"messages": ["New message"]}, config)  # Restarts!
+# This starts a NEW run from __start__, merging input through reducers
+graph.invoke({"messages": ["New message"]}, config)
 
-# CORRECT: Use None to resume from checkpoint
+# Use None to resume from the last checkpoint (e.g., after an interrupt)
 graph.invoke(None, config)  # Continues from where it paused
 ```
 </python>
 <typescript>
-Pass null to resume from checkpoint instead of providing new input.
+Pass null to resume from checkpoint — providing new input starts a new run from the beginning.
 ```typescript
-// WRONG: Providing new input restarts from beginning
-await graph.invoke({ messages: ["New message"] }, config);  // Restarts!
+// This starts a NEW run from __start__, merging input through reducers
+await graph.invoke({ messages: ["New message"] }, config);
 
 // CORRECT: Use null to resume from checkpoint
 await graph.invoke(null, config);  // Continues from where it paused
@@ -430,17 +542,17 @@ await graph.updateState(config, { items: new Overwrite(["C"]) });  // Result: ["
 
 <fix-store-injection>
 <python>
-Inject store via keyword parameter to access it in graph nodes.
+Access store via the Runtime object in graph nodes.
 ```python
 # WRONG: Store not available in node
 def my_node(state):
     store.put(...)  # NameError! store not defined
 
-# CORRECT: Inject store via keyword parameter
-from langgraph.store.base import BaseStore
+# CORRECT: Access store via runtime
+from langgraph.runtime import Runtime
 
-def my_node(state, *, store: BaseStore):
-    store.put(...)  # Correct store instance injected
+def my_node(state, runtime: Runtime):
+    runtime.store.put(...)  # Correct store instance
 ```
 </python>
 <typescript>
@@ -458,3 +570,13 @@ const myNode = async (state, config) => {
 ```
 </typescript>
 </fix-store-injection>
+
+<boundaries>
+### What You Should NOT Do
+
+- Use `InMemorySaver` in production — data lost on restart; use `PostgresSaver`
+- Forget `thread_id` — state won't persist without it
+- Expect `update_state` to bypass reducers — it passes through them; use `Overwrite` to replace
+- Run the same stateful subgraph (`checkpointer=True`) in parallel within one node — namespace conflict
+- Access store directly in a node — use `runtime.store` via `Runtime` param (Python) or `config.store` (TS)
+</boundaries>

@@ -1,6 +1,6 @@
 ---
 name: LangGraph Fundamentals
-description: "INVOKE THIS SKILL when writing ANY LangGraph code. Covers StateGraph creation, node functions, edges, state schemas with reducers (Annotated), and the Command API."
+description: "INVOKE THIS SKILL when writing ANY LangGraph code. Covers StateGraph, state schemas, nodes, edges, Command, subgraph patterns, invoke, and streaming."
 ---
 
 <overview>
@@ -14,6 +14,20 @@ LangGraph models agent workflows as **directed graphs**:
 
 Graphs must be `compile()`d before execution.
 </overview>
+
+<design-methodology>
+
+### Designing a LangGraph application
+
+Follow these 5 steps when building a new graph:
+
+1. **Map out discrete steps** — sketch a flowchart of your workflow. Each step becomes a node.
+2. **Identify what each step does** — categorize nodes: LLM step, data step, action step, or user input step. For each, determine static context (prompt), dynamic context (from state), retry strategy, and desired outcome.
+3. **Design your state** — state is shared memory for all nodes. Store raw data, format prompts on-demand inside nodes.
+4. **Build your nodes** — implement each step as a function that takes state and returns partial updates.
+5. **Wire it together** — connect nodes with edges, add conditional routing, compile with a checkpointer if needed.
+
+</design-methodology>
 
 <when-to-use-langgraph>
 
@@ -146,7 +160,62 @@ const myNode = async (state: typeof State.State) => {
 
 ---
 
-## Building Graphs
+## Nodes
+
+<node-function-signatures>
+
+Node functions accept these arguments:
+
+<python>
+
+| Signature | When to Use |
+|-----------|-------------|
+| `def node(state: State)` | Simple nodes that only need state |
+| `def node(state: State, config: RunnableConfig)` | Need thread_id, tags, or configurable values |
+| `def node(state: State, runtime: Runtime[Context])` | Need runtime context, store, or stream_writer |
+
+```python
+from langchain_core.runnables import RunnableConfig
+from langgraph.runtime import Runtime
+
+def plain_node(state: State):
+    return {"results": "done"}
+
+def node_with_config(state: State, config: RunnableConfig):
+    thread_id = config["configurable"]["thread_id"]
+    return {"results": f"Thread: {thread_id}"}
+
+def node_with_runtime(state: State, runtime: Runtime[Context]):
+    user_id = runtime.context.user_id
+    return {"results": f"User: {user_id}"}
+```
+</python>
+<typescript>
+
+| Signature | When to Use |
+|-----------|-------------|
+| `(state) => {...}` | Simple nodes that only need state |
+| `(state, config) => {...}` | Need thread_id, tags, or configurable values |
+
+```typescript
+import { GraphNode, StateSchema } from "@langchain/langgraph";
+
+const plainNode: GraphNode<typeof State> = (state) => {
+  return { results: "done" };
+};
+
+const nodeWithConfig: GraphNode<typeof State> = (state, config) => {
+  const threadId = config?.configurable?.thread_id;
+  return { results: `Thread: ${threadId}` };
+};
+```
+</typescript>
+
+</node-function-signatures>
+
+---
+
+## Edges
 
 <edge-type-selection>
 
@@ -290,71 +359,6 @@ const graph = new StateGraph(State)
 </typescript>
 </ex-conditional-edges>
 
-<ex-command-state-and-routing>
-<python>
-Command lets you update state AND choose next node in one return.
-```python
-from langgraph.types import Command
-from typing import Literal
-
-class State(TypedDict):
-    count: int
-    result: str
-
-def node_a(state: State) -> Command[Literal["node_b", "node_c"]]:
-    """Update state AND decide next node in one return."""
-    new_count = state["count"] + 1
-    if new_count > 5:
-        return Command(update={"count": new_count}, goto="node_c")
-    return Command(update={"count": new_count}, goto="node_b")
-
-graph = (
-    StateGraph(State)
-    .add_node("node_a", node_a)
-    .add_node("node_b", lambda s: {"result": "B"})
-    .add_node("node_c", lambda s: {"result": "C"})
-    .add_edge(START, "node_a")
-    .add_edge("node_b", END)
-    .add_edge("node_c", END)
-    .compile()
-)
-```
-</python>
-<typescript>
-Return Command with update and goto to combine state change with routing.
-```typescript
-import { StateGraph, StateSchema, START, END, Command } from "@langchain/langgraph";
-import { z } from "zod";
-
-const State = new StateSchema({
-  count: z.number().default(0),
-  result: z.string().default(""),
-});
-
-const nodeA = async (state: typeof State.State) => {
-  const newCount = state.count + 1;
-  if (newCount > 5) {
-    return new Command({ update: { count: newCount }, goto: "node_c" });
-  }
-  return new Command({ update: { count: newCount }, goto: "node_b" });
-};
-
-const graph = new StateGraph(State)
-  .addNode("node_a", nodeA, { ends: ["node_b", "node_c"] })
-  .addNode("node_b", async () => ({ result: "B" }))
-  .addNode("node_c", async () => ({ result: "C" }))
-  .addEdge(START, "node_a")
-  .addEdge("node_b", END)
-  .addEdge("node_c", END)
-  .compile();
-```
-</typescript>
-</ex-command-state-and-routing>
-
-<ex-map-reduce-with-send>
-Fan-out with Send: return `[Send("worker", {...})]` from a conditional edge to spawn parallel workers. Requires a reducer on the results field. A deep understanding of Send and execution patterns is essential for complex workflows.
-</ex-map-reduce-with-send>
-
 <ex-graph-with-loop>
 <python>
 Conditional edge to END prevents infinite loops.
@@ -416,6 +420,536 @@ console.log(result.count);  // 5
 ```
 </typescript>
 </ex-graph-with-loop>
+
+---
+
+## Command
+
+Command combines state updates and routing in a single return value. Fields:
+- **`update`**: State updates to apply (like returning a dict from a node)
+- **`goto`**: Node name(s) to navigate to next
+- **`graph`**: Target graph — `None` (current) or `Command.PARENT` (closest parent)
+- **`resume`**: Value to resume after `interrupt()` — see human-in-the-loop skill
+
+<ex-command-state-and-routing>
+<python>
+Command lets you update state AND choose next node in one return.
+```python
+from langgraph.types import Command
+from typing import Literal
+
+class State(TypedDict):
+    count: int
+    result: str
+
+def node_a(state: State) -> Command[Literal["node_b", "node_c"]]:
+    """Update state AND decide next node in one return."""
+    new_count = state["count"] + 1
+    if new_count > 5:
+        return Command(update={"count": new_count}, goto="node_c")
+    return Command(update={"count": new_count}, goto="node_b")
+
+graph = (
+    StateGraph(State)
+    .add_node("node_a", node_a)
+    .add_node("node_b", lambda s: {"result": "B"})
+    .add_node("node_c", lambda s: {"result": "C"})
+    .add_edge(START, "node_a")
+    .add_edge("node_b", END)
+    .add_edge("node_c", END)
+    .compile()
+)
+```
+</python>
+<typescript>
+Return Command with update and goto to combine state change with routing.
+```typescript
+import { StateGraph, StateSchema, START, END, Command } from "@langchain/langgraph";
+import { z } from "zod";
+
+const State = new StateSchema({
+  count: z.number().default(0),
+  result: z.string().default(""),
+});
+
+const nodeA = async (state: typeof State.State) => {
+  const newCount = state.count + 1;
+  if (newCount > 5) {
+    return new Command({ update: { count: newCount }, goto: "node_c" });
+  }
+  return new Command({ update: { count: newCount }, goto: "node_b" });
+};
+
+const graph = new StateGraph(State)
+  .addNode("node_a", nodeA, { ends: ["node_b", "node_c"] })
+  .addNode("node_b", async () => ({ result: "B" }))
+  .addNode("node_c", async () => ({ result: "C" }))
+  .addEdge(START, "node_a")
+  .addEdge("node_b", END)
+  .addEdge("node_c", END)
+  .compile();
+```
+</typescript>
+</ex-command-state-and-routing>
+
+<ex-command-parent-navigation>
+<python>
+Use `Command(graph=Command.PARENT)` to navigate from a subgraph to a node in the parent graph.
+```python
+from langgraph.types import Command
+from typing import Literal
+
+def subgraph_node(state: SubgraphState) -> Command[Literal["other_subgraph"]]:
+    return Command(
+        update={"foo": "bar"},
+        goto="other_subgraph",  # node in the PARENT graph
+        graph=Command.PARENT
+    )
+```
+</python>
+<typescript>
+Use `Command.PARENT` to route from subgraph to parent graph nodes.
+```typescript
+import { Command } from "@langchain/langgraph";
+
+const subgraphNode = async (state: typeof SubgraphState.State) => {
+  return new Command({
+    update: { foo: "bar" },
+    goto: "otherSubgraph",  // node in the PARENT graph
+    graph: Command.PARENT,
+  });
+};
+```
+</typescript>
+</ex-command-parent-navigation>
+
+<command-return-type-annotations>
+
+**Python**: Use `Command[Literal["node_a", "node_b"]]` as the return type annotation to declare valid goto destinations.
+
+**TypeScript**: Pass `{ ends: ["node_a", "node_b"] }` as the third argument to `addNode` to declare valid goto destinations.
+
+</command-return-type-annotations>
+
+<warning-command-static-edges>
+
+**Warning**: `Command` only adds **dynamic** edges — static edges defined with `add_edge` / `addEdge` still execute. If `node_a` returns `Command(goto="node_c")` and you also have `graph.add_edge("node_a", "node_b")`, **both** `node_b` and `node_c` will run.
+
+</warning-command-static-edges>
+
+<fix-command-as-input-antipattern>
+
+### Command-as-input antipattern
+
+`Command(resume=...)` is the **only** Command pattern intended as input to `invoke()`/`stream()`. Do NOT pass `Command(update=...)` as input to continue multi-turn conversations — it resumes from the latest checkpoint (last step that ran, not `__start__`), so the graph appears stuck if it already finished.
+
+<python>
+```python
+# WRONG — graph resumes from the latest checkpoint, appears stuck
+graph.invoke(Command(update={
+    "messages": [{"role": "user", "content": "follow up"}]
+}), config)
+
+# CORRECT — plain dict restarts from __start__
+graph.invoke({
+    "messages": [{"role": "user", "content": "follow up"}]
+}, config)
+```
+</python>
+<typescript>
+```typescript
+// WRONG — graph resumes from the latest checkpoint, appears stuck
+await graph.invoke(new Command({ update: { messages: [{ role: "user", content: "follow up" }] } }), config);
+
+// CORRECT — plain object restarts from __start__
+await graph.invoke({ messages: [{ role: "user", content: "follow up" }] }, config);
+```
+</typescript>
+</fix-command-as-input-antipattern>
+
+---
+
+## Subgraph Patterns
+
+Two patterns for composing subgraphs, depending on whether the parent and subgraph share state keys:
+
+<subgraph-communication-decision>
+
+| Scenario | Pattern | How |
+|----------|---------|-----|
+| Different state schemas | Call subgraph inside a node | Wrapper function transforms state |
+| Shared state keys | Add compiled subgraph as a node | Pass subgraph directly to `add_node` |
+
+</subgraph-communication-decision>
+
+<ex-call-subgraph-inside-node>
+<python>
+Call a subgraph inside a node when parent and subgraph have different state schemas.
+```python
+from typing_extensions import TypedDict
+from langgraph.graph.state import StateGraph, START
+
+class SubgraphState(TypedDict):
+    bar: str
+
+def subgraph_node_1(state: SubgraphState):
+    return {"bar": "hi! " + state["bar"]}
+
+subgraph_builder = StateGraph(SubgraphState)
+subgraph_builder.add_node(subgraph_node_1)
+subgraph_builder.add_edge(START, "subgraph_node_1")
+subgraph = subgraph_builder.compile()
+
+# Parent graph
+class State(TypedDict):
+    foo: str
+
+def call_subgraph(state: State):
+    # Transform parent state to subgraph state
+    subgraph_output = subgraph.invoke({"bar": state["foo"]})
+    # Transform response back to parent state
+    return {"foo": subgraph_output["bar"]}
+
+builder = StateGraph(State)
+builder.add_node("node_1", call_subgraph)
+builder.add_edge(START, "node_1")
+graph = builder.compile()
+```
+</python>
+<typescript>
+Call a subgraph inside a node when schemas differ.
+```typescript
+import { StateGraph, StateSchema, START } from "@langchain/langgraph";
+import { z } from "zod";
+
+const SubgraphState = new StateSchema({ bar: z.string() });
+
+const subgraph = new StateGraph(SubgraphState)
+  .addNode("subgraphNode1", (state) => ({ bar: "hi! " + state.bar }))
+  .addEdge(START, "subgraphNode1")
+  .compile();
+
+// Parent graph
+const State = new StateSchema({ foo: z.string() });
+
+const graph = new StateGraph(State)
+  .addNode("node1", async (state) => {
+    const subgraphOutput = await subgraph.invoke({ bar: state.foo });
+    return { foo: subgraphOutput.bar };
+  })
+  .addEdge(START, "node1")
+  .compile();
+```
+</typescript>
+</ex-call-subgraph-inside-node>
+
+<ex-add-subgraph-as-node>
+<python>
+Add a compiled subgraph directly as a node when parent and subgraph share state keys.
+```python
+from typing_extensions import TypedDict
+from langgraph.graph.state import StateGraph, START
+
+class State(TypedDict):
+    foo: str
+
+def subgraph_node_1(state: State):
+    return {"foo": "hi! " + state["foo"]}
+
+subgraph_builder = StateGraph(State)
+subgraph_builder.add_node(subgraph_node_1)
+subgraph_builder.add_edge(START, "subgraph_node_1")
+subgraph = subgraph_builder.compile()
+
+# Parent graph — pass compiled subgraph directly
+builder = StateGraph(State)
+builder.add_node("node_1", subgraph)
+builder.add_edge(START, "node_1")
+graph = builder.compile()
+```
+</python>
+<typescript>
+Add a compiled subgraph directly as a node when schemas are shared.
+```typescript
+import { StateGraph, StateSchema, START } from "@langchain/langgraph";
+import { z } from "zod";
+
+const State = new StateSchema({ foo: z.string() });
+
+const subgraph = new StateGraph(State)
+  .addNode("subgraphNode1", (state) => ({ foo: "hi! " + state.foo }))
+  .addEdge(START, "subgraphNode1")
+  .compile();
+
+// Parent graph — pass compiled subgraph directly
+const graph = new StateGraph(State)
+  .addNode("node1", subgraph)
+  .addEdge(START, "node1")
+  .compile();
+```
+</typescript>
+</ex-add-subgraph-as-node>
+
+---
+
+## Send API
+
+Fan-out with `Send`: return `[Send("worker", {...})]` from a conditional edge to spawn parallel workers. Requires a reducer on the results field.
+
+<ex-orchestrator-worker>
+<python>
+Fan out tasks to parallel workers using the Send API and aggregate results.
+```python
+from langgraph.types import Send
+from typing import Annotated
+import operator
+
+class OrchestratorState(TypedDict):
+    tasks: list[str]
+    results: Annotated[list, operator.add]
+    summary: str
+
+def orchestrator(state: OrchestratorState):
+    """Fan out tasks to workers."""
+    return [Send("worker", {"task": task}) for task in state["tasks"]]
+
+def worker(state: dict) -> dict:
+    return {"results": [f"Completed: {state['task']}"]}
+
+def synthesize(state: OrchestratorState) -> dict:
+    return {"summary": f"Processed {len(state['results'])} tasks"}
+
+graph = (
+    StateGraph(OrchestratorState)
+    .add_node("worker", worker)
+    .add_node("synthesize", synthesize)
+    .add_conditional_edges(START, orchestrator, ["worker"])
+    .add_edge("worker", "synthesize")
+    .add_edge("synthesize", END)
+    .compile()
+)
+
+result = graph.invoke({"tasks": ["Task A", "Task B", "Task C"]})
+```
+</python>
+<typescript>
+Fan out tasks to parallel workers using the Send API and aggregate results.
+```typescript
+import { Send, StateGraph, StateSchema, ReducedValue, START, END } from "@langchain/langgraph";
+import { z } from "zod";
+
+const State = new StateSchema({
+  tasks: z.array(z.string()),
+  results: new ReducedValue(
+    z.array(z.string()).default(() => []),
+    { reducer: (curr, upd) => curr.concat(upd) }
+  ),
+  summary: z.string().default(""),
+});
+
+const orchestrator = (state: typeof State.State) => {
+  return state.tasks.map((task) => new Send("worker", { task }));
+};
+
+const worker = async (state: { task: string }) => {
+  return { results: [`Completed: ${state.task}`] };
+};
+
+const synthesize = async (state: typeof State.State) => {
+  return { summary: `Processed ${state.results.length} tasks` };
+};
+
+const graph = new StateGraph(State)
+  .addNode("worker", worker)
+  .addNode("synthesize", synthesize)
+  .addConditionalEdges(START, orchestrator, ["worker"])
+  .addEdge("worker", "synthesize")
+  .addEdge("synthesize", END)
+  .compile();
+```
+</typescript>
+</ex-orchestrator-worker>
+
+<fix-send-accumulator>
+<python>
+Use a reducer to accumulate parallel worker results (otherwise last worker overwrites).
+```python
+# WRONG: No reducer - last worker overwrites
+class State(TypedDict):
+    results: list
+
+# CORRECT
+class State(TypedDict):
+    results: Annotated[list, operator.add]  # Accumulates
+```
+</python>
+<typescript>
+Use ReducedValue to accumulate parallel worker results.
+```typescript
+// WRONG: No reducer
+const State = new StateSchema({ results: z.array(z.string()) });
+
+// CORRECT
+const State = new StateSchema({
+  results: new ReducedValue(z.array(z.string()).default(() => []), { reducer: (curr, upd) => curr.concat(upd) }),
+});
+```
+</typescript>
+</fix-send-accumulator>
+
+---
+
+## Running Graphs: Invoke and Stream
+
+<invoke-basics>
+
+Call `graph.invoke(input, config)` to run a graph to completion and return the final state.
+
+<python>
+```python
+result = graph.invoke({"input": "hello"})
+# With config (for persistence, tags, etc.)
+result = graph.invoke({"input": "hello"}, {"configurable": {"thread_id": "1"}})
+```
+</python>
+<typescript>
+```typescript
+const result = await graph.invoke({ input: "hello" });
+// With config
+const result = await graph.invoke({ input: "hello" }, { configurable: { thread_id: "1" } });
+```
+</typescript>
+
+</invoke-basics>
+
+<stream-mode-selection>
+
+| Mode | What it Streams | Use Case |
+|------|----------------|----------|
+| `values` | Full state after each step | Monitor complete state |
+| `updates` | State deltas | Track incremental updates |
+| `messages` | LLM tokens + metadata | Chat UIs |
+| `custom` | User-defined data | Progress indicators |
+
+</stream-mode-selection>
+
+<ex-stream-llm-tokens>
+<python>
+Stream LLM tokens in real-time for chat UI display.
+```python
+for chunk in graph.stream(
+    {"messages": [HumanMessage("Hello")]},
+    stream_mode="messages"
+):
+    token, metadata = chunk
+    if hasattr(token, "content"):
+        print(token.content, end="", flush=True)
+```
+</python>
+<typescript>
+Stream LLM tokens in real-time for chat UI display.
+```typescript
+for await (const chunk of graph.stream(
+  { messages: [new HumanMessage("Hello")] },
+  { streamMode: "messages" }
+)) {
+  const [token, metadata] = chunk;
+  if (token.content) {
+    process.stdout.write(token.content);
+  }
+}
+```
+</typescript>
+</ex-stream-llm-tokens>
+
+<ex-stream-custom-data>
+<python>
+Emit custom progress updates from within nodes using the stream writer.
+```python
+from langgraph.config import get_stream_writer
+
+def my_node(state):
+    writer = get_stream_writer()
+    writer("Processing step 1...")
+    # Do work
+    writer("Complete!")
+    return {"result": "done"}
+
+for chunk in graph.stream({"data": "test"}, stream_mode="custom"):
+    print(chunk)
+```
+</python>
+<typescript>
+Emit custom progress updates from within nodes using the stream writer.
+```typescript
+import { getWriter } from "@langchain/langgraph";
+
+const myNode = async (state: typeof State.State) => {
+  const writer = getWriter();
+  writer("Processing step 1...");
+  // Do work
+  writer("Complete!");
+  return { result: "done" };
+};
+
+for await (const chunk of graph.stream({ data: "test" }, { streamMode: "custom" })) {
+  console.log(chunk);
+}
+```
+</typescript>
+</ex-stream-custom-data>
+
+<ex-multiple-stream-modes>
+<python>
+Stream multiple modes simultaneously.
+```python
+# Stream multiple modes simultaneously
+for mode, chunk in graph.stream(
+    {"messages": [HumanMessage("Hi")]},
+    stream_mode=["updates", "messages", "custom"]
+):
+    print(f"{mode}: {chunk}")
+```
+</python>
+</ex-multiple-stream-modes>
+
+<fix-messages-mode-requires-llm>
+<python>
+Messages stream mode requires an LLM to be invoked.
+```python
+# WRONG: No LLM called - nothing streamed
+def node(state):
+    return {"output": "static text"}
+
+# CORRECT
+def node(state):
+    response = model.invoke(state["messages"])
+    return {"messages": [response]}
+```
+</python>
+</fix-messages-mode-requires-llm>
+
+<fix-custom-mode-needs-stream-writer>
+<python>
+Use get_stream_writer() to emit custom data.
+```python
+# WRONG: print() isn't streamed
+def node(state):
+    print("Processing...")
+    return {"data": "done"}
+
+# CORRECT
+def node(state):
+    writer = get_stream_writer()
+    writer("Processing...")  # Streamed!
+    return {"data": "done"}
+```
+</python>
+</fix-custom-mode-needs-stream-writer>
+
+---
+
+## Common Fixes
 
 <fix-compile-before-execution>
 <python>
@@ -496,17 +1030,11 @@ builder.addNode("router", routerFn, { ends: ["node_b", "node_c"] });
 </fix-common-mistakes>
 
 <boundaries>
-### What You CAN Configure
+### What You Should NOT Do
 
-- Define custom state schemas with TypedDict/StateSchema
-- Add reducers to control how state updates are merged
-- Create nodes (any function) and add static/conditional edges
-- Use Command for combined state update + routing
-- Create loops with conditional termination
-
-### What You CANNOT Configure
-
-- Modify START/END behavior
-- Access state outside node functions
-- Modify state directly (must return partial update dicts)
+- Mutate state directly — always return partial update dicts from nodes
+- Pass `Command(update=...)` as invoke input — use plain dict for multi-turn conversations
+- Route back to START — it's entry-only; use a named node instead
+- Forget reducers on list fields — without one, last write wins
+- Mix static edges with Command goto without understanding both will execute
 </boundaries>
