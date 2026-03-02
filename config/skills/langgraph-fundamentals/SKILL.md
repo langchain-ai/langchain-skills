@@ -359,68 +359,6 @@ const graph = new StateGraph(State)
 </typescript>
 </ex-conditional-edges>
 
-<ex-graph-with-loop>
-<python>
-Conditional edge to END prevents infinite loops.
-```python
-from langgraph.graph import StateGraph, START, END
-
-class State(TypedDict):
-    count: int
-    max_iterations: int
-
-def increment(state: State) -> dict:
-    return {"count": state["count"] + 1}
-
-def should_continue(state: State) -> str:
-    if state["count"] >= state["max_iterations"]:
-        return END
-    return "increment"
-
-graph = (
-    StateGraph(State)
-    .add_node("increment", increment)
-    .add_edge(START, "increment")
-    .add_conditional_edges("increment", should_continue)
-    .compile()
-)
-
-result = graph.invoke({"count": 0, "max_iterations": 5})
-print(result["count"])  # 5
-```
-</python>
-<typescript>
-Return END from conditional function to terminate loop.
-```typescript
-import { StateGraph, StateSchema, START, END } from "@langchain/langgraph";
-import { z } from "zod";
-
-const State = new StateSchema({
-  count: z.number().default(0),
-  maxIterations: z.number(),
-});
-
-const increment = async (state: typeof State.State) => {
-  return { count: state.count + 1 };
-};
-
-const shouldContinue = (state: typeof State.State) => {
-  if (state.count >= state.maxIterations) return END;
-  return "increment";
-};
-
-const graph = new StateGraph(State)
-  .addNode("increment", increment)
-  .addEdge(START, "increment")
-  .addConditionalEdges("increment", shouldContinue)
-  .compile();
-
-const result = await graph.invoke({ count: 0, maxIterations: 5 });
-console.log(result.count);  // 5
-```
-</typescript>
-</ex-graph-with-loop>
-
 ---
 
 ## Command
@@ -714,54 +652,6 @@ for await (const chunk of graph.stream({ data: "test" }, { streamMode: "custom" 
 </typescript>
 </ex-stream-custom-data>
 
-<ex-multiple-stream-modes>
-<python>
-Stream multiple modes simultaneously.
-```python
-# Stream multiple modes simultaneously
-for mode, chunk in graph.stream(
-    {"messages": [HumanMessage("Hi")]},
-    stream_mode=["updates", "messages", "custom"]
-):
-    print(f"{mode}: {chunk}")
-```
-</python>
-</ex-multiple-stream-modes>
-
-<fix-messages-mode-requires-llm>
-<python>
-Messages stream mode requires an LLM to be invoked.
-```python
-# WRONG: No LLM called - nothing streamed
-def node(state):
-    return {"output": "static text"}
-
-# CORRECT
-def node(state):
-    response = model.invoke(state["messages"])
-    return {"messages": [response]}
-```
-</python>
-</fix-messages-mode-requires-llm>
-
-<fix-custom-mode-needs-stream-writer>
-<python>
-Use get_stream_writer() to emit custom data.
-```python
-# WRONG: print() isn't streamed
-def node(state):
-    print("Processing...")
-    return {"data": "done"}
-
-# CORRECT
-def node(state):
-    writer = get_stream_writer()
-    writer("Processing...")  # Streamed!
-    return {"data": "done"}
-```
-</python>
-</fix-custom-mode-needs-stream-writer>
-
 ---
 
 ## Error Handling
@@ -773,7 +663,7 @@ Match the error type to the right handler:
 | Error Type | Who Fixes | Strategy | Example |
 |---|---|---|---|
 | Transient (network, rate limits) | System | `RetryPolicy(max_attempts=3)` | `add_node(..., retry_policy=...)` |
-| LLM-recoverable (tool failures) | LLM | `Command(update={"error": ...}, goto="agent")` | Error loop back to agent |
+| LLM-recoverable (tool failures) | LLM | `ToolNode(tools, handle_tool_errors=True)` | Error returned as ToolMessage |
 | User-fixable (missing info) | Human | `interrupt({"message": ...})` | Collect missing data (see HITL skill) |
 | Unexpected | Developer | Let bubble up | `raise` |
 
@@ -806,48 +696,28 @@ workflow.addNode(
 </typescript>
 </ex-retry-policy>
 
-<ex-command-error-loop>
+<ex-tool-node-error-handling>
 <python>
-Use Command to loop back to the agent node for LLM-recoverable errors.
+Use ToolNode from langgraph.prebuilt to handle tool execution and errors. When handle_tool_errors=True, errors are returned as ToolMessages so the LLM can recover.
 ```python
-from langgraph.types import Command
-from typing import Literal
+from langgraph.prebuilt import ToolNode
 
-def execute_tool(state: State) -> Command[Literal["agent"]]:
-    try:
-        result = run_tool(state["tool_call"])
-        return Command(update={"tool_result": result}, goto="agent")
-    except ToolError as e:
-        # Let the LLM see what went wrong and try again
-        return Command(
-            update={"tool_result": f"Tool error: {str(e)}"},
-            goto="agent"
-        )
+tool_node = ToolNode(tools, handle_tool_errors=True)
+
+workflow.add_node("tools", tool_node)
 ```
 </python>
 <typescript>
-Use Command to loop back to the agent node for LLM-recoverable errors.
+Use ToolNode from @langchain/langgraph/prebuilt to handle tool execution and errors. When handleToolErrors is true, errors are returned as ToolMessages so the LLM can recover.
 ```typescript
-import { Command, GraphNode } from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
 
-const executeTool: GraphNode<typeof State> = async (state) => {
-  try {
-    const result = await runTool(state.toolCall);
-    return new Command({
-      update: { toolResult: result },
-      goto: "agent",
-    });
-  } catch (error) {
-    // Let the LLM see what went wrong and try again
-    return new Command({
-      update: { toolResult: `Tool error: ${error}` },
-      goto: "agent",
-    });
-  }
-};
+const toolNode = new ToolNode(tools, { handleToolErrors: true });
+
+workflow.addNode("tools", toolNode);
 ```
 </typescript>
-</ex-command-error-loop>
+</ex-tool-node-error-handling>
 
 ---
 
