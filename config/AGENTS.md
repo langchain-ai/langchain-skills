@@ -21,7 +21,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langchain-middleware** - Invoke for structured output with Pydantic
 
 ### LangGraph Skills
-- **langgraph-fundamentals** - Invoke for StateGraph, state schemas, edges, Command, subgraphs, invoke, streaming
+- **langgraph-fundamentals** - Invoke for StateGraph, state schemas, edges, Command, Send, invoke, streaming, error handling
 - **langgraph-persistence** - Invoke for checkpointers, thread_id, time travel, memory, subgraph scoping
 - **langgraph-human-in-the-loop** - Invoke for interrupts, human review, error handling, approval workflows
 

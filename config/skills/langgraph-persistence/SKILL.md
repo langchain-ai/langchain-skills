@@ -383,16 +383,16 @@ graph.invoke({"user_id": "alice"}, {"configurable": {"thread_id": "thread-2"}}) 
 <typescript>
 Use a Store for cross-thread memory to share user preferences across conversations.
 ```typescript
-import { InMemoryStore } from "@langchain/langgraph";
+import { MemoryStore } from "@langchain/langgraph";
 
-const store = new InMemoryStore();
+const store = new MemoryStore();
 
 // Save user preference (available across ALL threads)
 await store.put(["alice", "preferences"], "language", { preference: "short responses" });
 
-// Node with store - access via config
-const respond = async (state: typeof State.State, config: any) => {
-  const item = await config.store.get(["alice", "preferences"], "language");
+// Node with store — access via runtime
+const respond = async (state: typeof State.State, runtime: any) => {
+  const item = await runtime.store?.get(["alice", "preferences"], "language");
   return { response: `Using preference: ${item?.value?.preference}` };
 };
 
@@ -484,28 +484,6 @@ await checkpointer.setup(); // only needed on first use to create tables
 </typescript>
 </fix-inmemory-not-for-production>
 
-<fix-resume-with-none>
-<python>
-Pass None to resume from checkpoint — providing new input starts a new run from `__start__`.
-```python
-# This starts a NEW run from __start__, merging input through reducers
-graph.invoke({"messages": ["New message"]}, config)
-
-# Use None to resume from the last checkpoint (e.g., after an interrupt)
-graph.invoke(None, config)  # Continues from where it paused
-```
-</python>
-<typescript>
-Pass null to resume from checkpoint — providing new input starts a new run from the beginning.
-```typescript
-// This starts a NEW run from __start__, merging input through reducers
-await graph.invoke({ messages: ["New message"] }, config);
-
-// CORRECT: Use null to resume from checkpoint
-await graph.invoke(null, config);  // Continues from where it paused
-```
-</typescript>
-</fix-resume-with-none>
 
 <fix-update-state-with-reducers>
 <python>
@@ -556,16 +534,16 @@ def my_node(state, runtime: Runtime):
 ```
 </python>
 <typescript>
-Access store via config parameter in graph nodes.
+Access store via runtime parameter in graph nodes.
 ```typescript
 // WRONG: Store not available in node
 const myNode = async (state) => {
   store.put(...);  // ReferenceError!
 };
 
-// CORRECT: Access store via config parameter
-const myNode = async (state, config) => {
-  await config.store.put(...);  // Correct store instance
+// CORRECT: Access store via runtime
+const myNode = async (state, runtime) => {
+  await runtime.store?.put(...);  // Correct store instance
 };
 ```
 </typescript>
@@ -578,5 +556,5 @@ const myNode = async (state, config) => {
 - Forget `thread_id` — state won't persist without it
 - Expect `update_state` to bypass reducers — it passes through them; use `Overwrite` to replace
 - Run the same stateful subgraph (`checkpointer=True`) in parallel within one node — namespace conflict
-- Access store directly in a node — use `runtime.store` via `Runtime` param (Python) or `config.store` (TS)
+- Access store directly in a node — use `runtime.store` via the `Runtime` param
 </boundaries>

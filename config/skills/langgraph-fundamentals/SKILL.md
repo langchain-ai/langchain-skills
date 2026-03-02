@@ -1,6 +1,6 @@
 ---
 name: LangGraph Fundamentals
-description: "INVOKE THIS SKILL when writing ANY LangGraph code. Covers StateGraph, state schemas, nodes, edges, Command, subgraph patterns, invoke, and streaming."
+description: "INVOKE THIS SKILL when writing ANY LangGraph code. Covers StateGraph, state schemas, nodes, edges, Command, Send, invoke, streaming, and error handling."
 ---
 
 <overview>
@@ -428,7 +428,6 @@ console.log(result.count);  // 5
 Command combines state updates and routing in a single return value. Fields:
 - **`update`**: State updates to apply (like returning a dict from a node)
 - **`goto`**: Node name(s) to navigate to next
-- **`graph`**: Target graph — `None` (current) or `Command.PARENT` (closest parent)
 - **`resume`**: Value to resume after `interrupt()` — see human-in-the-loop skill
 
 <ex-command-state-and-routing>
@@ -492,37 +491,6 @@ const graph = new StateGraph(State)
 </typescript>
 </ex-command-state-and-routing>
 
-<ex-command-parent-navigation>
-<python>
-Use `Command(graph=Command.PARENT)` to navigate from a subgraph to a node in the parent graph.
-```python
-from langgraph.types import Command
-from typing import Literal
-
-def subgraph_node(state: SubgraphState) -> Command[Literal["other_subgraph"]]:
-    return Command(
-        update={"foo": "bar"},
-        goto="other_subgraph",  # node in the PARENT graph
-        graph=Command.PARENT
-    )
-```
-</python>
-<typescript>
-Use `Command.PARENT` to route from subgraph to parent graph nodes.
-```typescript
-import { Command } from "@langchain/langgraph";
-
-const subgraphNode = async (state: typeof SubgraphState.State) => {
-  return new Command({
-    update: { foo: "bar" },
-    goto: "otherSubgraph",  // node in the PARENT graph
-    graph: Command.PARENT,
-  });
-};
-```
-</typescript>
-</ex-command-parent-navigation>
-
 <command-return-type-annotations>
 
 **Python**: Use `Command[Literal["node_a", "node_b"]]` as the return type annotation to declare valid goto destinations.
@@ -536,159 +504,6 @@ const subgraphNode = async (state: typeof SubgraphState.State) => {
 **Warning**: `Command` only adds **dynamic** edges — static edges defined with `add_edge` / `addEdge` still execute. If `node_a` returns `Command(goto="node_c")` and you also have `graph.add_edge("node_a", "node_b")`, **both** `node_b` and `node_c` will run.
 
 </warning-command-static-edges>
-
-<fix-command-as-input-antipattern>
-
-### Command-as-input antipattern
-
-`Command(resume=...)` is the **only** Command pattern intended as input to `invoke()`/`stream()`. Do NOT pass `Command(update=...)` as input to continue multi-turn conversations — it resumes from the latest checkpoint (last step that ran, not `__start__`), so the graph appears stuck if it already finished.
-
-<python>
-```python
-# WRONG — graph resumes from the latest checkpoint, appears stuck
-graph.invoke(Command(update={
-    "messages": [{"role": "user", "content": "follow up"}]
-}), config)
-
-# CORRECT — plain dict restarts from __start__
-graph.invoke({
-    "messages": [{"role": "user", "content": "follow up"}]
-}, config)
-```
-</python>
-<typescript>
-```typescript
-// WRONG — graph resumes from the latest checkpoint, appears stuck
-await graph.invoke(new Command({ update: { messages: [{ role: "user", content: "follow up" }] } }), config);
-
-// CORRECT — plain object restarts from __start__
-await graph.invoke({ messages: [{ role: "user", content: "follow up" }] }, config);
-```
-</typescript>
-</fix-command-as-input-antipattern>
-
----
-
-## Subgraph Patterns
-
-Two patterns for composing subgraphs, depending on whether the parent and subgraph share state keys:
-
-<subgraph-communication-decision>
-
-| Scenario | Pattern | How |
-|----------|---------|-----|
-| Different state schemas | Call subgraph inside a node | Wrapper function transforms state |
-| Shared state keys | Add compiled subgraph as a node | Pass subgraph directly to `add_node` |
-
-</subgraph-communication-decision>
-
-<ex-call-subgraph-inside-node>
-<python>
-Call a subgraph inside a node when parent and subgraph have different state schemas.
-```python
-from typing_extensions import TypedDict
-from langgraph.graph.state import StateGraph, START
-
-class SubgraphState(TypedDict):
-    bar: str
-
-def subgraph_node_1(state: SubgraphState):
-    return {"bar": "hi! " + state["bar"]}
-
-subgraph_builder = StateGraph(SubgraphState)
-subgraph_builder.add_node(subgraph_node_1)
-subgraph_builder.add_edge(START, "subgraph_node_1")
-subgraph = subgraph_builder.compile()
-
-# Parent graph
-class State(TypedDict):
-    foo: str
-
-def call_subgraph(state: State):
-    # Transform parent state to subgraph state
-    subgraph_output = subgraph.invoke({"bar": state["foo"]})
-    # Transform response back to parent state
-    return {"foo": subgraph_output["bar"]}
-
-builder = StateGraph(State)
-builder.add_node("node_1", call_subgraph)
-builder.add_edge(START, "node_1")
-graph = builder.compile()
-```
-</python>
-<typescript>
-Call a subgraph inside a node when schemas differ.
-```typescript
-import { StateGraph, StateSchema, START } from "@langchain/langgraph";
-import { z } from "zod";
-
-const SubgraphState = new StateSchema({ bar: z.string() });
-
-const subgraph = new StateGraph(SubgraphState)
-  .addNode("subgraphNode1", (state) => ({ bar: "hi! " + state.bar }))
-  .addEdge(START, "subgraphNode1")
-  .compile();
-
-// Parent graph
-const State = new StateSchema({ foo: z.string() });
-
-const graph = new StateGraph(State)
-  .addNode("node1", async (state) => {
-    const subgraphOutput = await subgraph.invoke({ bar: state.foo });
-    return { foo: subgraphOutput.bar };
-  })
-  .addEdge(START, "node1")
-  .compile();
-```
-</typescript>
-</ex-call-subgraph-inside-node>
-
-<ex-add-subgraph-as-node>
-<python>
-Add a compiled subgraph directly as a node when parent and subgraph share state keys.
-```python
-from typing_extensions import TypedDict
-from langgraph.graph.state import StateGraph, START
-
-class State(TypedDict):
-    foo: str
-
-def subgraph_node_1(state: State):
-    return {"foo": "hi! " + state["foo"]}
-
-subgraph_builder = StateGraph(State)
-subgraph_builder.add_node(subgraph_node_1)
-subgraph_builder.add_edge(START, "subgraph_node_1")
-subgraph = subgraph_builder.compile()
-
-# Parent graph — pass compiled subgraph directly
-builder = StateGraph(State)
-builder.add_node("node_1", subgraph)
-builder.add_edge(START, "node_1")
-graph = builder.compile()
-```
-</python>
-<typescript>
-Add a compiled subgraph directly as a node when schemas are shared.
-```typescript
-import { StateGraph, StateSchema, START } from "@langchain/langgraph";
-import { z } from "zod";
-
-const State = new StateSchema({ foo: z.string() });
-
-const subgraph = new StateGraph(State)
-  .addNode("subgraphNode1", (state) => ({ foo: "hi! " + state.foo }))
-  .addEdge(START, "subgraphNode1")
-  .compile();
-
-// Parent graph — pass compiled subgraph directly
-const graph = new StateGraph(State)
-  .addNode("node1", subgraph)
-  .addEdge(START, "node1")
-  .compile();
-```
-</typescript>
-</ex-add-subgraph-as-node>
 
 ---
 
@@ -949,6 +764,93 @@ def node(state):
 
 ---
 
+## Error Handling
+
+Match the error type to the right handler:
+
+<error-handling-table>
+
+| Error Type | Who Fixes | Strategy | Example |
+|---|---|---|---|
+| Transient (network, rate limits) | System | `RetryPolicy(max_attempts=3)` | `add_node(..., retry_policy=...)` |
+| LLM-recoverable (tool failures) | LLM | `Command(update={"error": ...}, goto="agent")` | Error loop back to agent |
+| User-fixable (missing info) | Human | `interrupt({"message": ...})` | Collect missing data (see HITL skill) |
+| Unexpected | Developer | Let bubble up | `raise` |
+
+</error-handling-table>
+
+<ex-retry-policy>
+<python>
+Use RetryPolicy for transient errors (network issues, rate limits).
+```python
+from langgraph.types import RetryPolicy
+
+workflow.add_node(
+    "search_documentation",
+    search_documentation,
+    retry_policy=RetryPolicy(max_attempts=3, initial_interval=1.0)
+)
+```
+</python>
+<typescript>
+Use retryPolicy for transient errors.
+```typescript
+workflow.addNode(
+  "searchDocumentation",
+  searchDocumentation,
+  {
+    retryPolicy: { maxAttempts: 3, initialInterval: 1.0 },
+  },
+);
+```
+</typescript>
+</ex-retry-policy>
+
+<ex-command-error-loop>
+<python>
+Use Command to loop back to the agent node for LLM-recoverable errors.
+```python
+from langgraph.types import Command
+from typing import Literal
+
+def execute_tool(state: State) -> Command[Literal["agent"]]:
+    try:
+        result = run_tool(state["tool_call"])
+        return Command(update={"tool_result": result}, goto="agent")
+    except ToolError as e:
+        # Let the LLM see what went wrong and try again
+        return Command(
+            update={"tool_result": f"Tool error: {str(e)}"},
+            goto="agent"
+        )
+```
+</python>
+<typescript>
+Use Command to loop back to the agent node for LLM-recoverable errors.
+```typescript
+import { Command, GraphNode } from "@langchain/langgraph";
+
+const executeTool: GraphNode<typeof State> = async (state) => {
+  try {
+    const result = await runTool(state.toolCall);
+    return new Command({
+      update: { toolResult: result },
+      goto: "agent",
+    });
+  } catch (error) {
+    // Let the LLM see what went wrong and try again
+    return new Command({
+      update: { toolResult: `Tool error: ${error}` },
+      goto: "agent",
+    });
+  }
+};
+```
+</typescript>
+</ex-command-error-loop>
+
+---
+
 ## Common Fixes
 
 <fix-compile-before-execution>
@@ -1033,7 +935,6 @@ builder.addNode("router", routerFn, { ends: ["node_b", "node_c"] });
 ### What You Should NOT Do
 
 - Mutate state directly — always return partial update dicts from nodes
-- Pass `Command(update=...)` as invoke input — use plain dict for multi-turn conversations
 - Route back to START — it's entry-only; use a named node instead
 - Forget reducers on list fields — without one, last write wins
 - Mix static edges with Command goto without understanding both will execute
