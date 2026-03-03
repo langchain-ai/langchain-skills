@@ -11,7 +11,7 @@ TARGET="claude"  # claude or deepagents
 GLOBAL=false
 FORCE=false
 YES=false
-INCLUDE_PREFIXES=()
+LANGSMITH_ONLY=false
 
 # Usage
 usage() {
@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --langsmith)
-            INCLUDE_PREFIXES+=("langsmith-")
+            LANGSMITH_ONLY=true
             shift
             ;;
         --help|-h)
@@ -108,8 +108,8 @@ if [ "$GLOBAL" = true ]; then
 else
     echo "Scope:     Local (current directory)"
 fi
-if [ ${#INCLUDE_PREFIXES[@]} -gt 0 ]; then
-    echo "Filter:    Only skills starting with: ${INCLUDE_PREFIXES[*]}"
+if [ "$LANGSMITH_ONLY" = true ]; then
+    echo "Filter:    Only LangSmith skills"
 fi
 echo ""
 
@@ -166,18 +166,9 @@ if [ -d "$SCRIPT_DIR/config/skills" ]; then
     mkdir -p "$INSTALL_DIR/skills"
     for skill in "$SCRIPT_DIR/config/skills"/*; do
         skill_name=$(basename "$skill")
-        # If filters are provided, only install matching skills
-        if [ ${#INCLUDE_PREFIXES[@]} -gt 0 ]; then
-            matched=false
-            for prefix in "${INCLUDE_PREFIXES[@]}"; do
-                if [[ "$skill_name" == "$prefix"* ]]; then
-                    matched=true
-                    break
-                fi
-            done
-            if [ "$matched" != true ]; then
-                continue
-            fi
+        # If --langsmith is provided, only install skills prefixed with "langsmith-"
+        if [ "$LANGSMITH_ONLY" = true ] && [[ ! "$skill_name" == langsmith-* ]]; then
+            continue
         fi
         if [ -d "$INSTALL_DIR/skills/$skill_name" ]; then
             if [ "$FORCE" = true ]; then
