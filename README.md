@@ -109,7 +109,7 @@ Then run your coding agent from the directory where you installed (for local ins
 ### LangGraph
 - **langgraph-fundamentals** - StateGraph, nodes, edges, state reducers
 - **langgraph-persistence** - Checkpointers, thread_id, cross-thread memory
-- **langgraph-execution** - Workflows, interrupts, streaming modes
+- **langgraph-human-in-the-loop** - Interrupts, human review, approval workflows
 
 ### LangSmith
 - **langsmith-trace** - Query and export traces (includes helper scripts)
