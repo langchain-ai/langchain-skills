@@ -52,15 +52,18 @@ Output structures vary significantly by framework, agent type, and configuration
 - Upload with: `--project "Project Name"`
 
 **CRITICAL - Return Format:**
-- Return `{"score": value, "comment": "..."}` - the metric key is auto-derived from the function name
 - Each evaluator returns **ONE metric only**. For multiple metrics, create multiple evaluator functions.
 - Do NOT return `{"metric_name": value}` or lists of metrics - this will error.
 
-**CRITICAL - Local vs Uploaded (Python only):**
-- Local `evaluate()`: `run` is a `RunTree` object → use `run.outputs`
-- Uploaded to LangSmith: `run` is a dict → use `run["outputs"]`
-- Handle both: `run.outputs if hasattr(run, "outputs") else run.get("outputs", {})`
-- TypeScript always uses attribute access: `run.outputs?.field`
+**CRITICAL - Local vs Uploaded Differences:**
+
+| | Local `evaluate()` | Uploaded to LangSmith |
+|---|---|---|
+| **Column name** | Python: auto-derived from function name. TypeScript: must include `key` field or column is untitled | Comes from evaluator name set at upload time. Do NOT include `key` — it creates a duplicate column |
+| **Python `run` type** | `RunTree` object → `run.outputs` (attribute) | `dict` → `run["outputs"]` (subscript). Handle both: `run.outputs if hasattr(run, "outputs") else run.get("outputs", {})` |
+| **TypeScript `run` type** | Always attribute access: `run.outputs?.field` | Always attribute access: `run.outputs?.field` |
+| **Python return** | `{"score": value, "comment": "..."}` | `{"score": value, "comment": "..."}` |
+| **TypeScript return** | `{ key: "name", score: value, comment: "..." }` | `{ score: value, comment: "..." }` |
 </evaluator_format>
 
 <evaluator_types>
@@ -91,6 +94,32 @@ async def accuracy_evaluator(run, example):
     return {"score": 1 if grade["is_accurate"] else 0, "comment": grade["reasoning"]}
 ```
 </python>
+
+<typescript>
+```javascript
+import OpenAI from "openai";
+
+const openai = new OpenAI();
+
+async function accuracyEvaluator(run, example) {
+  const runOutputs = run.outputs ?? {};
+  const exampleOutputs = example.outputs ?? {};
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: 'Respond with JSON: {"is_accurate": boolean, "reasoning": string}' },
+      { role: "user", content: `Expected: ${JSON.stringify(exampleOutputs)}\nActual: ${JSON.stringify(runOutputs)}\nIs this accurate?` }
+    ]
+  });
+
+  const grade = JSON.parse(response.choices[0].message.content);
+  return { key: "accuracy", score: grade.is_accurate ? 1 : 0, comment: grade.reasoning };
+}
+```
+</typescript>
 </llm_judge>
 
 <code_evaluators>
@@ -115,6 +144,22 @@ def trajectory_evaluator(run, example):
     return {"score": 1 if actual == expected else 0, "comment": f"Expected {expected}, got {actual}"}
 ```
 </python>
+
+<typescript>
+```javascript
+function trajectoryEvaluator(run, example) {
+  const runOutputs = run.outputs ?? {};
+  const exampleOutputs = example.outputs ?? {};
+  // IMPORTANT: Replace these placeholders with your actual field names
+  // 1. Query your LangSmith trace to see what fields exist in run outputs
+  // 2. Check your dataset schema for expected field names
+  const actual = runOutputs.YOUR_TRAJECTORY_FIELD ?? [];
+  const expected = exampleOutputs.YOUR_EXPECTED_FIELD ?? [];
+  const match = JSON.stringify(actual) === JSON.stringify(expected);
+  return { key: "trajectory", score: match ? 1 : 0, comment: `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}` };
+}
+```
+</typescript>
 </code_evaluators>
 
 <run_functions>
@@ -134,6 +179,7 @@ Before writing evaluators, you MUST test your run function and inspect the actua
 
 **Try your hardest to match your run function output to your dataset schema.** This makes evaluators simple and reusable. If matching isn't possible, your evaluator must know how to extract and compare the right fields from each side.
 
+<python>
 ```python
 def run_agent(inputs: dict) -> dict:
     result = your_agent.run(inputs)
@@ -142,6 +188,19 @@ def run_agent(inputs: dict) -> dict:
     print(f"DEBUG - value: {result}")
     return {"output": result}  # Adjust to match your dataset schema
 ```
+</python>
+
+<typescript>
+```javascript
+async function runAgent(inputs) {
+  const result = await yourAgent.invoke(inputs);
+  // ALWAYS inspect output shape first
+  console.log("DEBUG - type:", typeof result, "keys:", Object.keys(result));
+  console.log("DEBUG - value:", result);
+  return { output: result };  // Adjust to match your dataset schema
+}
+```
+</typescript>
 
 ### Capturing Trajectories
 
@@ -265,6 +324,7 @@ npx tsx upload_evaluators.ts delete "Trajectory Match"
 
 **Uploaded evaluators** auto-run when you run experiments - no code needed. **Local evaluators** are passed directly for development/testing.
 
+<python>
 ```python
 from langsmith import evaluate
 
@@ -274,6 +334,26 @@ results = evaluate(run_agent, data="My Dataset", experiment_prefix="eval-v1")
 # Or pass local evaluators for testing
 results = evaluate(run_agent, data="My Dataset", evaluators=[my_evaluator], experiment_prefix="eval-v1")
 ```
+</python>
+
+<typescript>
+```javascript
+import { evaluate } from "langsmith/evaluation";
+
+// Uploaded evaluators run automatically
+const results = await evaluate(runAgent, {
+  data: "My Dataset",
+  experimentPrefix: "eval-v1",
+});
+
+// Or pass local evaluators for testing
+const results = await evaluate(runAgent, {
+  data: "My Dataset",
+  evaluators: [myEvaluator],
+  experimentPrefix: "eval-v1",
+});
+```
+</typescript>
 </running_evaluations>
 
 <troubleshooting>
@@ -285,10 +365,11 @@ results = evaluate(run_agent, data="My Dataset", evaluators=[my_evaluator], expe
 
 **Field name mismatch:** Your run function output must match dataset schema exactly. Inspect dataset first with `client.read_example(example_id)`.
 
-**RunTree vs dict (Python):** Local `evaluate()` passes `RunTree`, uploaded evaluators receive `dict`. Handle both:
+**RunTree vs dict (Python only):** Local `evaluate()` passes `RunTree`, uploaded evaluators receive `dict`. Handle both:
 ```python
 run_outputs = run.outputs if hasattr(run, "outputs") else run.get("outputs", {}) or {}
 ```
+TypeScript always uses attribute access: `run.outputs?.field`
 </troubleshooting>
 
 <resources>
