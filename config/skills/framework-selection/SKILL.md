@@ -79,7 +79,7 @@ Answer these questions in order:
 - You want planning, file management, and subagent delegation handled for you (use Deep Agents instead)
 - The workflow is straightforward enough for a simple agent
 
-**Skills to invoke next:** `langgraph-fundamentals`, `langgraph-execution`, `langgraph-persistence`
+**Skills to invoke next:** `langgraph-fundamentals`, `langgraph-human-in-the-loop`, `langgraph-persistence`
 
 </langgraph-profile>
 
