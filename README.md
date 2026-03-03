@@ -66,6 +66,9 @@ Clone the repo and run the install script for more options:
 
 # Install for DeepAgents CLI globally (includes agent persona)
 ./install.sh --deepagents --global
+
+# Install only LangSmith skills (any target)
+./install.sh --langsmith
 ```
 
 ### Options
@@ -77,6 +80,7 @@ Clone the repo and run the install script for more options:
 | `--global`, `-g` | Install globally instead of current directory |
 | `--force`, `-f` | Overwrite skills with same names as this package |
 | `--yes`, `-y` | Skip confirmation prompts |
+| `--langsmith` | Install only LangSmith skills |
 
 ## Usage
 

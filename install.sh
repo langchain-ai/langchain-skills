@@ -11,6 +11,7 @@ TARGET="claude"  # claude or deepagents
 GLOBAL=false
 FORCE=false
 YES=false
+LANGSMITH_ONLY=false
 
 # Usage
 usage() {
@@ -25,6 +26,7 @@ usage() {
     echo "                  Default: install in current directory"
     echo "  --force, -f     Overwrite skills with same names as this package"
     echo "  --yes, -y       Skip confirmation prompts"
+    echo "  --langsmith     Install only LangSmith skills"
     echo "  --help, -h      Show this help message"
     echo ""
     echo "Examples:"
@@ -56,6 +58,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --yes|-y)
             YES=true
+            shift
+            ;;
+        --langsmith)
+            LANGSMITH_ONLY=true
             shift
             ;;
         --help|-h)
@@ -101,6 +107,9 @@ if [ "$GLOBAL" = true ]; then
     echo "Scope:     Global (all projects)"
 else
     echo "Scope:     Local (current directory)"
+fi
+if [ "$LANGSMITH_ONLY" = true ]; then
+    echo "Filter:    Only LangSmith skills"
 fi
 echo ""
 
@@ -157,6 +166,10 @@ if [ -d "$SCRIPT_DIR/config/skills" ]; then
     mkdir -p "$INSTALL_DIR/skills"
     for skill in "$SCRIPT_DIR/config/skills"/*; do
         skill_name=$(basename "$skill")
+        # If --langsmith is provided, only install skills prefixed with "langsmith-"
+        if [ "$LANGSMITH_ONLY" = true ] && [[ ! "$skill_name" == langsmith-* ]]; then
+            continue
+        fi
         if [ -d "$INSTALL_DIR/skills/$skill_name" ]; then
             if [ "$FORCE" = true ]; then
                 rm -rf "$INSTALL_DIR/skills/$skill_name"
