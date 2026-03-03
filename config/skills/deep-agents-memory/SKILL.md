@@ -1,5 +1,5 @@
 ---
-name: Deep Agents Memory & Filesystem
+name: deep-agents-memory
 description: "INVOKE THIS SKILL when your Deep Agent needs memory, persistence, or filesystem access. Covers StateBackend (ephemeral), StoreBackend (persistent), FilesystemMiddleware, and CompositeBackend for routing."
 ---
 
