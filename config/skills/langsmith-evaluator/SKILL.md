@@ -1,5 +1,5 @@
 ---
-name: LangSmith Evaluators
+name: langsmith-evaluator
 description: "INVOKE THIS SKILL when building evaluation pipelines for LangSmith. Covers three core components: (1) Creating Evaluators - LLM-as-Judge, custom code; (2) Defining Run Functions - how to capture outputs and trajectories from your agent; (3) Running Evaluations - locally with evaluate() or auto-run via LangSmith. Contains helper scripts."
 ---
 
