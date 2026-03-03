@@ -28,12 +28,12 @@ Install into the current directory with a single command (run from your project 
 
 **Claude Code:**
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh -y && rm -rf /tmp/langchain-skills-main
+curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --langsmith -y && rm -rf /tmp/langchain-skills-main
 ```
 
 **DeepAgents CLI:**
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents -y && rm -rf /tmp/langchain-skills-main
+curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents --langsmith -y && rm -rf /tmp/langchain-skills-main
 ```
 
 ### Quick Install (Global)
@@ -42,12 +42,12 @@ Install globally with a single command:
 
 **Claude Code:**
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --global -y && rm -rf /tmp/langchain-skills-main
+curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --global --langsmith -y && rm -rf /tmp/langchain-skills-main
 ```
 
 **DeepAgents CLI:**
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents --global -y && rm -rf /tmp/langchain-skills-main
+curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents --global --langsmith -y && rm -rf /tmp/langchain-skills-main
 ```
 
 ### Manual Install
@@ -66,6 +66,9 @@ Clone the repo and run the install script for more options:
 
 # Install for DeepAgents CLI globally (includes agent persona)
 ./install.sh --deepagents --global
+
+# Install only LangSmith skills (any target)
+./install.sh --langsmith
 ```
 
 ### Options
@@ -77,6 +80,7 @@ Clone the repo and run the install script for more options:
 | `--global`, `-g` | Install globally instead of current directory |
 | `--force`, `-f` | Overwrite skills with same names as this package |
 | `--yes`, `-y` | Skip confirmation prompts |
+| `--langsmith` | Install only LangSmith skills |
 
 ## Usage
 
