@@ -192,54 +192,15 @@ echo "✅ Installation complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-if [ "$TARGET" = "claude" ]; then
-    echo "Skills installed for Claude Code."
+echo "Skills installed to $TOOL_NAME!"
+echo ""
+echo "To see installed skills:"
+echo "  ls $INSTALL_DIR/skills/"
+if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ]; then
     echo ""
-    if [ "$GLOBAL" = true ]; then
-        echo "The skills are now available globally in all projects."
-    else
-        echo "The skills are available in this directory."
-        echo "Run Claude Code from here to use them."
-    fi
-else
-    if [ "$GLOBAL" = true ]; then
-        echo "Agent 'langchain_agent' is now available in DeepAgents CLI."
-        echo ""
-        echo "To use this agent, run:"
-        echo "  deepagents --agent langchain_agent"
-    else
-        echo "Skills installed for DeepAgents CLI."
-        echo ""
-        echo "The skills are available in this directory."
-    fi
+    echo "To use this agent, run:"
+    echo "  deepagents --agent langchain_agent"
 fi
-
-echo ""
-echo "Available skills (14 total):"
-echo ""
-echo "  Getting Started:"
-echo "    - framework-selection: Framework comparison reference (LangChain vs LangGraph vs Deep Agents)"
-echo "    - langchain-dependencies: Full dependency and package version reference (Python + TypeScript)"
-echo ""
-echo "  Deep Agents:"
-echo "    - deep-agents-core: Agent architecture and SKILL.md format"
-echo "    - deep-agents-memory: Memory, persistence, and filesystem"
-echo "    - deep-agents-orchestration: Subagents, task planning, HITL"
-echo ""
-echo "  LangChain:"
-echo "    - langchain-fundamentals: Chat models, provider setup, streaming, agents and tools"
-echo "    - langchain-middleware: Human-in-the-loop approval and custom middleware"
-echo "    - langchain-rag: RAG pipeline (loaders, embeddings, vector stores)"
-echo ""
-echo "  LangGraph:"
-echo "    - langgraph-fundamentals: StateGraph, nodes, edges, reducers"
-echo "    - langgraph-persistence: Checkpointers and memory"
-echo "    - langgraph-human-in-the-loop: Interrupts, human review, approval workflows"
-echo ""
-echo "  LangSmith:"
-echo "    - langsmith-trace: Query and export traces"
-echo "    - langsmith-dataset: Generate evaluation datasets"
-echo "    - langsmith-evaluator: Create custom evaluators"
 echo ""
 echo "Set your API keys before using:"
 echo "  export LANGSMITH_API_KEY=<your-key>"
