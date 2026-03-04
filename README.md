@@ -21,37 +21,28 @@ These skills can be installed for the following AI coding agents:
 
 ## Installation
 
-### Quick Install (Local)
+### Quick Install
 
-Install into the current directory with a single command (run from your project root):
+Using [`npx skills`](https://github.com/vercel-labs/skills):
 
-**Claude Code:**
+**Local** (current project):
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh -y && rm -rf /tmp/langchain-skills-main
+npx skills add langchain-ai/langchain-skills --skill '*' --yes
 ```
 
-**Deep Agents CLI:**
+**Global** (all projects):
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents -y && rm -rf /tmp/langchain-skills-main
+npx skills add langchain-ai/langchain-skills --skill '*' --yes --global
 ```
 
-### Quick Install (Global)
-
-Install globally with a single command:
-
-**Claude Code:**
+To link skills to a specific agent (e.g. Claude Code):
 ```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --global -y && rm -rf /tmp/langchain-skills-main
+npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
 ```
 
-**Deep Agents CLI:**
-```bash
-curl -fsSL https://github.com/langchain-ai/langchain-skills/archive/main.tar.gz | tar -xz -C /tmp && /tmp/langchain-skills-main/install.sh --deepagents --global -y && rm -rf /tmp/langchain-skills-main
-```
+### Install Script
 
-### Manual Install
-
-Clone the repo and run the install script for more options:
+Alternatively, clone the repo and use the install script:
 
 ```bash
 # Install for Claude Code in current directory (default)
@@ -66,8 +57,6 @@ Clone the repo and run the install script for more options:
 # Install for Deep Agents CLI globally (includes agent persona)
 ./install.sh --deepagents --global
 ```
-
-### Options
 
 | Flag | Description |
 |------|-------------|
