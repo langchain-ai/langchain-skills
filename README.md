@@ -29,6 +29,8 @@ To link skills to a specific agent (e.g. Claude Code):
 npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
 ```
 
+---
+
 ### Install Script (Claude Code & Deep Agents CLI only)
 
 Alternatively, clone the repo and use the install script:
@@ -87,10 +89,3 @@ Then run your coding agent from the directory where you installed (for local ins
 - **langgraph-persistence** - Checkpointers, thread_id, cross-thread memory
 - **langgraph-human-in-the-loop** - Interrupts, human review, approval workflows
 
-## Development
-
-Agent configuration lives in `config/`. To update an existing installation:
-
-```bash
-./install.sh --force
-```
