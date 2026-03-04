@@ -6,18 +6,7 @@ Agent skills for building agents with LangChain, LangGraph, and Deep Agents.
 
 ## Supported Coding Agents
 
-These skills can be installed for the following AI coding agents:
-
-| Agent | Local Install | Global Install |
-|-------|---------------|----------------|
-| **Claude Code** | `.claude/skills/` | `~/.claude/skills/` |
-| **Deep Agents CLI** | `.deepagents/skills/` | `~/.deepagents/langchain_agent/skills/` |
-
-**Note:** The `config/AGENTS.md` file is primarily for reference and is **not copied** during installation (except for Deep Agents global installs where it defines the agent persona). It may be a helpful example to incorporate into your existing `CLAUDE.md` or `AGENTS.md` configuration.
-
-## Prerequisites
-
-- [Claude Code](https://claude.ai/claude-code) or [Deep Agents CLI](https://docs.langchain.com/oss/python/deepagents/cli/overview) installed
+These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
 
 ## Installation
 
@@ -40,7 +29,7 @@ To link skills to a specific agent (e.g. Claude Code):
 npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
 ```
 
-### Install Script
+### Install Script (Claude Code & Deep Agents CLI only)
 
 Alternatively, clone the repo and use the install script:
 
