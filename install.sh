@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install LangGraph + LangSmith skills for Claude Code or DeepAgents CLI
+# Install LangChain skills for Claude Code or DeepAgents CLI
 
 set -e
 
@@ -11,13 +11,12 @@ TARGET="claude"  # claude or deepagents
 GLOBAL=false
 FORCE=false
 YES=false
-LANGSMITH_ONLY=false
 
 # Usage
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "Install LangGraph + LangSmith skills for Claude Code or DeepAgents CLI."
+    echo "Install LangChain skills for Claude Code or DeepAgents CLI."
     echo ""
     echo "Options:"
     echo "  --claude        Install for Claude Code (default)"
@@ -26,7 +25,6 @@ usage() {
     echo "                  Default: install in current directory"
     echo "  --force, -f     Overwrite skills with same names as this package"
     echo "  --yes, -y       Skip confirmation prompts"
-    echo "  --langsmith     Install only LangSmith skills"
     echo "  --help, -h      Show this help message"
     echo ""
     echo "Examples:"
@@ -58,10 +56,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --yes|-y)
             YES=true
-            shift
-            ;;
-        --langsmith)
-            LANGSMITH_ONLY=true
             shift
             ;;
         --help|-h)
@@ -107,9 +101,6 @@ if [ "$GLOBAL" = true ]; then
     echo "Scope:     Global (all projects)"
 else
     echo "Scope:     Local (current directory)"
-fi
-if [ "$LANGSMITH_ONLY" = true ]; then
-    echo "Filter:    Only LangSmith skills"
 fi
 echo ""
 
@@ -166,10 +157,6 @@ if [ -d "$SCRIPT_DIR/config/skills" ]; then
     mkdir -p "$INSTALL_DIR/skills"
     for skill in "$SCRIPT_DIR/config/skills"/*; do
         skill_name=$(basename "$skill")
-        # If --langsmith is provided, only install skills prefixed with "langsmith-"
-        if [ "$LANGSMITH_ONLY" = true ] && [[ ! "$skill_name" == langsmith-* ]]; then
-            continue
-        fi
         if [ -d "$INSTALL_DIR/skills/$skill_name" ]; then
             if [ "$FORCE" = true ]; then
                 rm -rf "$INSTALL_DIR/skills/$skill_name"
@@ -203,7 +190,6 @@ if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ]; then
 fi
 echo ""
 echo "Set your API keys before using:"
-echo "  export LANGSMITH_API_KEY=<your-key>"
 echo "  export OPENAI_API_KEY=<your-key>      # For OpenAI models"
 echo "  export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models"
 echo ""

@@ -2,7 +2,7 @@
 
 > **⚠️** — This project is in early development. APIs and skill content may change.
 
-Agent skills for building, observing, and evaluating agents with LangChain, LangGraph, LangSmith, and Deep Agents.
+Agent skills for building agents with LangChain, LangGraph, and Deep Agents.
 
 ## Supported Coding Agents
 
@@ -18,7 +18,6 @@ These skills can be installed for the following AI coding agents:
 ## Prerequisites
 
 - [Claude Code](https://claude.ai/claude-code) or [Deep Agents CLI](https://docs.langchain.com/oss/python/deepagents/cli/overview) installed
-- A LangSmith API key (for LangSmith skills)
 
 ## Installation
 
@@ -66,9 +65,6 @@ Clone the repo and run the install script for more options:
 
 # Install for Deep Agents CLI globally (includes agent persona)
 ./install.sh --deepagents --global
-
-# Install only LangSmith skills (any target)
-./install.sh --langsmith
 ```
 
 ### Options
@@ -80,21 +76,19 @@ Clone the repo and run the install script for more options:
 | `--global`, `-g` | Install globally instead of current directory |
 | `--force`, `-f` | Overwrite skills with same names as this package |
 | `--yes`, `-y` | Skip confirmation prompts |
-| `--langsmith` | Install only LangSmith skills |
 
 ## Usage
 
 After installation, set your API keys:
 
 ```bash
-export LANGSMITH_API_KEY=<your-key>
 export OPENAI_API_KEY=<your-key>      # For OpenAI models
 export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 ```
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills (14)
+## Available Skills (11)
 
 ### Getting Started
 - **framework-selection** - Framework comparison reference (LangChain vs LangGraph vs Deep Agents)
@@ -114,13 +108,6 @@ Then run your coding agent from the directory where you installed (for local ins
 - **langgraph-fundamentals** - StateGraph, nodes, edges, state reducers
 - **langgraph-persistence** - Checkpointers, thread_id, cross-thread memory
 - **langgraph-human-in-the-loop** - Interrupts, human review, approval workflows
-
-### LangSmith
-- **langsmith-trace** - Query and export traces (includes helper scripts)
-- **langsmith-dataset** - Generate evaluation datasets from traces (includes helper scripts)
-- **langsmith-evaluator** - Create custom evaluators (includes helper scripts)
-
-**Note:** LangSmith skills include Python and TypeScript helper scripts for common operations.
 
 ## Development
 
