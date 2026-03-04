@@ -6,7 +6,7 @@ Agent skills for building agents with LangChain, LangGraph, and Deep Agents.
 
 ## Supported Coding Agents
 
-These skills can be installed for any agent supported by [`skills.sh`](https://skills.sh), including Claude Code, Cursor, Windsurf, Goose, and [many more](https://github.com/vercel-labs/skills).
+These skills can be installed via [`npx skills`](https://github.com/vercel-labs/skills) for any agent that supports the [Agent Skills specification](https://skills.sh), including Claude Code, Cursor, Windsurf, and more.
 
 ## Installation
 
