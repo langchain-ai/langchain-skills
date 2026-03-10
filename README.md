@@ -31,6 +31,17 @@ npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --y
 
 ---
 
+### Claude Code Plugin
+
+Install directly as a [Claude Code plugin](https://code.claude.com/docs/en/plugins):
+
+```bash
+/plugin marketplace add langchain-ai/langchain-skills
+/plugin install langchain-skills@langchain-skills
+```
+
+---
+
 ### Install Script (Claude Code & Deep Agents CLI only)
 
 Alternatively, clone the repo and use the install script:
