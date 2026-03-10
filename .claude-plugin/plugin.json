@@ -1,0 +1,13 @@
+{
+  "name": "langchain-skills",
+  "version": "0.1.0",
+  "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents",
+  "author": {
+    "name": "LangChain",
+    "url": "https://langchain.com"
+  },
+  "repository": "https://github.com/langchain-ai/langchain-skills",
+  "license": "MIT",
+  "keywords": ["langchain", "langgraph", "deep-agents", "ai-agents", "rag"],
+  "skills": "./config/skills/"
+}
