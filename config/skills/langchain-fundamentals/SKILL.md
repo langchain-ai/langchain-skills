@@ -134,13 +134,14 @@ Tools are functions that agents can call. Use the `@tool` decorator (Python) or 
 from langchain_core.tools import tool
 
 @tool
-def calculate(expression: str) -> str:
-    """Evaluate a mathematical expression.
+def add(a: float, b: float) -> float:
+    """Add two numbers.
 
     Args:
-        expression: Math expression like "2 + 2" or "10 * 5"
+        a: First number
+        b: Second number
     """
-    return str(eval(expression))
+    return a + b
 ```
 </python>
 <typescript>
@@ -148,13 +149,14 @@ def calculate(expression: str) -> str:
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
-const calculate = tool(
-  async ({ expression }) => String(eval(expression)),
+const add = tool(
+  async ({ a, b }) => a + b,
   {
-    name: "calculate",
-    description: "Evaluate a mathematical expression.",
+    name: "add",
+    description: "Add two numbers.",
     schema: z.object({
-      expression: z.string().describe("Math expression like '2 + 2' or '10 * 5'"),
+      a: z.number().describe("First number"),
+      b: z.number().describe("Second number"),
     }),
   }
 );
