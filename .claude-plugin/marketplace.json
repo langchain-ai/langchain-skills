@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "langchain-skills",
-      "source": ".",
+      "source": "./",
       "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents",
       "homepage": "https://github.com/langchain-ai/langchain-skills"
     }
