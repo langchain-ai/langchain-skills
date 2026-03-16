@@ -1,4 +1,4 @@
-# LangChain + DeepAgents Development Guide
+# LangChain + Deep Agents Development Guide
 
 This project uses skills that contain up-to-date patterns and working reference scripts.
 
@@ -20,8 +20,8 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langgraph-persistence** - Invoke for checkpointers, thread_id, time travel, memory, subgraph scoping
 - **langgraph-human-in-the-loop** - Invoke for interrupts, human review, error handling, approval workflows
 
-### DeepAgents Skills
-- **deep-agents-core** - Invoke for DeepAgents harness architecture
+### Deep Agents Skills
+- **deep-agents-core** - Invoke for Deep Agents harness architecture
 - **deep-agents-memory** - Invoke for long-term memory with StoreBackend
 - **deep-agents-orchestration** - Invoke for multi-agent coordination
 
