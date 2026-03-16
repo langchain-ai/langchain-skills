@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install LangChain skills for Claude Code or DeepAgents CLI
+# Install LangChain skills for Claude Code or Deep Agents CLI
 
 set -e
 
@@ -16,11 +16,11 @@ YES=false
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
-    echo "Install LangChain skills for Claude Code or DeepAgents CLI."
+    echo "Install LangChain skills for Claude Code or Deep Agents CLI."
     echo ""
     echo "Options:"
     echo "  --claude        Install for Claude Code (default)"
-    echo "  --deepagents    Install for DeepAgents CLI"
+    echo "  --deepagents    Install for Deep Agents CLI"
     echo "  --global, -g    Install globally (~/.claude or ~/.deepagents/langchain_agent)"
     echo "                  Default: install in current directory"
     echo "  --force, -f     Overwrite skills with same names as this package"
@@ -30,7 +30,7 @@ usage() {
     echo "Examples:"
     echo "  $0                      # Install for Claude Code in current directory"
     echo "  $0 --global             # Install for Claude Code globally"
-    echo "  $0 --deepagents -g      # Install for DeepAgents globally (with agent persona)"
+    echo "  $0 --deepagents -g      # Install for Deep Agents globally (with agent persona)"
     echo "  $0 -f -y                # Force reinstall without prompts"
     exit 0
 }
@@ -79,7 +79,7 @@ if [ "$TARGET" = "claude" ]; then
     fi
     TOOL_NAME="Claude Code"
 else
-    # DeepAgents
+    # Deep Agents
     if [ "$GLOBAL" = true ]; then
         # Global: install as agent with persona
         INSTALL_DIR="$HOME/.deepagents/langchain_agent"
@@ -88,7 +88,7 @@ else
         # Local: just skills, no agent persona
         INSTALL_DIR="$(pwd)/.deepagents"
     fi
-    TOOL_NAME="DeepAgents CLI"
+    TOOL_NAME="Deep Agents CLI"
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -104,7 +104,7 @@ else
 fi
 echo ""
 
-# For DeepAgents global, check if agent already exists
+# For Deep Agents global, check if agent already exists
 if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ] && [ -d "$INSTALL_DIR" ]; then
     if [ "$FORCE" = true ]; then
         echo "⚠️  Existing agent found. Will overwrite (--force)."
@@ -133,7 +133,7 @@ fi
 echo ""
 echo "Installing..."
 
-# For DeepAgents global with --force, remove existing agent
+# For Deep Agents global with --force, remove existing agent
 if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ] && [ "$FORCE" = true ] && [ -d "$INSTALL_DIR" ]; then
     rm -rf "$INSTALL_DIR"
 fi
@@ -141,7 +141,7 @@ fi
 # Create directory structure
 mkdir -p "$INSTALL_DIR"
 
-# Copy AGENTS.md only for global DeepAgents install
+# Copy AGENTS.md only for global Deep Agents install
 if [ "$INCLUDE_AGENTS_MD" = true ]; then
     if [ -f "$SCRIPT_DIR/config/AGENTS.md" ]; then
         cp "$SCRIPT_DIR/config/AGENTS.md" "$INSTALL_DIR/AGENTS.md"
