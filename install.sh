@@ -194,6 +194,6 @@ if [ "$TARGET" = "deepagents" ]; then
     echo "  https://docs.langchain.com/deepagents-cli"
 else
     echo "For usage, configuration, and API key setup, see the Claude Code docs:"
-    echo "  https://docs.langchain.com/claude-code"
+    echo "  https://code.claude.com/docs/en/overview"
 fi
 echo ""
