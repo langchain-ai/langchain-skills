@@ -183,13 +183,17 @@ echo "Skills installed to $TOOL_NAME!"
 echo ""
 echo "To see installed skills:"
 echo "  ls $INSTALL_DIR/skills/"
-if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ]; then
-    echo ""
-    echo "To use this agent, run:"
-    echo "  deepagents --agent langchain_agent"
-fi
 echo ""
-echo "Set your API keys before using:"
-echo "  export OPENAI_API_KEY=<your-key>      # For OpenAI models"
-echo "  export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models"
+if [ "$TARGET" = "deepagents" ]; then
+    if [ "$GLOBAL" = true ]; then
+        echo "To use this agent, run:"
+        echo "  deepagents --agent langchain_agent"
+        echo ""
+    fi
+    echo "For usage, configuration, and API key setup, see the CLI docs:"
+    echo "  https://docs.langchain.com/deepagents-cli"
+else
+    echo "For usage, configuration, and API key setup, see the Claude Code docs:"
+    echo "  https://docs.langchain.com/claude-code"
+fi
 echo ""
