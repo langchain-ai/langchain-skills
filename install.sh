@@ -11,12 +11,17 @@ TARGET="claude"  # claude or deepagents
 GLOBAL=false
 FORCE=false
 YES=false
+TARGET_DIR=""
 
 # Usage
 usage() {
-    echo "Usage: $0 [OPTIONS]"
+    echo "Usage: $0 [OPTIONS] [DIRECTORY]"
     echo ""
     echo "Install LangChain skills for Claude Code or Deep Agents CLI."
+    echo ""
+    echo "Arguments:"
+    echo "  DIRECTORY           Target project directory (default: current directory)"
+    echo "                      Ignored when --global is used"
     echo ""
     echo "Options:"
     echo "  --claude        Install for Claude Code (default)"
@@ -28,10 +33,11 @@ usage() {
     echo "  --help, -h      Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0                      # Install for Claude Code in current directory"
-    echo "  $0 --global             # Install for Claude Code globally"
-    echo "  $0 --deepagents -g      # Install for Deep Agents globally (with agent persona)"
-    echo "  $0 -f -y                # Force reinstall without prompts"
+    echo "  $0                          # Install for Claude Code in current directory"
+    echo "  $0 ~/my-project             # Install for Claude Code in ~/my-project"
+    echo "  $0 --global                 # Install for Claude Code globally"
+    echo "  $0 --deepagents ~/my-project  # Install for Deep Agents in ~/my-project"
+    echo "  $0 -f -y                    # Force reinstall without prompts"
     exit 0
 }
 
@@ -61,12 +67,25 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             usage
             ;;
-        *)
+        -*)
             echo "Unknown option: $1"
             usage
             ;;
+        *)
+            if [ -n "$TARGET_DIR" ]; then
+                echo "Error: multiple directories specified: '$TARGET_DIR' and '$1'"
+                exit 1
+            fi
+            TARGET_DIR="$1"
+            shift
+            ;;
     esac
 done
+
+# Resolve target directory (default to current directory)
+if [ -z "$TARGET_DIR" ]; then
+    TARGET_DIR="$(pwd)"
+fi
 
 # Determine installation directory and whether to include AGENTS.md
 INCLUDE_AGENTS_MD=false
@@ -75,7 +94,7 @@ if [ "$TARGET" = "claude" ]; then
     if [ "$GLOBAL" = true ]; then
         INSTALL_DIR="$HOME/.claude"
     else
-        INSTALL_DIR="$(pwd)/.claude"
+        INSTALL_DIR="$TARGET_DIR/.claude"
     fi
     TOOL_NAME="Claude Code"
 else
@@ -86,7 +105,7 @@ else
         INCLUDE_AGENTS_MD=true
     else
         # Local: just skills, no agent persona
-        INSTALL_DIR="$(pwd)/.deepagents"
+        INSTALL_DIR="$TARGET_DIR/.deepagents"
     fi
     TOOL_NAME="Deep Agents CLI"
 fi
