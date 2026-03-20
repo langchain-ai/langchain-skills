@@ -4,6 +4,8 @@
 
 Agent skills for building agents with LangChain, LangGraph, and Deep Agents.
 
+> Want your agent to **self-improve**? Use [langsmith-skills](https://github.com/langchain-ai/langsmith-skills) to observe, evaluate, and iterate on your LLM applications.
+
 ## Supported Coding Agents
 
 These skills can be installed via [`npx skills`](https://github.com/vercel-labs/skills) for any agent that supports the [Agent Skills specification](https://skills.sh), including Claude Code, Cursor, Windsurf, and more.
