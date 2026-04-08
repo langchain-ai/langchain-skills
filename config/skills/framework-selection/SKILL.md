@@ -37,7 +37,7 @@ Answer these questions in order:
 | Does the task require breaking work into sub-tasks, managing files across a long session, persistent memory, or loading on-demand skills? | **Deep Agents** | ↓ |
 | Does the task require complex control flow — loops, dynamic branching, parallel workers, human-in-the-loop, or custom state? | **LangGraph** | ↓ |
 | Is this a single-purpose agent that takes input, runs tools, and returns a result? | **LangChain** (`create_agent`) | ↓ |
-| Is this a pure model call, chain, or retrieval pipeline with no agent loop? | **LangChain** (LCEL / chain) | — |
+| Is this a pure model call, chain, or retrieval pipeline with no agent loop? | **LangChain** (chain) | — |
 
 </decision-table>
 
