@@ -36,7 +36,7 @@ deepagents deploy [--config ./deepagents.toml] [--dry-run]
 
 `--dry-run` writes the generated artifacts to a temp directory and prints the paths — useful for inspecting what will be shipped without actually deploying.
 
-Prereq: `pip install 'langgraph-cli[inmem]'` and a LangSmith API key in the environment (or `.env` referenced via `[deploy].env_file`).
+Prereq: Install `langgraph-cli[inmem]` (`pip install 'langgraph-cli[inmem]'` or `uv add "langgraph-cli[inmem]"` depending on your package manager) and a LangSmith API key in the environment (or `.env` referenced via `[deploy].env_file`).
 
 ## `deepagents.toml` reference
 
