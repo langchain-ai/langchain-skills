@@ -33,6 +33,10 @@ Use this skill when the user wants to:
 pip install 'langgraph-cli[inmem]'   # includes langgraph dev support
 pip install langgraph-cli             # without dev server (build/up/deploy only)
 
+# if using UV as package manager
+uv add "langgraph-cli[inmem]"       # includes langgraph dev support
+uv add langgraph-cli                # without dev server (build/up/deploy only)
+
 # JavaScript
 npx @langchain/langgraph-cli         # use on demand
 npm install -g @langchain/langgraph-cli  # install globally (available as langgraphjs)
@@ -204,7 +208,7 @@ The configuration file used by all CLI commands (`dev`, `build`, `up`, `deploy`)
 |-----|----------|-------------|
 | `dependencies` | Yes | Array of dependencies. `"."` looks for local packages via `pyproject.toml`, `setup.py`, `requirements.txt`, or `package.json`. Can also be paths to subdirectories (`"./my_pkg"`) or package names (`"langchain_openai"`). |
 | `graphs` | Yes | Mapping of graph ID to path. Format: `./path/to/file.py:variable` (Python) or `./path/to/file.js:function` (JS). The variable must be a `CompiledGraph` or a function returning one. Multiple graphs supported. |
-| `env` | No | Path to a `.env` file (string) OR an inline mapping of env var names to values (object). For production deployments, prefer managing env vars in the LangSmith UI. |
+| `env` | No | Path to a `.env` file (string) OR an inline mapping of env var names to values (object). Used by `langgraph dev` and `langgraph up` locally. `langgraph deploy` reads from this file and adds the variables as deployment secrets. |
 | `python_version` | No | `"3.11"`, `"3.12"`, or `"3.13"`. Defaults to `"3.11"`. |
 | `node_version` | No | Node.js version for JS projects. |
 | `pip_config_file` | No | Path to a pip config file for custom package indexes. |
@@ -237,7 +241,6 @@ The configuration file used by all CLI commands (`dev`, `build`, `up`, `deploy`)
 - **`langgraph deploy` requires Docker** — On Apple Silicon (M1/M2/M3), Docker Buildx is also required for cross-compiling to `linux/amd64`.
 - **`langgraph deploy` can only update its own deployments** — Deployments created through the LangSmith UI or GitHub integration cannot be updated with `langgraph deploy`. Use the UI for those.
 - **`dependencies` must include all packages** — The `dependencies` array in `langgraph.json` must point to where your package config lives (e.g., `"."` for root). The actual packages are resolved from `pyproject.toml`, `requirements.txt`, or `package.json` at that location.
-- **`env` is for local development only** — For production deployments, manage environment variables and secrets through the LangSmith UI after the deployment is created.
 - **`langgraph dev` runs without Docker** — It runs directly in your environment. If your code depends on system packages (e.g., `ffmpeg`), they must be installed locally. Use `langgraph up` to validate Docker builds.
 - **JavaScript CLI** — Use `npx @langchain/langgraph-cli <command>` (or `langgraphjs` if installed globally via `npm install -g @langchain/langgraph-cli`).
 - **API key** — `LANGSMITH_API_KEY` is required for `langgraph deploy`. For `langgraph dev`, it is optional — the server runs without it, but you won't get traces in LangSmith. Can also be set via `LANGGRAPH_HOST_API_KEY` or `LANGCHAIN_API_KEY`.
