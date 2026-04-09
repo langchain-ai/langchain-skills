@@ -1,115 +1,153 @@
 ---
 name: deepagents-deploy
-description: Build, run locally, and deploy deep agents with the `deepagents` CLI — configure an agent via `deepagents.toml` (model, memories, skills, tools, MCP, sandbox), iterate with `deepagents deploy dev`, then ship to LangGraph Platform with `deepagents deploy`.
+description: "Deploy deep agents with the deepagents CLI — configure via deepagents.toml (model, sandbox), place AGENTS.md/skills/mcp.json alongside it, and ship to LangGraph Platform with deepagents deploy."
 ---
 
-# deepagents dev & deploy
+# deepagents deploy
 
 ## Overview
 
-`deepagents` is a CLI for building stateful agents configured by a single `deepagents.toml` file. The CLI bundles the agent's system prompt, memories (AGENTS.md, user preferences), skills, Python tools, and MCP servers into a LangGraph deployment package. You iterate locally with `deepagents deploy dev` and ship the same bundle to LangGraph Platform with `deepagents deploy`.
-
-There is no hand-written graph entrypoint — the bundler generates `deploy_graph.py`, `langgraph.json`, and `pyproject.toml` from the config.
+The Deep Agents CLI includes a `deploy` command that packages and deploys your agent to LangSmith Deployment in a single step. Define your agent's configuration in a `deepagents.toml` file and deploy directly from your project directory.
 
 ## When to use
 
 Use this skill when the user wants to:
-- Scaffold a new deep agent project
+- Deploy a deep agent to LangGraph Platform (`deepagents deploy`)
 - Understand or edit a `deepagents.toml`
-- Run an agent locally for iteration (`deepagents deploy dev`)
-- Deploy an agent to LangGraph Platform (`deepagents deploy`)
-- Add skills, Python tools, or MCP servers to an agent
-- Choose between `hub`- and `store`-backed agent memories, or configure a sandbox provider
+- Set up the convention-based project layout (AGENTS.md, skills/, mcp.json)
+- Configure a sandbox provider for code execution
 
 ## Commands
 
 ```bash
-# Scaffold a starter deepagents.toml in cwd
-deepagents deploy init [--force]
+# Deploy to LangGraph Platform
+deepagents deploy
 
-# Bundle + run locally on a LangGraph dev server (default http://localhost:2024)
-deepagents deploy dev [--config ./deepagents.toml] [--port 2024]
-
-# Bundle + deploy to LangGraph Platform
-deepagents deploy [--config ./deepagents.toml] [--dry-run]
+# Use a specific config file
+deepagents deploy --config path/to/deepagents.toml
 ```
 
-`--dry-run` writes the generated artifacts to a temp directory and prints the paths — useful for inspecting what will be shipped without actually deploying.
+By default, the command looks for `deepagents.toml` in the current directory.
 
-Prereq: Install `langgraph-cli[inmem]` (`pip install 'langgraph-cli[inmem]'` or `uv add "langgraph-cli[inmem]"` depending on your package manager) and a LangSmith API key in the environment (or `.env` referenced via `[deploy].env_file`).
+Prereq: Install `langgraph-cli[inmem]` (`pip install 'langgraph-cli[inmem]'` or `uv add "langgraph-cli[inmem]"` depending on your package manager) and a LangSmith API key in the environment (or `.env` at the project root).
+
+## Project layout
+
+The deploy command uses a convention-based layout. Place these files alongside your `deepagents.toml` and they are automatically discovered:
+
+```
+my-agent/
+├── deepagents.toml          # agent configuration (required)
+├── AGENTS.md                # agent memory/context (required)
+├── .env                     # environment variables (optional)
+├── mcp.json                 # MCP server config (optional, http/sse only)
+└── skills/                  # skill definitions (optional)
+    ├── code-review/
+    │   └── SKILL.md
+    └── data-analysis/
+        └── SKILL.md
+```
+
+| File/directory | Purpose | Required |
+|---------------|---------|----------|
+| `AGENTS.md` | Persistent context for the agent (project conventions, instructions, preferences). Always loaded at startup. | Yes |
+| `skills/` | Directory of skill definitions. Each subdirectory contains a `SKILL.md`. | No |
+| `mcp.json` | MCP server configuration. Only `http` and `sse` transports are supported in deployed contexts. | No |
+| `.env` | Environment variables (API keys, secrets). Automatically picked up if present. | No |
 
 ## `deepagents.toml` reference
 
-Minimal config:
+Only the `[agent]` section is required. The `[sandbox]` section is optional and defaults to no sandbox.
+
+### Minimal config
 
 ```toml
 [agent]
 name = "my-agent"
-model = "anthropic:claude-sonnet-4-5"
-system_prompt = "You are a helpful assistant."
+model = "anthropic:claude-sonnet-4-6"
 ```
 
-Full config with all sections:
+The `name` field is the only required value in the entire configuration file. Everything else has defaults.
+
+### `[agent]` (required)
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `name` | string | (required) | Name for the deployed agent. Used as the assistant identifier in LangSmith. |
+| `model` | string | `"anthropic:claude-sonnet-4-6"` | Model identifier in `provider:model` format. |
+
+Supported model providers:
+
+| Provider | Prefix | Example |
+|----------|--------|---------|
+| Anthropic | `anthropic:` | `anthropic:claude-sonnet-4-6` |
+| OpenAI | `openai:` | `openai:gpt-4o` |
+| Google | `google:` | `google:gemini-2.5-pro` |
+| Amazon Bedrock | `bedrock:` | `bedrock:anthropic.claude-sonnet-4-6` |
+| Azure OpenAI | `azure:` | `azure:gpt-4o` |
+| Fireworks | `fireworks:` | `fireworks:accounts/fireworks/models/llama-v3p1-70b-instruct` |
+| OpenRouter | `openrouter:` | `openrouter:anthropic/claude-sonnet-4-6` |
+
+### `[sandbox]` (optional)
+
+Configure the isolated execution environment where the agent runs code. Sandboxes provide a container with a filesystem and shell access. Only needed for code execution or skill script execution.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `provider` | string | `"none"` | Sandbox provider. Determines where the container runs. |
+| `template` | string | `"deepagents-deploy"` | Provider-specific template name for the sandbox environment. |
+| `image` | string | `"python:3"` | Base Docker image for the sandbox container. |
+| `scope` | string | `"thread"` | Sandbox lifecycle: `"thread"` (one per conversation) or `"assistant"` (shared across all conversations). |
+
+Supported sandbox providers:
+
+| Provider | `provider` value | Description |
+|----------|-----------------|-------------|
+| None | `"none"` | No sandbox. Default. |
+| LangSmith | `"langsmith"` | Managed sandbox hosted by LangSmith. Currently in private preview. |
+| Daytona | `"daytona"` | Daytona cloud sandboxes. |
+| Modal | `"modal"` | Modal serverless containers. |
+| Runloop | `"runloop"` | Runloop dev sandboxes. |
+
+### Full config example
 
 ```toml
 [agent]
-name = "my-agent"                      # unique identifier, also the hub repo name
-model = "anthropic:claude-sonnet-4-5"  # any LangChain model string
-system_prompt = "..."
-
-# Shared across all users of this agent.
-[agent_memories]
-backend = "hub"                        # "hub" (LangSmith Prompt Hub) | "store" (LangGraph store)
-sources = ["./AGENTS.md"]              # files bundled as agent context
-
-# Per-user, always store-backed, namespaced (agent, user_id, "user_memories").
-[user_memories]
-sources = ["./preferences.md"]
-
-[skills]
-sources = ["./skills/"]                # directory of skill subdirs
-
-[tools]
-python_file = "./tools.py"             # module with @tool functions
-functions = ["search", "write_file"]   # optional; auto-discovered if omitted
-
-[mcp]
-config = "./.mcp.json"                 # HTTP/SSE MCP servers only (no stdio)
+name = "coding-agent"
+model = "anthropic:claude-sonnet-4-5"
 
 [sandbox]
-provider = "langsmith"                 # none | langsmith | agentcore | daytona | modal | runloop
+provider = "langsmith"
 template = "coding-agent"
 image = "python:3.12"
-
-[deploy]
-python_version = "3.12"
-dependencies = ["langchain-anthropic", "langchain-tavily"]
-env_file = ".env"
 ```
 
-## Memory backends
+## Examples
 
-- **`backend = "hub"`** — `[agent_memories].sources` are pushed to a LangSmith Prompt Hub repo named after `[agent].name`. Read at runtime via `HubBackend`. Good default for shared context you want versioned outside the deployment.
-- **`backend = "store"`** — sources are embedded in `_agent_memories_seed.json` and seeded into the LangGraph persistent store on first invocation under namespace `(agent_name, "agent_memories")`.
-- **`[user_memories]`** — always store-backed, always per-user. The agent can rewrite these files (e.g. update `preferences.md` as it learns the user's style).
+A content writing agent (no code execution needed):
 
-## Sandboxes
+```toml
+[agent]
+name = "content-writer"
+model = "anthropic:claude-sonnet-4-6"
+```
 
-Each thread gets one sandbox, created lazily on first tool call. `provider = "none"` runs tools in-process (no shell, no filesystem). Other providers (`langsmith`, `daytona`, `modal`, ...) give the agent an isolated environment with a persistent filesystem — required for coding agents that read/write/execute code.
+A coding agent with a LangSmith sandbox:
 
-## Typical workflow
+```toml
+[agent]
+name = "coding-agent"
+model = "anthropic:claude-sonnet-4-5"
 
-1. `deepagents deploy init` in a new directory.
-2. Edit `deepagents.toml`: set model, system prompt, point at `AGENTS.md` / `tools.py` / `.mcp.json` as needed.
-3. `deepagents deploy dev` — iterate against a local LangGraph server. Re-run after edits to rebundle.
-4. `deepagents deploy --dry-run` — inspect generated `deploy_graph.py`, `langgraph.json`, `pyproject.toml`, `_bundle.json`.
-5. `deepagents deploy` — ship to LangGraph Platform.
-
-See `examples/deploy-coding-agent/` and `examples/deploy-content-writer/` in this repo for complete working configs.
+[sandbox]
+provider = "langsmith"
+template = "coding-agent"
+image = "python:3.12"
+```
 
 ## Gotchas
 
-- MCP stdio transports are not supported in deployed contexts — use HTTP/SSE.
-- `[deploy].dependencies` must include any LangChain provider package your model string references (e.g. `langchain-anthropic` for `anthropic:...`).
-- `deepagents deploy dev` re-bundles on each run; there is no hot reload inside a running session.
-- Switching `[agent_memories].backend` between `hub` and `store` changes where runtime reads happen — don't flip it on a deployed agent without migrating the content.
+- **MCP stdio transports are not supported** in deployed contexts — only `http` and `sse`. Convert stdio servers to http/sse before deploying.
+- **`AGENTS.md` is required** — the deploy command expects it alongside `deepagents.toml`.
+- **`.env` is auto-discovered** — place it alongside `deepagents.toml` at the project root. The deploy command picks it up automatically if present.
+- **Sandbox scope** — `"thread"` (default) gives each conversation its own sandbox. `"assistant"` shares one sandbox across all conversations, useful for long-lived workspaces like a cloned repo.
