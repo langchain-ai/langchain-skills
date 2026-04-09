@@ -23,7 +23,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 
 ### Deep Agents Skills
 - **deep-agents-core** - Invoke for Deep Agents harness architecture
-- **deep-agents-deploy** - Invoke for deepagents CLI: deepagents.toml configuration, deploy dev, and deploy to LangGraph Platform
+- **deep-agents-deploy** - Invoke for deepagents deploy: deepagents.toml configuration, project layout, and deploy to LangGraph Platform
 - **deep-agents-memory** - Invoke for long-term memory with StoreBackend
 - **deep-agents-orchestration** - Invoke for multi-agent coordination
 
