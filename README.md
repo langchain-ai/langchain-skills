@@ -17,16 +17,17 @@ These skills can be installed via [`npx skills`](https://github.com/vercel-labs/
 Using [`npx skills`](https://github.com/vercel-labs/skills):
 
 **Local** (current project):
+
 ```bash
 npx skills add langchain-ai/langchain-skills --skill '*' --yes
 ```
-
 **Global** (all projects):
+
 ```bash
 npx skills add langchain-ai/langchain-skills --skill '*' --yes --global
 ```
-
 To link skills to a specific agent (e.g. Claude Code):
+
 ```bash
 npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
 ```

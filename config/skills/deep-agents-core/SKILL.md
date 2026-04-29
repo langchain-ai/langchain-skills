@@ -43,6 +43,7 @@ The agent harness provides these capabilities automatically - you configure, not
 <ex-basic-agent>
 <python>
 Create a basic deep agent with a custom tool and invoke it with a user message.
+
 ```python
 from deepagents import create_deep_agent
 from langchain.tools import tool
@@ -66,6 +67,7 @@ result = agent.invoke({
 </python>
 <typescript>
 Create a basic deep agent with a custom tool and invoke it with a user message.
+
 ```typescript
 import { createDeepAgent } from "deepagents";
 import { tool } from "@langchain/core/tools";
@@ -93,6 +95,7 @@ const result = await agent.invoke({
 <ex-full-configuration>
 <python>
 Configure a deep agent with all available options including subagents, skills, and persistence.
+
 ```python
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
@@ -115,6 +118,7 @@ agent = create_deep_agent(
 </python>
 <typescript>
 Configure a deep agent with all available options including subagents, skills, and persistence.
+
 ```typescript
 import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver, InMemoryStore } from "@langchain/langgraph";
@@ -151,6 +155,7 @@ Every deep agent has access to:
 Skills use **progressive disclosure** - agents only load content when relevant.
 
 ### Directory Structure
+
 ```
 skills/
 └── my-skill/
@@ -160,6 +165,7 @@ skills/
 ```
 
 ### SKILL.md Format
+
 ```markdown
 ---
 name: my-skill
@@ -193,6 +199,7 @@ Step-by-step guidance for the agent.
 <ex-skills-with-filesystem-backend>
 <python>
 Set up an agent with skills directory and filesystem backend for on-demand skill loading.
+
 ```python
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
@@ -211,6 +218,7 @@ result = agent.invoke({
 </python>
 <typescript>
 Set up an agent with skills directory and filesystem backend for on-demand skill loading.
+
 ```typescript
 import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
@@ -231,6 +239,7 @@ const result = await agent.invoke({
 <ex-skills-with-store-backend>
 <python>
 Load skill content into a Store backend for environments without filesystem access.
+
 ```python
 from deepagents import create_deep_agent
 from deepagents.backends import StoreBackend
@@ -263,6 +272,7 @@ agent = create_deep_agent(
 </ex-skills-with-store-backend>
 
 <boundaries>
+
 ### What Agents CAN Configure
 
 - Model selection and parameters
@@ -282,6 +292,7 @@ agent = create_deep_agent(
 <fix-checkpointer-for-interrupts>
 <python>
 Interrupts require a checkpointer.
+
 ```python
 # WRONG
 agent = create_deep_agent(interrupt_on={"write_file": True})
@@ -292,6 +303,7 @@ agent = create_deep_agent(interrupt_on={"write_file": True}, checkpointer=Memory
 </python>
 <typescript>
 Interrupts require a checkpointer.
+
 ```typescript
 // WRONG
 const agent = await createDeepAgent({ interruptOn: { write_file: true } });
@@ -305,6 +317,7 @@ const agent = await createDeepAgent({ interruptOn: { write_file: true }, checkpo
 <fix-store-for-memory>
 <python>
 StoreBackend requires a Store instance for persistent memory across threads.
+
 ```python
 # WRONG
 agent = create_deep_agent(backend=lambda rt: StoreBackend(rt))
@@ -315,6 +328,7 @@ agent = create_deep_agent(backend=lambda rt: StoreBackend(rt), store=InMemorySto
 </python>
 <typescript>
 StoreBackend requires a Store instance for persistent memory across threads.
+
 ```typescript
 // WRONG
 const agent = await createDeepAgent({ backend: (config) => new StoreBackend(config) });
@@ -328,6 +342,7 @@ const agent = await createDeepAgent({ backend: (config) => new StoreBackend(conf
 <fix-thread-id-for-conversations>
 <python>
 Use consistent thread_id to maintain conversation context across invocations.
+
 ```python
 # WRONG: Each invocation is isolated
 agent.invoke({"messages": [{"role": "user", "content": "Hi"}]})
@@ -341,6 +356,7 @@ agent.invoke({"messages": [...]}, config=config)
 </python>
 <typescript>
 Use consistent thread_id to maintain conversation context across invocations.
+
 ```typescript
 // WRONG: Each invocation is isolated
 await agent.invoke({ messages: [{ role: "user", content: "Hi" }] });
@@ -355,6 +371,7 @@ await agent.invoke({ messages: [...] }, config);
 </fix-thread-id-for-conversations>
 
 <fix-frontmatter-required>
+
 ```markdown
 # WRONG: Missing frontmatter in SKILL.md
 # My Skill
@@ -373,6 +390,7 @@ This is my skill...
 <fix-backend-for-skills>
 <python>
 Skills require a proper backend to load from the filesystem.
+
 ```python
 # WRONG: Skills won't load without proper backend
 agent = create_deep_agent(skills=["./skills/"])
@@ -388,6 +406,7 @@ agent = create_deep_agent(
 
 <fix-specific-skill-descriptions>
 Use specific descriptions to help agents decide when to use a skill.
+
 ```markdown
 # WRONG: Vague description
 ---
@@ -406,6 +425,7 @@ description: Python testing best practices with pytest fixtures, mocking, and as
 <fix-subagent-skills>
 <python>
 Skills are not inherited by subagents - provide them explicitly.
+
 ```python
 # WRONG: Custom subagents don't inherit skills
 agent = create_deep_agent(

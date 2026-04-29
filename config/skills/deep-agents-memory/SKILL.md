@@ -27,6 +27,7 @@ FilesystemMiddleware provides tools: `ls`, `read_file`, `write_file`, `edit_file
 <ex-default-state-backend>
 <python>
 Default StateBackend stores files ephemerally within a thread.
+
 ```python
 from deepagents import create_deep_agent
 
@@ -39,6 +40,7 @@ result = agent.invoke({
 </python>
 <typescript>
 Default StateBackend stores files ephemerally within a thread.
+
 ```typescript
 import { createDeepAgent } from "deepagents";
 
@@ -54,6 +56,7 @@ const result = await agent.invoke({
 <ex-composite-backend-for-hybrid>
 <python>
 Configure CompositeBackend to route paths to different storage backends.
+
 ```python
 from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend, StateBackend, StoreBackend
@@ -74,6 +77,7 @@ agent = create_deep_agent(backend=composite_backend, store=store)
 </python>
 <typescript>
 Configure CompositeBackend to route paths to different storage backends.
+
 ```typescript
 import { createDeepAgent, CompositeBackend, StateBackend, StoreBackend } from "deepagents";
 import { InMemoryStore } from "@langchain/langgraph";
@@ -97,6 +101,7 @@ const agent = await createDeepAgent({
 <ex-cross-session-memory>
 <python>
 Files in /memories/ persist across threads via StoreBackend routing.
+
 ```python
 # Using CompositeBackend from previous example
 config1 = {"configurable": {"thread_id": "thread-1"}}
@@ -109,6 +114,7 @@ agent.invoke({"messages": [{"role": "user", "content": "Read /memories/style.txt
 </python>
 <typescript>
 Files in /memories/ persist across threads via StoreBackend routing.
+
 ```typescript
 // Using CompositeBackend from previous example
 const config1 = { configurable: { thread_id: "thread-1" } };
@@ -124,6 +130,7 @@ await agent.invoke({ messages: [{ role: "user", content: "Read /memories/style.t
 <ex-filesystem-backend-local-dev>
 <python>
 Use FilesystemBackend for local development with real disk access and human-in-the-loop.
+
 ```python
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
@@ -140,6 +147,7 @@ agent = create_deep_agent(
 </python>
 <typescript>
 Use FilesystemBackend for local development with real disk access and human-in-the-loop.
+
 ```typescript
 import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
@@ -158,6 +166,7 @@ const agent = await createDeepAgent({
 <ex-store-in-custom-tools>
 <python>
 Access the store directly in custom tools for long-term memory operations.
+
 ```python
 from langchain.tools import tool, ToolRuntime
 from langchain.agents import create_agent
@@ -206,6 +215,7 @@ agent = create_agent(
 <fix-storebackend-requires-store>
 <python>
 StoreBackend requires a store instance.
+
 ```python
 # WRONG
 agent = create_deep_agent(backend=lambda rt: StoreBackend(rt))
@@ -216,6 +226,7 @@ agent = create_deep_agent(backend=lambda rt: StoreBackend(rt), store=InMemorySto
 </python>
 <typescript>
 StoreBackend requires a store instance.
+
 ```typescript
 // WRONG
 const agent = await createDeepAgent({ backend: (c) => new StoreBackend(c) });
@@ -229,6 +240,7 @@ const agent = await createDeepAgent({ backend: (c) => new StoreBackend(c), store
 <fix-statebackend-files-dont-persist>
 <python>
 StateBackend files are thread-scoped - use same thread_id or StoreBackend for cross-thread access.
+
 ```python
 # WRONG: thread-2 can't read file from thread-1
 agent.invoke({"messages": [...]}, config={"configurable": {"thread_id": "thread-1"}})  # Write
@@ -237,6 +249,7 @@ agent.invoke({"messages": [...]}, config={"configurable": {"thread_id": "thread-
 </python>
 <typescript>
 StateBackend files are thread-scoped - use same thread_id or StoreBackend for cross-thread access.
+
 ```typescript
 // WRONG: thread-2 can't read file from thread-1
 await agent.invoke({ messages: [...] }, { configurable: { thread_id: "thread-1" } });  // Write
@@ -248,6 +261,7 @@ await agent.invoke({ messages: [...] }, { configurable: { thread_id: "thread-2" 
 <fix-path-prefix-for-persistence>
 <python>
 Path must match CompositeBackend route prefix for persistence.
+
 ```python
 # With routes={"/memories/": StoreBackend(rt)}:
 agent.invoke(...)  # /prefs.txt -> ephemeral (no match)
@@ -256,6 +270,7 @@ agent.invoke(...)  # /memories/prefs.txt -> persistent (matches route)
 </python>
 <typescript>
 Path must match CompositeBackend route prefix for persistence.
+
 ```typescript
 // With routes: { "/memories/": StoreBackend }:
 await agent.invoke(...);  // /prefs.txt -> ephemeral (no match)
@@ -267,6 +282,7 @@ await agent.invoke(...);  // /memories/prefs.txt -> persistent (matches route)
 <fix-production-store>
 <python>
 Use PostgresStore for production (InMemoryStore lost on restart).
+
 ```python
 # WRONG                              # CORRECT
 store = InMemoryStore()              store = PostgresStore(connection_string="postgresql://...")
@@ -274,6 +290,7 @@ store = InMemoryStore()              store = PostgresStore(connection_string="po
 </python>
 <typescript>
 Use PostgresStore for production (InMemoryStore lost on restart).
+
 ```typescript
 // WRONG                                    // CORRECT
 const store = new InMemoryStore();          const store = new PostgresStore({ connectionString: "..." });
@@ -284,6 +301,7 @@ const store = new InMemoryStore();          const store = new PostgresStore({ co
 <fix-filesystem-backend-needs-virtual-mode>
 <python>
 Enable virtual_mode=True to restrict path access (prevents ../ and ~/ escapes).
+
 ```python
 backend = FilesystemBackend(root_dir="/project", virtual_mode=True)  # Secure
 ```
@@ -293,6 +311,7 @@ backend = FilesystemBackend(root_dir="/project", virtual_mode=True)  # Secure
 <fix-longest-prefix-match>
 <python>
 CompositeBackend matches longest prefix first.
+
 ```python
 routes = {"/mem/": StoreBackend(rt), "/mem/temp/": StateBackend(rt)}
 # /mem/file.txt -> StoreBackend, /mem/temp/file.txt -> StateBackend (longer match)

@@ -153,6 +153,7 @@ These packages have tighter compatibility requirements — use the latest availa
 <ex-langgraph-python>
 <python>
 Minimal dependency set for a LangGraph project (provider-agnostic).
+
 ```
 # requirements.txt
 langchain>=1.0,<2.0
@@ -171,6 +172,7 @@ langsmith>=0.3.0
 <ex-langgraph-typescript>
 <typescript>
 Minimal package.json dependencies for a LangGraph project (provider-agnostic).
+
 ```json
 {
   "dependencies": {
@@ -187,6 +189,7 @@ Minimal package.json dependencies for a LangGraph project (provider-agnostic).
 <ex-deepagents-python>
 <python>
 Minimal dependency set for a Deep Agents project (provider-agnostic).
+
 ```
 # requirements.txt
 deepagents            # bundles langgraph internally
@@ -204,6 +207,7 @@ langsmith>=0.3.0
 <ex-deepagents-typescript>
 <typescript>
 Minimal package.json dependencies for a Deep Agents project (provider-agnostic).
+
 ```json
 {
   "dependencies": {
@@ -220,6 +224,7 @@ Minimal package.json dependencies for a Deep Agents project (provider-agnostic).
 <ex-with-tools-python>
 <python>
 Adding Tavily search and a vector store to a LangGraph project.
+
 ```
 # requirements.txt
 langchain>=1.0,<2.0
@@ -247,6 +252,7 @@ langchain-text-splitters  # use latest; semver
 <ex-with-tools-typescript>
 <typescript>
 Adding Tavily search and a vector store to a LangGraph project.
+
 ```json
 {
   "dependencies": {
@@ -320,6 +326,7 @@ PINECONE_API_KEY=<your-key>        # for Pinecone
 
 <fix-legacy-version>
 Never start a new project on LangChain 0.3. It is maintenance-only until December 2026.
+
 ```
 # WRONG: legacy, no new features, security patches only
 langchain>=0.3,<0.4
@@ -331,6 +338,7 @@ langchain>=1.0,<2.0
 
 <fix-community-unpinned>
 `langchain-community` can break on minor version bumps — it does not follow semver.
+
 ```
 # WRONG: allows minor-version updates that may be breaking
 langchain-community>=0.4
@@ -343,6 +351,7 @@ Also consider switching to the equivalent dedicated integration package if one e
 
 <fix-community-tool-outdated>
 Community tool packages like `langchain-tavily` and vector store integrations release compatibility fixes alongside LangChain updates. Using an old pinned version can cause import errors or broken tool schemas.
+
 ```
 # RISKY: old pin may be incompatible with LangChain 1.0
 langchain-tavily==0.0.1
@@ -378,6 +387,7 @@ Each entry shows the correct package and import path. If a dedicated package exi
 <fix-core-not-installed>
 <typescript>
 `@langchain/core` is a peer dependency — it must be in your package.json, especially in monorepos.
+
 ```json
 // WRONG: missing @langchain/core (breaks in yarn workspaces / strict hoisting)
 {
@@ -400,6 +410,7 @@ Each entry shows the correct package and import path. If a dedicated package exi
 <fix-python-version>
 <python>
 Python 3.9 and below are not supported by LangChain 1.0.
+
 ```python
 # Verify before installing
 import sys
@@ -411,6 +422,7 @@ assert sys.version_info >= (3, 10), "Python 3.10+ required for LangChain 1.0"
 <fix-node-version>
 <typescript>
 Node.js below 20 is not officially supported.
+
 ```bash
 # Verify before installing
 node --version   # must be v20.x or higher

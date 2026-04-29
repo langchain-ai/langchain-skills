@@ -32,6 +32,7 @@ LangGraph's persistence layer enables durable execution by checkpointing graph s
 <ex-basic-persistence>
 <python>
 Set up a basic graph with in-memory checkpointing and thread-based state persistence.
+
 ```python
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
@@ -66,6 +67,7 @@ print(len(result2["messages"]))  # 4 (previous + new)
 </python>
 <typescript>
 Set up a basic graph with in-memory checkpointing and thread-based state persistence.
+
 ```typescript
 import { MemorySaver, StateGraph, StateSchema, MessagesValue, START, END } from "@langchain/langgraph";
 import { HumanMessage } from "@langchain/core/messages";
@@ -99,6 +101,7 @@ console.log(result2.messages.length);  // 4 (previous + new)
 <ex-production-postgres>
 <python>
 Configure PostgreSQL-backed checkpointing for production deployments.
+
 ```python
 from langgraph.checkpoint.postgres import PostgresSaver
 
@@ -111,6 +114,7 @@ with PostgresSaver.from_conn_string(
 </python>
 <typescript>
 Configure PostgreSQL-backed checkpointing for production deployments.
+
 ```typescript
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 
@@ -131,6 +135,7 @@ const graph = builder.compile({ checkpointer });
 <ex-separate-threads>
 <python>
 Demonstrate isolated state between different thread IDs.
+
 ```python
 # Different threads maintain separate state
 alice_config = {"configurable": {"thread_id": "user-alice"}}
@@ -144,6 +149,7 @@ graph.invoke({"messages": ["Hi from Bob"]}, bob_config)
 </python>
 <typescript>
 Demonstrate isolated state between different thread IDs.
+
 ```typescript
 // Different threads maintain separate state
 const aliceConfig = { configurable: { thread_id: "user-alice" } };
@@ -164,6 +170,7 @@ await graph.invoke({ messages: [new HumanMessage("Hi from Bob")] }, bobConfig);
 <ex-resume-from-checkpoint>
 <python>
 Time travel: browse checkpoint history and replay or fork from a past state.
+
 ```python
 config = {"configurable": {"thread_id": "session-1"}}
 
@@ -183,6 +190,7 @@ result = graph.invoke(None, fork_config)
 </python>
 <typescript>
 Time travel: browse checkpoint history and replay or fork from a past state.
+
 ```typescript
 const config = { configurable: { thread_id: "session-1" } };
 
@@ -208,6 +216,7 @@ const forked = await graph.invoke(null, forkConfig);
 <ex-update-state>
 <python>
 Manually update graph state before resuming execution.
+
 ```python
 config = {"configurable": {"thread_id": "session-1"}}
 
@@ -220,6 +229,7 @@ result = graph.invoke(None, config)
 </python>
 <typescript>
 Manually update graph state before resuming execution.
+
 ```typescript
 const config = { configurable: { thread_id: "session-1" } };
 
@@ -269,6 +279,7 @@ When compiling a subgraph, the `checkpointer` parameter controls persistence beh
 <ex-subgraph-checkpointer-modes>
 <python>
 Choose the right checkpointer mode for your subgraph.
+
 ```python
 # No interrupts needed — opt out of checkpointing
 subgraph = subgraph_builder.compile(checkpointer=False)
@@ -282,6 +293,7 @@ subgraph = subgraph_builder.compile(checkpointer=True)
 </python>
 <typescript>
 Choose the right checkpointer mode for your subgraph.
+
 ```typescript
 // No interrupts needed — opt out of checkpointing
 const subgraph = subgraphBuilder.compile({ checkpointer: false });
@@ -302,6 +314,7 @@ const subgraph = subgraphBuilder.compile({ checkpointer: true });
 When multiple **different** stateful subgraphs run in parallel, wrap each in its own `StateGraph` with a unique node name for stable namespace isolation:
 
 <python>
+
 ```python
 from langgraph.graph import MessagesState, StateGraph
 
@@ -326,6 +339,7 @@ veggie_agent = create_sub_agent(
 ```
 </python>
 <typescript>
+
 ```typescript
 import { StateGraph, StateSchema, MessagesValue, START } from "@langchain/langgraph";
 
@@ -357,6 +371,7 @@ Note: Subgraphs added as nodes (via `add_node`) already get name-based namespace
 <ex-long-term-memory-store>
 <python>
 Use a Store for cross-thread memory to share user preferences across conversations.
+
 ```python
 from langgraph.store.memory import InMemoryStore
 
@@ -382,6 +397,7 @@ graph.invoke({"user_id": "alice"}, {"configurable": {"thread_id": "thread-2"}}) 
 </python>
 <typescript>
 Use a Store for cross-thread memory to share user preferences across conversations.
+
 ```typescript
 import { MemoryStore } from "@langchain/langgraph";
 
@@ -409,6 +425,7 @@ await graph.invoke({ userId: "alice" }, { configurable: { thread_id: "thread-2" 
 <ex-store-operations>
 <python>
 Basic store operations: put, get, search, and delete.
+
 ```python
 from langgraph.store.memory import InMemoryStore
 
@@ -429,6 +446,7 @@ store.delete(("user-123", "facts"), "location")  # Delete
 <fix-thread-id-required>
 <python>
 Always provide thread_id in config to enable state persistence.
+
 ```python
 # WRONG: No thread_id - state NOT persisted!
 graph.invoke({"messages": ["Hello"]})
@@ -442,6 +460,7 @@ graph.invoke({"messages": ["What did I say?"]}, config)  # Remembers!
 </python>
 <typescript>
 Always provide thread_id in config to enable state persistence.
+
 ```typescript
 // WRONG: No thread_id - state NOT persisted!
 await graph.invoke({ messages: [new HumanMessage("Hello")] });
@@ -459,6 +478,7 @@ await graph.invoke({ messages: [new HumanMessage("What did I say?")] }, config);
 <fix-inmemory-not-for-production>
 <python>
 Use PostgresSaver instead of InMemorySaver for production persistence.
+
 ```python
 # WRONG: Data lost on process restart
 checkpointer = InMemorySaver()  # In-memory only!
@@ -472,6 +492,7 @@ with PostgresSaver.from_conn_string("postgresql://...") as checkpointer:
 </python>
 <typescript>
 Use PostgresSaver instead of MemorySaver for production persistence.
+
 ```typescript
 // WRONG: Data lost on process restart
 const checkpointer = new MemorySaver();  // In-memory only!
@@ -488,6 +509,7 @@ await checkpointer.setup(); // only needed on first use to create tables
 <fix-update-state-with-reducers>
 <python>
 Use Overwrite to replace state values instead of passing through reducers.
+
 ```python
 from langgraph.types import Overwrite
 
@@ -503,6 +525,7 @@ graph.update_state(config, {"items": Overwrite(["C"])})  # Result: ["C"] - Repla
 </python>
 <typescript>
 Use Overwrite to replace state values instead of passing through reducers.
+
 ```typescript
 import { Overwrite } from "@langchain/langgraph";
 
@@ -521,6 +544,7 @@ await graph.updateState(config, { items: new Overwrite(["C"]) });  // Result: ["
 <fix-store-injection>
 <python>
 Access store via the Runtime object in graph nodes.
+
 ```python
 # WRONG: Store not available in node
 def my_node(state):
@@ -535,6 +559,7 @@ def my_node(state, runtime: Runtime):
 </python>
 <typescript>
 Access store via runtime parameter in graph nodes.
+
 ```typescript
 // WRONG: Store not available in node
 const myNode = async (state) => {
