@@ -28,6 +28,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 ## Environment Setup
 
 Required environment variables:
+
 ```bash
 OPENAI_API_KEY=<your-key>  # For OpenAI models
 ANTHROPIC_API_KEY=<your-key>  # For Anthropic models

@@ -36,6 +36,7 @@ Main agent has `task` tool -> creates fresh subagent -> subagent executes autono
 <ex-custom-subagents>
 <python>
 Create a custom "researcher" subagent with specialized tools for academic paper search.
+
 ```python
 from deepagents import create_deep_agent
 from langchain.tools import tool
@@ -61,6 +62,7 @@ agent = create_deep_agent(
 </python>
 <typescript>
 Create a custom "researcher" subagent with specialized tools for academic paper search.
+
 ```typescript
 import { createDeepAgent } from "deepagents";
 import { tool } from "@langchain/core/tools";
@@ -90,6 +92,7 @@ const agent = await createDeepAgent({
 <ex-subagent-with-hitl>
 <python>
 Configure a subagent with HITL approval for sensitive operations.
+
 ```python
 from deepagents import create_deep_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -113,6 +116,7 @@ agent = create_deep_agent(
 <fix-subagents-are-stateless>
 <python>
 Subagents are stateless - provide complete instructions in a single call.
+
 ```python
 # WRONG: Subagents don't remember previous calls
 # task(agent='research', instruction='Find data')
@@ -124,6 +128,7 @@ Subagents are stateless - provide complete instructions in a single call.
 </python>
 <typescript>
 Subagents are stateless - provide complete instructions in a single call.
+
 ```typescript
 // WRONG: Subagents don't remember previous calls
 // task research: Find data
@@ -138,6 +143,7 @@ Subagents are stateless - provide complete instructions in a single call.
 <fix-custom-subagents-dont-inherit-skills>
 <python>
 Custom subagents don't inherit skills from the main agent.
+
 ```python
 # WRONG: Custom subagent won't have main agent's skills
 agent = create_deep_agent(
@@ -168,6 +174,7 @@ agent = create_deep_agent(
 </when-to-use-todolist>
 
 <todolist-tool>
+
 ```
 write_todos(todos: list[dict]) -> None
 ```
@@ -180,6 +187,7 @@ Each todo item has:
 <ex-todolist-usage>
 <python>
 Invoke an agent that automatically creates a todo list for a multi-step task.
+
 ```python
 from deepagents import create_deep_agent
 
@@ -200,6 +208,7 @@ result = agent.invoke({
 </python>
 <typescript>
 Invoke an agent that automatically creates a todo list for a multi-step task.
+
 ```typescript
 import { createDeepAgent } from "deepagents";
 
@@ -215,6 +224,7 @@ const result = await agent.invoke({
 <ex-access-todo-state>
 <python>
 Access the todo list from the agent's final state after invocation.
+
 ```python
 result = agent.invoke({...}, config={"configurable": {"thread_id": "session-1"}})
 
@@ -229,6 +239,7 @@ for todo in todos:
 <fix-todolist-requires-thread-id>
 <python>
 Todo list state requires a thread_id for persistence across invocations.
+
 ```python
 # WRONG: Fresh state each time without thread_id
 agent.invoke({"messages": [...]})
@@ -256,6 +267,7 @@ agent.invoke({"messages": [...]}, config=config)  # Todos preserved
 <ex-hitl-setup>
 <python>
 Configure which tools require human approval before execution.
+
 ```python
 from deepagents import create_deep_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -272,6 +284,7 @@ agent = create_deep_agent(
 </python>
 <typescript>
 Configure which tools require human approval before execution.
+
 ```typescript
 import { createDeepAgent } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
@@ -291,6 +304,7 @@ const agent = await createDeepAgent({
 <ex-approval-workflow>
 <python>
 Complete workflow: trigger an interrupt, check state, approve action, and resume execution.
+
 ```python
 from deepagents import create_deep_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -319,6 +333,7 @@ result = agent.invoke(Command(resume={"decisions": [{"type": "approve"}]}), conf
 </python>
 <typescript>
 Complete workflow: trigger an interrupt, check state, approve action, and resume execution.
+
 ```typescript
 import { createDeepAgent } from "deepagents";
 import { MemorySaver, Command } from "@langchain/langgraph";
@@ -352,6 +367,7 @@ result = await agent.invoke(
 <ex-reject-with-feedback>
 <python>
 Reject a pending action with feedback, prompting the agent to try a different approach.
+
 ```python
 result = agent.invoke(
     Command(resume={"decisions": [{"type": "reject", "message": "Run tests first"}]}),
@@ -361,6 +377,7 @@ result = agent.invoke(
 </python>
 <typescript>
 Reject a pending action with feedback, prompting the agent to try a different approach.
+
 ```typescript
 const result = await agent.invoke(
   new Command({ resume: { decisions: [{ type: "reject", message: "Run tests first" }] } }),
@@ -373,6 +390,7 @@ const result = await agent.invoke(
 <ex-edit-before-execution>
 <python>
 Edit the proposed action arguments before allowing execution.
+
 ```python
 result = agent.invoke(
     Command(resume={"decisions": [{
@@ -407,6 +425,7 @@ result = agent.invoke(
 <fix-checkpointer-required>
 <python>
 Checkpointer is required when using interrupt_on for HITL workflows.
+
 ```python
 # WRONG
 agent = create_deep_agent(interrupt_on={"write_file": True})
@@ -417,6 +436,7 @@ agent = create_deep_agent(interrupt_on={"write_file": True}, checkpointer=Memory
 </python>
 <typescript>
 Checkpointer is required when using interruptOn for HITL workflows.
+
 ```typescript
 // WRONG
 const agent = await createDeepAgent({ interruptOn: { write_file: true } });
@@ -430,6 +450,7 @@ const agent = await createDeepAgent({ interruptOn: { write_file: true }, checkpo
 <fix-thread-id-required-for-resumption>
 <python>
 A consistent thread_id is required to resume interrupted workflows.
+
 ```python
 # WRONG: Can't resume without thread_id
 agent.invoke({"messages": [...]})
@@ -443,6 +464,7 @@ agent.invoke(Command(resume={"decisions": [{"type": "approve"}]}), config=config
 </python>
 <typescript>
 A consistent thread_id is required to resume interrupted workflows.
+
 ```typescript
 // WRONG: Can't resume without thread_id
 await agent.invoke({ messages: [...] });
@@ -459,6 +481,7 @@ await agent.invoke(new Command({ resume: { decisions: [{ type: "approve" }] } })
 <fix-interrupt-checks-between-invocations>
 <python>
 Interrupts happen BETWEEN invoke() calls, not mid-execution.
+
 ```python
 result = agent.invoke({...}, config=config)       # Step 1: triggers interrupt
 if "__interrupt__" in result:                      # Step 2: check for interrupt

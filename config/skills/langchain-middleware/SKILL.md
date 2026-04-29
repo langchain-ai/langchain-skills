@@ -20,6 +20,7 @@ Middleware patterns for production LangChain agents:
 <ex-basic-hitl-setup>
 <python>
 Set up an agent with HITL middleware that pauses before sending emails for approval.
+
 ```python
 from langchain.agents import create_agent
 from langchain.agents.middleware import HumanInTheLoopMiddleware
@@ -47,6 +48,7 @@ agent = create_agent(
 </python>
 <typescript>
 Set up an agent with HITL that pauses before sending emails for human approval.
+
 ```typescript
 import { createAgent, humanInTheLoopMiddleware } from "langchain";
 import { MemorySaver } from "@langchain/langgraph";
@@ -79,6 +81,7 @@ const agent = createAgent({
 <ex-running-with-interrupts>
 <python>
 Run the agent, detect an interrupt, then resume execution after human approval.
+
 ```python
 from langgraph.types import Command
 
@@ -102,6 +105,7 @@ result2 = agent.invoke(
 </python>
 <typescript>
 Run the agent, detect an interrupt, then resume execution after human approval.
+
 ```typescript
 import { Command } from "@langchain/langgraph";
 
@@ -129,6 +133,7 @@ const result2 = await agent.invoke(
 <ex-editing-tool-arguments>
 <python>
 Edit the tool arguments before approving when the original values need correction.
+
 ```python
 # Human edits the arguments — edited_action must include name + args
 result2 = agent.invoke(
@@ -151,6 +156,7 @@ result2 = agent.invoke(
 </python>
 <typescript>
 Edit the tool arguments before approving when the original values need correction.
+
 ```typescript
 // Human edits the arguments — editedAction must include name + args
 const result2 = await agent.invoke(
@@ -178,6 +184,7 @@ const result2 = await agent.invoke(
 <ex-rejecting-with-feedback>
 <python>
 Reject a tool call and provide feedback explaining why it was rejected.
+
 ```python
 # Human rejects
 result2 = agent.invoke(
@@ -196,6 +203,7 @@ result2 = agent.invoke(
 <ex-multiple-tools-different-policies>
 <python>
 Configure different HITL policies for each tool based on risk level.
+
 ```python
 agent = create_agent(
     model="gpt-4.1",
@@ -318,6 +326,7 @@ const loggingMiddleware = createMiddleware({
 <fix-missing-checkpointer>
 <python>
 HITL middleware requires a checkpointer to persist state.
+
 ```python
 # WRONG
 agent = create_agent(model="gpt-4.1", tools=[send_email], middleware=[HumanInTheLoopMiddleware({...})])
@@ -332,6 +341,7 @@ agent = create_agent(
 </python>
 <typescript>
 HITL requires a checkpointer to persist state.
+
 ```typescript
 // WRONG: No checkpointer
 const agent = createAgent({
@@ -352,6 +362,7 @@ const agent = createAgent({
 <fix-no-thread-id>
 <python>
 Always provide thread_id when using HITL to track conversation state.
+
 ```python
 # WRONG
 agent.invoke(input)  # No config!
@@ -365,6 +376,7 @@ agent.invoke(input, config={"configurable": {"thread_id": "user-123"}})
 <fix-wrong-resume-syntax>
 <python>
 Use Command class to resume execution after an interrupt.
+
 ```python
 # WRONG
 agent.invoke({"resume": {"decisions": [...]}})
@@ -376,6 +388,7 @@ agent.invoke(Command(resume={"decisions": [{"type": "approve"}]}), config=config
 </python>
 <typescript>
 Use Command class to resume execution after an interrupt.
+
 ```typescript
 // WRONG
 await agent.invoke({ resume: { decisions: [...] } });
