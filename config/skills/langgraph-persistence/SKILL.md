@@ -100,12 +100,13 @@ console.log(result2.messages.length);  // 4 (previous + new)
 <python>
 Configure PostgreSQL-backed checkpointing for production deployments.
 ```python
+import os
 from langgraph.checkpoint.postgres import PostgresSaver
 
-with PostgresSaver.from_conn_string(
-    "postgresql://user:pass@localhost/db"
-) as checkpointer:
-    checkpointer.setup()  # only needed on first use to create tables
+# Run once during deployment (not at application startup):
+#   PostgresSaver.from_conn_string(os.environ["DATABASE_URL"]).setup()
+
+with PostgresSaver.from_conn_string(os.environ["DATABASE_URL"]) as checkpointer:
     graph = builder.compile(checkpointer=checkpointer)
 ```
 </python>
@@ -114,11 +115,10 @@ Configure PostgreSQL-backed checkpointing for production deployments.
 ```typescript
 import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 
-const checkpointer = PostgresSaver.fromConnString(
-  "postgresql://user:pass@localhost/db"
-);
-await checkpointer.setup(); // only needed on first use to create tables
+// Run once during deployment (not at application startup):
+//   await PostgresSaver.fromConnString(process.env.DATABASE_URL!).setup();
 
+const checkpointer = PostgresSaver.fromConnString(process.env.DATABASE_URL!);
 const graph = builder.compile({ checkpointer });
 ```
 </typescript>
