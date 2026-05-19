@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "paths": {
+      "#swarm/*": ["./config/skills/swarm/scripts/*"]
+    }
+  },
+  "include": ["config/skills/swarm/scripts", "tests"]
+}

@@ -7,3 +7,4 @@ logs/
 __pycache__
 .DS_Store
 uv.lock
+node_modules/
