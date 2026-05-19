@@ -1,0 +1,12 @@
+{
+  "name": "langchain-skills",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.0"
+  }
+}
