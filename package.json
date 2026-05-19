@@ -1,6 +1,7 @@
 {
   "name": "langchain-skills",
   "private": true,
+  "packageManager": "pnpm@10.30.0",
   "type": "module",
   "scripts": {
     "test": "vitest run"
