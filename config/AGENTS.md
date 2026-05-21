@@ -23,9 +23,9 @@ This project uses skills that contain up-to-date patterns and working reference 
 
 ### Deep Agents Skills
 - **deep-agents-core** - Invoke for Deep Agents harness architecture
-- **deep-agents-deploy** - Invoke for deepagents deploy: deepagents.toml configuration, project layout, and deploy to LangGraph Platform
 - **deep-agents-memory** - Invoke for long-term memory with StoreBackend
 - **deep-agents-orchestration** - Invoke for multi-agent coordination
+- **managed-deep-agents** - Invoke for the Managed Deep Agents private-preview REST API (`/v1/deepagents`): create agents, register MCP servers, create threads, stream runs
 
 ## Environment Setup
 

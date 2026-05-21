@@ -94,8 +94,8 @@ Then run your coding agent from the directory where you installed (for local ins
 ### Deep Agents
 - **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
 - **deep-agents-memory** - Memory, persistence, filesystem middleware
-- **deep-agents-deploy** - deepagents.toml config, project layout, deploy to LangGraph Platform
 - **deep-agents-orchestration** - Subagents, task planning, human-in-the-loop
+- **managed-deep-agents** - Managed Deep Agents private-preview REST API (`/v1/deepagents`): create agents, register MCP servers, create threads, stream runs
 
 ### LangChain
 - **langchain-fundamentals** - Agents with create_agent, tools, structured output, middleware basics
