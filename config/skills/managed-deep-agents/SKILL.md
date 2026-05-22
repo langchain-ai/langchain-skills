@@ -85,12 +85,13 @@ Tools are configured with a `tools` array and an `interrupt_config` map. The sam
     }
   ],
   "interrupt_config": {
-    "https://mcp.tavily.com/mcp/::tavily_search::tavily": false
+    "https://mcp.tavily.com/mcp/::tavily-search::tavily": false
   }
 }
 ```
 
 - Each `tools[].mcp_server_url` must match an MCP server already registered for the workspace; credentials are attached automatically at invocation time.
+- `tools[].name` is the tool name **exposed by the MCP server itself**, not the workspace's MCP-server display name. Confirm the name with `tools/list` against the server (e.g. Tavily's MCP exposes `tavily_search` with an underscore, even if you registered the server under any other name). The model will not see the tool if this name is wrong.
 - `interrupt_config` keys use the form `{mcp_server_url}::{tool_name}` (two colons, trailing slashes on the URL stripped before matching). Additional `::`-separated parts (e.g. the MCP server display name) are accepted but ignored when matching.
 - Set the value to `true` to require human approval before the tool runs, `false` to allow it without interrupt.
 
@@ -154,7 +155,7 @@ response = httpx.post(
                 },
             ],
             "interrupt_config": {
-                "https://mcp.tavily.com/mcp/::tavily_search::tavily": False,
+                "https://mcp.tavily.com/mcp/::tavily-search::tavily": False,
             },
         },
     },
@@ -237,6 +238,76 @@ Set `Accept: text/event-stream` so the client receives progress as SSE. `stream_
 
 Every run is traced in LangSmith — model calls, tool calls, subagent activity, files, and runtime state are all inspectable from the trace UI.
 
+## Step 5 — Handle human-in-the-loop interrupts
+
+When `interrupt_config` flags a tool with `true`, the run pauses before the tool executes and the SSE stream emits an interrupt payload nested inside a `values` (or `updates`) event:
+
+```json
+{
+  "__interrupt__": [
+    {
+      "value": {
+        "action_requests": [
+          {
+            "name": "tavily_search",
+            "args": { "query": "…", "max_results": 5 },
+            "description": "Tool execution requires approval\n\nTool: tavily_search\nArgs: {...}"
+          }
+        ],
+        "review_configs": [
+          {
+            "action_name": "tavily_search",
+            "allowed_decisions": ["approve", "edit", "reject", "respond"]
+          }
+        ]
+      },
+      "id": "7ae0be0e5105464d49a267e35083f422"
+    }
+  ]
+}
+```
+
+The stream closes after the interrupt is emitted. To act on it, post a follow-up run with `command.resume` on the **same thread**:
+
+```python
+resume = httpx.stream(
+    "POST",
+    f"{BASE_URL}/threads/{thread_id}/runs/stream",
+    headers={**HEADERS, "Accept": "text/event-stream"},
+    json={
+        "agent_id": agent_id,
+        # The API requires a non-empty `messages` array on every call;
+        # an empty system message is accepted as a no-op when resuming.
+        "messages": [{"role": "system", "content": ""}],
+        "command": {
+            "resume": {
+                "decisions": [{"type": "approve"}]
+            }
+        },
+        "stream_mode": ["values", "updates", "messages-tuple"],
+        "stream_subgraphs": True,
+    },
+    timeout=None,
+)
+```
+
+**The resume value must be the `HITLResponse` dict `{"decisions": [...]}` — not a bare list.** The middleware does `decisions = interrupt(request)["decisions"]` under the hood (see `langchain.agents.middleware.HumanInTheLoopMiddleware`), so a list at the top level crashes the run with `TypeError: list indices must be integers or slices, not str`.
+
+Send exactly one decision per `action_request`, in the same order. Decision shapes:
+
+| Decision | Shape | Effect |
+|----------|-------|--------|
+| Approve | `{"type": "approve"}` | Run the tool with the proposed args. |
+| Edit | `{"type": "edit", "edited_action": {"name": "...", "args": {...}}}` | Run the tool with modified name/args (preserves the original `tool_call.id`). |
+| Reject | `{"type": "reject", "message": "..."}` | Block the tool. The model receives an error `ToolMessage` with `message` (or a default). |
+| Respond | `{"type": "respond", "message": "..."}` | Skip the tool; the model receives a success `ToolMessage` with `message` as the synthetic tool reply. |
+
+Each entry's `type` must be present in the matching `review_configs[i].allowed_decisions` — otherwise the run raises `ValueError`.
+
+### `POST /threads/{thread_id}/resolve-interrupt` (cancel, not approve)
+
+There is also a `POST /v1/deepagents/threads/{thread_id}/resolve-interrupt` endpoint, which takes **no body** and returns `204`. It is **not** an approve shortcut — it calls `update_state(as_node="__end__")` on the upstream LangGraph runtime, which terminates the run at the interrupt without running the pending tool. Use it only when you want to abandon the paused work and free the thread; for any "approve / edit / reject / respond" decision, send a `command.resume` to `/runs/stream` instead.
+
 ## JavaScript / cURL equivalents
 
 The same flow works with `fetch` (Node 18+ or browser) or `curl`. Replace `httpx.post(url, headers=HEADERS, json=...)` with:
@@ -276,6 +347,10 @@ Use a standard LangSmith Deployment via [[langgraph-cli]] (`langgraph deploy`) i
 - **No rate limits during preview** — but quotas may be introduced before GA; don't design around the absence of limits.
 - **`PATCH` is wholesale, not partial** — both for `agents` (`tools` field is replaced) and for `mcp-servers` (`headers` array is replaced). Always send the full new value.
 - **`interrupt_config` key format** — `{mcp_server_url}::{tool_name}` with two colons. Trailing slashes on the URL are stripped before matching.
+- **Tool name is the MCP tool name, not the server name** — if `tools[].name` doesn't match what the MCP server exposes from `tools/list`, the runtime silently drops the tool from the model's bound tool set. The model never sees it and never triggers the interrupt. List tools against the live server (e.g. via `mcp.client.streamable_http`) to confirm.
+- **Resume from an interrupt is `command.resume = {"decisions": [...]}`** — a bare list of decisions crashes the run with `TypeError: list indices must be integers or slices, not str` because the middleware does `interrupt(request)["decisions"]` internally.
+- **`/threads/{tid}/runs/stream` requires a non-empty `messages` array even when resuming** — pass `[{"role": "system", "content": ""}]` alongside `command.resume`.
+- **`/resolve-interrupt` advances to `__end__`** — the endpoint terminates the paused run without running the pending tool. It is a cancel/finalize escape hatch, not an approve.
 - **Model IDs must include the provider prefix** — `anthropic:claude-sonnet-4-6`, not `claude-sonnet-4-6` (the latter is treated as a Playground config reference).
 - **MCP credentials are sensitive** — `headers` is omitted from response bodies for callers without invoke permission; treat list/get responses as sensitive and avoid logging them verbatim.
 - **MCP auth limited to static headers** — bearer tokens and custom API-key headers only during preview. OAuth-backed registration is planned.
