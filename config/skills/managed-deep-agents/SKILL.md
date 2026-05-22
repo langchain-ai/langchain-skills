@@ -78,14 +78,14 @@ Tools are configured with a `tools` array and an `interrupt_config` map. The sam
 {
   "tools": [
     {
-      "name": "tavily-search",
+      "name": "tavily_search",
       "mcp_server_url": "https://mcp.tavily.com/mcp/",
       "mcp_server_name": "tavily",
-      "display_name": "tavily-search"
+      "display_name": "tavily_search"
     }
   ],
   "interrupt_config": {
-    "https://mcp.tavily.com/mcp/::tavily-search::tavily": false
+    "https://mcp.tavily.com/mcp/::tavily_search::tavily": false
   }
 }
 ```
@@ -147,14 +147,14 @@ response = httpx.post(
         "tools": {
             "tools": [
                 {
-                    "name": "tavily-search",
+                    "name": "tavily_search",
                     "mcp_server_url": "https://mcp.tavily.com/mcp/",
                     "mcp_server_name": "tavily",
-                    "display_name": "tavily-search",
+                    "display_name": "tavily_search",
                 },
             ],
             "interrupt_config": {
-                "https://mcp.tavily.com/mcp/::tavily-search::tavily": False,
+                "https://mcp.tavily.com/mcp/::tavily_search::tavily": False,
             },
         },
     },
