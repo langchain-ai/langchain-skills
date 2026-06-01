@@ -37,7 +37,7 @@ function sanitizeSessionId(id: string): string {
  */
 function getTableDir(): string {
   const id = typeof __sessionId__ !== "undefined" ? __sessionId__ : "default";
-  return `.swarm/${sanitizeSessionId(id)}`;
+  return `/tmp/.swarm/${sanitizeSessionId(id)}`;
 }
 
 /**

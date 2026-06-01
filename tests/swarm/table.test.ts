@@ -76,11 +76,11 @@ describe("generateId", () => {
 
 describe("tablePath", () => {
   it("zero-pads the sequence number", () => {
-    expect(tablePath(0, "t_abc123")).toBe(".swarm/default/000-t_abc123.jsonl");
-    expect(tablePath(3, "t_abc123")).toBe(".swarm/default/003-t_abc123.jsonl");
-    expect(tablePath(42, "t_abc123")).toBe(".swarm/default/042-t_abc123.jsonl");
+    expect(tablePath(0, "t_abc123")).toBe("/tmp/.swarm/default/000-t_abc123.jsonl");
+    expect(tablePath(3, "t_abc123")).toBe("/tmp/.swarm/default/003-t_abc123.jsonl");
+    expect(tablePath(42, "t_abc123")).toBe("/tmp/.swarm/default/042-t_abc123.jsonl");
     expect(tablePath(999, "t_abc123")).toBe(
-      ".swarm/default/999-t_abc123.jsonl",
+      "/tmp/.swarm/default/999-t_abc123.jsonl",
     );
   });
 });
@@ -458,6 +458,6 @@ describe("sequence numbering", () => {
     const handle = await createTable({ tasks: [{ id: "r3" }] });
     const path = [...files.keys()].find((k) => k.includes(handle.id));
     expect(path).toBeDefined();
-    expect(path).toMatch(/^\.swarm\/default\/00[2-9]/);
+    expect(path).toMatch(/^\/tmp\/\.swarm\/default\/00[2-9]/);
   });
 });
