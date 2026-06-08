@@ -7,7 +7,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 **ALWAYS** invoke the relevant skill first - skills have the correct imports, patterns, and scripts that prevent common mistakes.
 
 ### Getting Started
-- **framework-selection** - Invoke when choosing between LangChain, LangGraph, and Deep Agents
+- **ecosystem-primer** - Invoke FIRST for any LangChain/LangGraph/Deep Agents project: framework selection, env setup, and which skill to load next
 - **langchain-dependencies** - Invoke before installing packages or when resolving version issues (Python + TypeScript)
 
 ### LangChain Skills

@@ -89,7 +89,7 @@ Then run your coding agent from the directory where you installed (for local ins
 ## Available Skills (13)
 
 ### Getting Started
-- **framework-selection** - Framework comparison reference (LangChain vs LangGraph vs Deep Agents)
+- **ecosystem-primer** - Start-here primer: framework selection (LangChain vs LangGraph vs Deep Agents), env setup, and which skill to load next
 - **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
 
 ### Deep Agents
