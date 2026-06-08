@@ -96,7 +96,7 @@ Then run your coding agent from the directory where you installed (for local ins
 - **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
 - **deep-agents-memory** - Memory, persistence, filesystem middleware
 - **deep-agents-orchestration** - Subagents, task planning, human-in-the-loop
-- **managed-deep-agents** - Managed Deep Agents private-preview REST API (`/v1/deepagents`): create agents, register MCP servers, create threads, stream runs
+- **managed-deep-agents** - Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
 
 ### LangChain
 - **langchain-fundamentals** - Agents with create_agent, tools, structured output, middleware basics
