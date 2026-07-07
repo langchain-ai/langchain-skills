@@ -25,7 +25,7 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **deep-agents-core** - Invoke for Deep Agents harness architecture
 - **deep-agents-memory** - Invoke for long-term memory with StoreBackend
 - **deep-agents-orchestration** - Invoke for multi-agent coordination
-- **managed-deep-agents** - Invoke for Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
+- **managed-deep-agents** - Invoke for Managed Deep Agents: build a code-first agent, add tools, middleware, MCP connectors, schedules, and sandboxes, and deploy with the `mda` CLI
 
 ## Environment Setup
 
