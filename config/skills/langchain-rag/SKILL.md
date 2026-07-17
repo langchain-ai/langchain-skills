@@ -257,11 +257,13 @@ from langchain_community.vectorstores import FAISS
 vectorstore = FAISS.from_documents(splits, embeddings)
 vectorstore.save_local("./faiss_index")
 
-# Load (requires allow_dangerous_deserialization)
+# Only load FAISS indexes that you created and fully control.
+# The Python FAISS loader uses pickle-backed metadata, so never load
+# downloaded, shared, or otherwise untrusted index directories.
 loaded = FAISS.load_local(
     "./faiss_index",
     embeddings,
-    allow_dangerous_deserialization=True
+    allow_dangerous_deserialization=True,
 )
 ```
 </python>
@@ -514,15 +516,27 @@ const retriever = vectorstore.asRetriever();  // Uses same embeddings
 
 <fix-faiss-deserialization>
 <python>
-Explicitly allow deserialization when loading FAISS indexes.
+Only opt in to FAISS deserialization for trusted local indexes. Python FAISS indexes include pickle-backed metadata, and untrusted pickle files can execute arbitrary code during loading.
 
 ```python
-# WRONG: Will raise error
-loaded_store = FAISS.load_local("./faiss_index", embeddings)
+# WRONG: Loading a downloaded, shared, cloud-hosted, or third-party-controlled
+# FAISS index with dangerous deserialization enabled.
+loaded_store = FAISS.load_local(
+    "./untrusted_faiss_index",
+    embeddings,
+    allow_dangerous_deserialization=True,
+)
 
-# CORRECT
-loaded_store = FAISS.load_local("./faiss_index", embeddings, allow_dangerous_deserialization=True)
+# CORRECT: Only opt in when the index directory was created by you and has
+# remained under your control.
+loaded_store = FAISS.load_local(
+    "./faiss_index",
+    embeddings,
+    allow_dangerous_deserialization=True,
+)
 ```
+
+If you cannot guarantee the provenance of a persisted index, do not load it with `allow_dangerous_deserialization=True`. Rebuild the index from trusted source documents or use a vector store/backend that does not require pickle deserialization for untrusted files.
 </python>
 </fix-faiss-deserialization>
 
