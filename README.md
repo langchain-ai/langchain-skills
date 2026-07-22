@@ -94,6 +94,8 @@ To install only the eval-engineering skill:
 npx skills add langchain-ai/langchain-skills --skill eval-engineering --yes
 ```
 
+Or ask Codex: “Install the `eval-engineering` skill from `langchain-ai/langchain-skills`.”
+
 Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor locally with Docker or use a supported cloud environment.
 
 Then ask your coding agent:
