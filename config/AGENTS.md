@@ -10,6 +10,12 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **ecosystem-primer** - Invoke FIRST for any LangChain/LangGraph/Deep Agents project: framework selection, env setup, and which skill to load next
 - **langchain-dependencies** - Invoke before installing packages or when resolving version issues (Python + TypeScript)
 
+### Local quickstarts
+Invoke when the user wants a minimal working local agent (new directory, stub tool, provider API key only):
+- **langchain-python-quickstart** / **langchain-typescript-quickstart**
+- **langgraph-python-quickstart** / **langgraph-typescript-quickstart**
+- **deepagents-python-quickstart** / **deepagents-typescript-quickstart**
+
 ### LangChain Skills
 - **langchain-fundamentals** - Invoke for create_agent, @tool decorator, middleware patterns
 - **langchain-rag** - Invoke for RAG pipelines, vector stores, embeddings

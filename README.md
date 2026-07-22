@@ -104,11 +104,17 @@ Then ask your coding agent:
 Use eval-engineering to inspect this agent and propose two or three Harbor evals. Traces for this agent can be found here [Tracing Project/Location].
 ```
 
-## Available Skills (15)
+## Available Skills (21)
 
 ### Getting Started
 - **ecosystem-primer** - Start-here primer: framework selection (LangChain vs LangGraph vs Deep Agents), env setup, and which skill to load next
 - **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
+
+### Quickstarts (local)
+Minimal “get something running” skills — ask for provider/model (default `anthropic:claude-sonnet-5`), provider API key only:
+- **langchain-python-quickstart** / **langchain-typescript-quickstart** — weather stub + `create_agent` / `createAgent`
+- **langgraph-python-quickstart** / **langgraph-typescript-quickstart** — weather stub + minimal `StateGraph`
+- **deepagents-python-quickstart** / **deepagents-typescript-quickstart** — research agent with **provider-native web search** (no Tavily)
 
 ### Deep Agents
 - **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
