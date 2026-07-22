@@ -4,7 +4,7 @@
 
 Agent skills for building agents with LangChain, LangGraph, and Deep Agents.
 
-> Want your agent to **self-improve**? Use [langsmith-skills](https://github.com/langchain-ai/langsmith-skills) to observe, evaluate, and iterate on your LLM applications.
+> For LangSmith-specific trace and dataset workflows, use [langsmith-skills](https://github.com/langchain-ai/langsmith-skills).
 
 ## Supported Coding Agents
 
@@ -86,7 +86,25 @@ export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
-## Available Skills (13)
+### Eval Engineering
+
+To install only the eval-engineering skill:
+
+```bash
+npx skills add langchain-ai/langchain-skills --skill eval-engineering --yes
+```
+
+Or ask Codex: “Install the `eval-engineering` skill from `langchain-ai/langchain-skills`.”
+
+Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor locally with Docker or use a supported cloud environment.
+
+Then ask your coding agent:
+
+```text
+Use eval-engineering to inspect this agent and propose two or three Harbor evals. Traces for this agent can be found here [Tracing Project/Location].
+```
+
+## Available Skills (15)
 
 ### Getting Started
 - **ecosystem-primer** - Start-here primer: framework selection (LangChain vs LangGraph vs Deep Agents), env setup, and which skill to load next
@@ -109,3 +127,8 @@ Then run your coding agent from the directory where you installed (for local ins
 - **langgraph-cli** - CLI lifecycle: scaffold, dev, build, deploy, langgraph.json config
 - **langgraph-human-in-the-loop** - Interrupts, human review, approval workflows
 
+### Evaluation
+- **eval-engineering** - Build, run, and audit Harbor evals for an existing agent with user approval
+
+### Utilities
+- **swarm** - Dispatch independent work items in parallel and aggregate the results
