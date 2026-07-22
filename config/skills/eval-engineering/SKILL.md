@@ -25,7 +25,7 @@ Inspect the active agent and code reachable from its public entrypoint. Find:
 - purpose: intended users, jobs, and what a good result provides;
 - evidence: tests, fixtures, issues, existing evals, and documented failures.
 
-Start the entrypoint before approval only when it is local and effect-free. Otherwise include startup requirements in the runtime recommendation.
+Mapping is read-only. Do not start the target or services, install packages, or use external credentials before the user approves the runtime and environment.
 
 Summarize the map in the conversation:
 
@@ -73,7 +73,7 @@ Before implementation, give the user one proposal under 150 words:
 ```text
 Task: request and capability
 Runtime: active entrypoint or reconstruction, with tradeoff
-Dependencies and backing data: live, frozen, or synthetic; effects and source/version
+Dependencies and backing data: live, frozen, or simulated; required credentials if live, effects, and source/version
 Success: how the result is judged
 Recommendation: preferred setup and why
 ```
@@ -109,11 +109,11 @@ Run the approved target runtime through Harbor. Inspect:
 - verifier evidence, verdict, reason, reward, and errors;
 - resolved target and environment configuration.
 
-Fix and rerun when the task is unclear, the environment is unrealistic, the verifier is wrong, or infrastructure failed.
+Fix and rerun when the task is unclear, the environment is unrealistic, the verifier is wrong, or infrastructure failed. An eval is ready for review only after a Harbor run and its output show that the task measures the selected capability.
 
 ## 6. Review with the user
 
-Report the task path and run command, capability and scenario, runtime and dependency boundary, target behavior, verifier decision, limitation, and recommendation to keep, revise, or drop the eval. Wait for the user's decision before creating another one.
+Explain the task path and run command, capability and scenario, runtime and dependency boundary, target behavior, verifier decision, and limitation. Ask the user to approve, revise, or drop the eval before creating another one.
 
 ## Invariants
 

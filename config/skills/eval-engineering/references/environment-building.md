@@ -38,4 +38,4 @@ For retrieval, include relevant records, distractors, misses, and bad IDs. For m
 
 Prove that Harbor starts the approved runtime; the target can use the required information and actions; relevant success and error paths work through the dependency interface; state resets; production access is blocked; and the verifier can observe the intended result.
 
-Keep credentials out of files, images, prompts, fixtures, and logs. Deserialize only explicit classes with `secrets_from_env=False` and allowlist configurable endpoints.
+Keep credentials out of files, images, prompts, fixtures, and logs.

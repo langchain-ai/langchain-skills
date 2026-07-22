@@ -20,7 +20,7 @@ Give the judge:
 
 Ask the judge to assess the result, not whether it matches a reference answer or preferred process. Accept different valid approaches and wording.
 
-Use one rubric and one primary semantic verdict. Calibrate that rubric instead of adding separate proxy scores. Deterministic gates may contribute only when they establish an objective fact required by Pass iff.
+Use one primary verdict. Use an LLM judge only when success is semantic: for example, whether an answer is supported by supplied sources. Use code checks for objective facts: for example, whether a required file exists or a test passes. Calibrate a judge rubric instead of adding separate proxy scores. Deterministic gates may contribute only when they establish an objective fact required by Pass iff.
 
 ## Match evidence to the outcome
 

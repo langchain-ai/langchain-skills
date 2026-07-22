@@ -86,6 +86,22 @@ export ANTHROPIC_API_KEY=<your-key>   # For Anthropic models
 
 Then run your coding agent from the directory where you installed (for local installs) or from anywhere (for global installs).
 
+### Eval Engineering
+
+To install only the eval-engineering skill:
+
+```bash
+npx skills add langchain-ai/langchain-skills --skill eval-engineering --yes
+```
+
+Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor locally with Docker or use a supported cloud environment.
+
+Then ask your coding agent:
+
+```text
+Use eval-engineering to inspect this agent and propose two or three Harbor evals. Do not use traces unless I provide them.
+```
+
 ## Available Skills (15)
 
 ### Getting Started
