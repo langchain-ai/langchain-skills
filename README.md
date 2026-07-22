@@ -99,7 +99,7 @@ Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor lo
 Then ask your coding agent:
 
 ```text
-Use eval-engineering to inspect this agent and propose two or three Harbor evals. Do not use traces unless I provide them.
+Use eval-engineering to inspect this agent and propose two or three Harbor evals. Traces for this agent can be found here [Tracing Project/Location].
 ```
 
 ## Available Skills (15)
