@@ -11,10 +11,10 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **langchain-dependencies** - Invoke before installing packages or when resolving version issues (Python + TypeScript)
 
 ### Local quickstarts
-Invoke when the user wants a minimal working local agent (new directory, stub tool, provider API key only):
-- **langchain-python-quickstart** / **langchain-typescript-quickstart**
-- **langgraph-python-quickstart** / **langgraph-typescript-quickstart**
-- **deepagents-python-quickstart** / **deepagents-typescript-quickstart**
+Invoke when the user wants a minimal working local agent. Skills point at the official Mintlify quickstarts (fetch live docs); add provider/model prompt + provider-key-only setup:
+- **langchain-python-quickstart** / **langchain-typescript-quickstart** (weather)
+- **langgraph-python-quickstart** / **langgraph-typescript-quickstart** (math)
+- **deepagents-python-quickstart** / **deepagents-typescript-quickstart** (research; provider web search, not Tavily)
 
 ### LangChain Skills
 - **langchain-fundamentals** - Invoke for create_agent, @tool decorator, middleware patterns

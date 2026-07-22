@@ -1,70 +1,30 @@
 ---
 name: langchain-typescript-quickstart
-description: "Scaffold a minimal local LangChain agent in TypeScript with createAgent, one stub tool, and a provider API key. Use when the user wants to quickly build or try a LangChain agent locally."
+description: "Scaffold a minimal local LangChain agent in TypeScript by following the official quickstart. Use when the user wants to quickly build or try a LangChain agent locally."
 ---
 
 # LangChain TypeScript quickstart
 
-Get a working local LangChain agent with minimal setup. Mirror the official quickstart: https://docs.langchain.com/oss/javascript/langchain/quickstart
+Follow the live docs — do not invent an alternate API from memory:
 
-## Rules
+**https://docs.langchain.com/oss/javascript/langchain/quickstart**
 
-- Ask which **provider and model** to use (showcase model-agnosticism). Default to `anthropic:claude-sonnet-5` if they don't care.
-- Only secret: the provider API key. No Tavily, LangSmith, or other keys.
-- Create a **new** directory (e.g. `langchain-agent/`) and do all work there. Do not add files to the user's currently open project.
-- Use a stub weather tool (no network). Prefer the user edits `.env` themselves — do not ask them to paste keys into chat.
-- Requires Node 22+. Stop after a successful run. Briefly point to `langchain-fundamentals` / docs for next steps.
+Fetch that page (Docs MCP or HTTP) and implement what it shows (weather agent + `createAgent`). Requires Node 22+.
 
-## Steps
+## Local setup constraints
 
-1. **Ask** for provider/model. Emphasize LangChain works with any supported chat model — not locked to one vendor. Suggested prompt:
+Apply these on top of the quickstart (they keep setup minimal and model-agnostic):
 
-   > Which model should this agent use? Pass a `provider:model` string — e.g. `openai:gpt-5.5`, `anthropic:claude-sonnet-5`, `google-genai:gemini-2.5-flash-lite`, or another [supported provider](https://docs.langchain.com/oss/javascript/integrations/chat). Default if you're unsure: **`anthropic:claude-sonnet-5`**.
+1. **Ask** which provider/model to use. Showcase that LangChain is model-agnostic. Suggested prompt:
 
-   Do not proceed until they answer or accept the default. Use their choice as `<MODEL>` below.
+   > Which model should this agent use? Pass a `provider:model` string — e.g. `openai:gpt-5.5`, `anthropic:claude-sonnet-5`, `google-genai:gemini-2.5-flash-lite`. Default if you're unsure: **`anthropic:claude-sonnet-5`**.
 
-2. **Scaffold**
-   ```bash
-   mkdir langchain-agent && cd langchain-agent
-   npm init -y
-   npm install langchain @langchain/core zod dotenv
-   ```
-   Install the matching provider package for `<MODEL>` (e.g. `@langchain/openai`, `@langchain/anthropic`, `@langchain/google-genai`).
-   Add `"type": "module"` to `package.json` if missing.
+   Swap the quickstart's model string for their choice (or the default).
 
-3. **Write** `main.ts`:
+2. Create a **new** directory (e.g. `langchain-agent/`) and do all work there — do not pollute the open project.
 
-   ```typescript
-   import "dotenv/config";
-   import { createAgent, tool } from "langchain";
-   import * as z from "zod";
+3. Only secret: the provider API key in `.env` (gitignored). No LangSmith / Tavily unless they ask. Prefer they edit `.env` themselves — don't paste keys into chat.
 
-   const getWeather = tool(
-     ({ city }) => `It's always sunny in ${city}!`,
-     {
-       name: "get_weather",
-       description: "Get weather for a given city",
-       schema: z.object({ city: z.string() }),
-     }
-   );
+4. Install the provider package needed for their model if the quickstart's base install isn't enough.
 
-   const agent = createAgent({
-     model: "<MODEL>",
-     tools: [getWeather],
-     systemPrompt: "You are a helpful assistant",
-   });
-
-   const result = await agent.invoke({
-     messages: [{ role: "user", content: "What's the weather in San Francisco?" }],
-   });
-   console.log(result.messages[result.messages.length - 1].content);
-   ```
-
-4. **Env**
-   - Create `.env` with a single empty placeholder for the key their provider needs (e.g. `ANTHROPIC_API_KEY=`, `OPENAI_API_KEY=`, `GOOGLE_API_KEY=`).
-   - Ensure `.env` is in `.gitignore`.
-   - Ask them to fill it in, then wait.
-
-5. **Run** with `npx tsx main.ts` (install `tsx` if needed). Show the output. If it fails: missing provider package, blank key, or bad model id — fix and retry.
-
-6. **Done** — summarize files created. Suggest customizing tools / `systemPrompt`, then `langchain-fundamentals` for middleware, memory, and structured output.
+5. Run the example, show output, then stop. Point to `langchain-fundamentals` for next steps.

@@ -111,10 +111,10 @@ Use eval-engineering to inspect this agent and propose two or three Harbor evals
 - **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
 
 ### Quickstarts (local)
-Minimal “get something running” skills — ask for provider/model (default `anthropic:claude-sonnet-5`), provider API key only:
-- **langchain-python-quickstart** / **langchain-typescript-quickstart** — weather stub + `create_agent` / `createAgent`
-- **langgraph-python-quickstart** / **langgraph-typescript-quickstart** — weather stub + minimal `StateGraph`
-- **deepagents-python-quickstart** / **deepagents-typescript-quickstart** — research agent with **provider-native web search** (no Tavily)
+Thin wrappers around the official Mintlify quickstarts — ask for provider/model (default `anthropic:claude-sonnet-5`), new directory, provider API key only:
+- **langchain-python-quickstart** / **langchain-typescript-quickstart** → [Python](https://docs.langchain.com/oss/python/langchain/quickstart) / [JS](https://docs.langchain.com/oss/javascript/langchain/quickstart) (weather)
+- **langgraph-python-quickstart** / **langgraph-typescript-quickstart** → [Python](https://docs.langchain.com/oss/python/langgraph/quickstart) / [JS](https://docs.langchain.com/oss/javascript/langgraph/quickstart) (math)
+- **deepagents-python-quickstart** / **deepagents-typescript-quickstart** → [Python](https://docs.langchain.com/oss/python/deepagents/quickstart) / [JS](https://docs.langchain.com/oss/javascript/deepagents/quickstart) (research; provider web search instead of Tavily)
 
 ### Deep Agents
 - **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
