@@ -12,7 +12,7 @@ inspect agent and interview user -> propose directions -> user chooses
 -> approve runtime and environment -> build, run, audit -> review and repeat
 ```
 
-Use Harbor 0.18.0. Put task source under `evals/`. Read [references/harbor.md](references/harbor.md) before creating or running a task.
+Use the latest version of Harbor. Put task source under `evals/`. Read [references/harbor.md](references/harbor.md) before creating or running a task.
 
 ## 1. Map the agent
 

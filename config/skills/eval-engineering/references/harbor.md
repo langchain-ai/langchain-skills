@@ -1,6 +1,6 @@
 # Harbor Task and Run Contract
 
-Use Harbor 0.18.0. Install and run it locally with Docker or use a supported cloud environment; see the [Harbor documentation](https://www.harborframework.com/docs). Use installed CLI help as the command contract.
+Use the latest version of Harbor. Install and run it locally with Docker or use a supported cloud environment; see the [Harbor documentation](https://www.harborframework.com/docs). Use installed CLI help as the command contract.
 
 ## Source and run output
 
