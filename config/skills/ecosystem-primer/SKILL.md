@@ -164,7 +164,13 @@ rg -il "checkpointer" /oss/python/langgraph/ # search by keyword
 
 ## Step 4 — Load the Right Skill Next
 
-Now load the skill below that matches your layer from Step 1. This is required — the layer-specific skill carries the current API; the primer alone does not.
+If the user only wants a minimal local working agent (new project, stub tool, provider key), load the matching quickstart first:
+
+- LangChain → `langchain-python-quickstart` or `langchain-typescript-quickstart`
+- LangGraph → `langgraph-python-quickstart` or `langgraph-typescript-quickstart`
+- Deep Agents → `deepagents-python-quickstart` or `deepagents-typescript-quickstart`
+
+Otherwise load the skill below that matches your layer from Step 1. This is required — the layer-specific skill carries the current API; the primer alone does not.
 
 <next-skills>
 

@@ -10,6 +10,12 @@ This project uses skills that contain up-to-date patterns and working reference 
 - **ecosystem-primer** - Invoke FIRST for any LangChain/LangGraph/Deep Agents project: framework selection, env setup, and which skill to load next
 - **langchain-dependencies** - Invoke before installing packages or when resolving version issues (Python + TypeScript)
 
+### Local quickstarts
+Invoke when the user wants a minimal working local agent. Skills point at the official Mintlify quickstarts (fetch live docs); add provider/model prompt + provider-key-only setup:
+- **langchain-python-quickstart** / **langchain-typescript-quickstart** (weather)
+- **langgraph-python-quickstart** / **langgraph-typescript-quickstart** (math)
+- **deepagents-python-quickstart** / **deepagents-typescript-quickstart** (research; provider web search, not Tavily)
+
 ### LangChain Skills
 - **langchain-fundamentals** - Invoke for create_agent, @tool decorator, middleware patterns
 - **langchain-rag** - Invoke for RAG pipelines, vector stores, embeddings
