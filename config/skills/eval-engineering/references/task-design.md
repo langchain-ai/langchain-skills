@@ -2,6 +2,24 @@
 
 Design one request that makes the selected capability necessary.
 
+## Write `task.md`
+
+Before implementation, write `evals/specs/<task-id>/task.md`:
+
+```text
+Status: draft | approved
+Capability: behavior being measured
+Request: exact instruction later placed in Harbor's instruction.md
+Initial conditions: information, permissions, and state available
+Why this requires the capability: shortcut the task rules out
+Pass iff: independently observable successful outcome
+Verifier: LLM judge, deterministic check, or both
+Verifier evidence: exact sources, trajectory fields, or initial/final state
+Accepted alternatives: materially equivalent successful outcomes
+```
+
+`task.md` is a control-plane review spec, not Harness input. Set `Status: approved` only after the user approves it with `harness.md` and `environment.md`.
+
 ## The contract
 
 Define this before implementation:

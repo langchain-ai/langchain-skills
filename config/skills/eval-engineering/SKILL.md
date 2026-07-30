@@ -9,7 +9,7 @@ Create one Harbor task at a time, run it, inspect the result, and repeat with th
 
 ```text
 map harness + environment -> propose directions -> user chooses
--> propose task boundary -> user approves -> build + run + audit -> repeat
+-> draft specs -> user approves -> build + run + audit -> repeat
 ```
 
 Use the latest Harbor release. Put task source under `evals/`.
@@ -65,19 +65,26 @@ Needs: known account records behind the existing read-only lookup
 
 Recommend one and explain why. The user chooses before implementation.
 
-## 3. Propose one task boundary
+## 3. Draft and approve the specs
 
-Read the Harness, task, Environment, and verifier references. Then give the user one proposal under 150 words:
+Read the Harness, task, Environment, and Verifier references. After the user chooses a direction, write:
 
 ```text
-Task: request and capability
-Harness: active repository entrypoint or a reconstruction, with lost behavior named
-Environment: live, frozen, or simulated dependencies/data; effects and credentials
-Verifier: independent evidence and pass condition
-Recommendation: preferred setup and why
+evals/specs/<task-id>/
+├── harness.md
+├── environment.md
+└── task.md
 ```
 
-For each dependency, recommend live, frozen, or simulated use. Read-only, low-cost services backed by hard-to-reproduce data are strong live candidates. Stable copied data is a strong frozen candidate. Writes, unstable services, and resettable state are strong simulation candidates. State required credentials for live use. The user approves or revises this boundary.
+These are control-plane review files. Never copy or mount them into the Harness workspace or task image. `task.md` is the review spec; Harbor's `instruction.md` is the Harness-visible request created from the approved spec.
+
+- `harness.md`: entrypoint, preserved behavior, adapter, sessions, credentials, recorded evidence, and reconstruction differences.
+- `environment.md`: live/frozen/simulated dependencies, backend contracts, generated or copied data, schemas and relationships, storage, effects, reset, and fidelity limits.
+- `task.md`: capability, request, initial conditions, pass condition, Verifier evidence, and accepted alternatives.
+
+For each dependency, recommend live, frozen, or simulated use. Read-only, low-cost services backed by hard-to-reproduce data are strong live candidates. Stable copied data is a strong frozen candidate. Writes, unstable services, and resettable state are strong simulation candidates. State required credential names for live use.
+
+Print the full contents of all three specs in the terminal, keeping them concise. Show their paths and your recommendation, then ask the user to approve or revise them. Mark each spec approved only after explicit user approval. Do not build the Harbor task until all three are approved. If implementation changes an approved boundary, update the affected spec, show the change, and obtain approval again.
 
 For multiple user turns, prefer fixed follow-ups when they do not depend on Harness responses. Use an LLM user only when replies must react, correct, reject, or stop; read the multi-turn reference and include simulator credentials in the proposal.
 
