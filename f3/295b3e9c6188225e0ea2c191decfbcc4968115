@@ -1,0 +1,25 @@
+config/skills/langsmith-online-eval-engineering/SKILL.md
+  s_909360676480d8::t_2dc516aca0a352 1-106
+config/skills/langsmith-online-eval-engineering/references/evaluator-design.md
+  s_909360676480d8::t_c2b3133e6c3c7c 1-127
+config/skills/langsmith-online-eval-engineering/references/langsmith-api.md
+  s_909360676480d8::t_4630101f05a003 1-281
+config/skills/langsmith-online-eval-engineering/references/trace-inspection.md
+  s_909360676480d8::t_cbbe7c71e41ae1 1-122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "f3295b3e9c6188225e0ea2c191decfbcc4968115",
+  "prompts": {},
+  "sessions": {
+    "s_909360676480d8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6c2a3052-bf4a-4a24-a896-1634e6d5a747",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Joel Johnson <joel.johnson@langchain.dev>"
+    }
+  }
+}
