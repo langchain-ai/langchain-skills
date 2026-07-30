@@ -1,41 +1,146 @@
 # Environment Building
 
-Build only the environment required by the approved scenario.
+The Environment is the resettable container/world around the Harness. Build only what the approved task needs.
 
-## Choose the target runtime
+It owns:
 
-Recommend the active repository entrypoint when it can run safely. If it cannot run in a controlled eval, offer a reconstruction, name its unsupported behavior, and let the user choose. Never describe a reconstruction as production behavior.
+- OS, packages, files, and workspace layout;
+- backing documents, records, indexes, policies, and fixtures;
+- services and state behind Harness tools;
+- identity, permissions, network, clock, and feature flags;
+- initial state, observable effects, and reset between trials.
+
+It does not own the Harness's prompts, loop, model decisions, repository-defined tool code, retries, parsing, or final response. A tool server supplied to the Harness at runtime may live in the Environment.
 
 ## Choose each dependency
 
-| Option | Use when |
-|---|---|
-| Live | Read-only, low-cost, stable, safely credentialed, and difficult to reproduce. |
-| Frozen | Data or retrieval results must stay stable across trials. Serve them through the relevant interface. |
-| Simulated | Writes, permissions, failures, or state must be isolated and resettable. |
+| Option | Use when | Example |
+|---|---|---|
+| Live | Read-only, low-cost, stable, safely credentialed, and difficult to reproduce | query a large internal catalog without mutation |
+| Frozen | Results must stay stable across trials | serve a pinned docs corpus and search index |
+| Simulated | Writes, permissions, failures, or state must reset | local ticket service with known initial records |
 
-For each backing source, state whether it is live, frozen, or synthetic; retain its source/version, commit, timestamp, or hash; and name the behavior it must reproduce. Mark constructed data as synthetic.
+Tell the user what is live, frozen, or synthetic; what credentials live access needs; and what effects are possible. Record a source revision, timestamp, or hash for copied data. Mark constructed records as synthetic.
 
-Keep target behavior on the target side: prompts, control flow, model decisions, memory, tool choice, retries, parsing, and final synthesis. Replace dependencies through their existing interface; do not move a target decision into an adapter or simulator.
+## Define the backend contract
 
-## Define and build the gap
-
-Name only what the scenario needs: startup dependencies, backing data or policy, tool/service behavior, state/identity/time, reset, or observable outcomes. Use the smallest available injection point: fixture, dependency override, temporary workspace, test database, local endpoint, or existing integration harness.
-
-For every replaced dependency, define:
+Write the contract before choosing an implementation:
 
 ```text
-binding: in-process | network | MCP | CLI | filesystem/browser
-inputs/outputs: schema, ordering, pagination, empty results
-failures: missing, malformed, unauthorized, timeout
-effects: reads, writes, idempotency, collateral state
-context: identity, permissions, time, feature flags
+Interface: operations and exact request/response schemas
+State: source of truth and initial records
+Rules: validation, permissions, and domain invariants
+Failures: errors the task can exercise
+Effects: reads, writes, and external actions
+Reset: how the initial state is restored
+Evidence: repository code, tests, and supplied traces supporting the contract
 ```
 
-For retrieval, include relevant records, distractors, misses, and bad IDs. For mutations, enforce validation and permissions and expose resulting state. Do not key results on task IDs, expected answers, or exact phrases.
+Include only task-exercised behavior: schemas, validation and errors, ordering or pagination, identity and permissions, mutations, domain rules, and time.
+
+Example:
+
+```text
+Interface: search_docs(query, limit) -> [{path, title, snippet, score}]
+State: pinned document corpus and search index
+Rules: enforce result limit and caller permissions
+Failures: empty results and missing documents
+Effects: read-only
+Reset: reload the pinned corpus
+Evidence: search wrapper, integration tests, and supplied traces
+```
+
+## Choose the implementation and data
+
+Use the smallest injection point that preserves the contract: fixture, dependency override, temporary workspace, test database, local endpoint, or existing integration harness.
+
+| Need | Example implementation |
+|---|---|
+| Small single-process state | typed objects loaded from a JSON fixture |
+| Relational queries or transactions | seeded SQLite or an existing test database |
+| Harness calls a production HTTP client | local service implementing the exercised endpoints |
+| Production supplies tools dynamically | local MCP server advertising the exercised schemas |
+| Read-only files or retrieval | pinned directory, corpus, or search index |
+
+Do not replace repository-defined tool code with a task-specific implementation; replace the service or data behind it.
+
+If generation is necessary, use synthetic identities, a fixed seed, and a materialized fixture so every trial receives the same records. Before implementation, show the proposed records or files and why each exists. Reject a fixture when the Harness can succeed by selecting the only option, following record order, reading answer-coded names, or bypassing the production interface.
+
+## Build the backend and world state
+
+Use one canonical state store. Give IDs, time, and generated values deterministic behavior. Enforce domain rules in the backend, not in the prompt or Verifier. For example, a reservation service should reject an overlapping booking even if the agent never checked availability first.
+
+Seed only data needed to create the selected decision: valid candidates, relevant invalid candidates, and existing state that changes the outcome. Every extra record should exercise a named behavior such as search, ambiguity, permissions, or a constraint. Do not add random distractors.
+
+When traces inform the backend, compare only the exercised schemas, errors, ordering, permissions, and state transitions. Do not recreate unrelated production behavior or copy production records.
+
+Never key results on the task ID, expected answer, exact instruction wording, or a hidden required tool sequence.
+
+## Examples
+
+### Docs search
+
+Task: determine the current account-deletion retention period.
+
+Bad: one file named `account-deletion-answer.md` containing “30 days.”
+
+| Document | Content | Why included |
+|---|---|---|
+| Current account-deletion policy | 30 days; effective 2026 | supports the answer |
+| Archived account-deletion policy | 60 days; superseded in 2025 | requires freshness checking |
+| Workspace-deletion policy | 14 days for workspaces | requires scope checking |
+| Account-recovery FAQ | recovery process without a retention period | plausible nearby search result |
+
+Serve these through the production-shaped search result schema and document-reading interface. Keep the documents as independent truth for the Verifier. Add empty results or missing pages only when the task exercises them.
+
+### Reservation service
+
+Task: reserve adjacent indoor tables for parties of four and two.
+
+Bad: one available record named `CORRECT_TABLE`.
+
+| Table | Capacity | Area | Available | Adjacent to | Why included |
+|---|---:|---|---|---|---|
+| T1 | 4 | indoor | yes | T4 | fits four but has no suitable adjacent table |
+| T2 | 4 | indoor | yes | T3 | valid first table |
+| T3 | 2 | indoor | yes | T2 | valid adjacent second table |
+| T4 | 4 | outdoor | yes | T1 | fails the indoor requirement |
+| T5 | 6 | indoor | no | T3 | large enough but already reserved |
+
+The service enforces capacity, overlap, and permissions when creating reservations. The Verifier checks the required reservations and prohibited changes from independent initial and final state.
+
+### Coding agent
+
+Task: fix checkout totals without breaking discounts.
+
+Bad: one failing test that reveals the expected implementation and no existing discount coverage.
+
+| Workspace item | Why included |
+|---|---|
+| Public failing checkout-total test | reproduces the reported behavior |
+| Existing percentage- and fixed-discount tests | define behavior that must remain valid |
+| Hidden discount-plus-tax regression | checks the outcome without revealing the fix |
+| Two plausible calculation paths in repository code | requires diagnosis rather than editing a named line |
+
+Pin the repository revision and dependency lockfiles. Use a writable task workspace and the real build and test commands when safe and deterministic. Reset by restoring the pinned workspace and removing trial-generated files. Simulate an external service only when the task reaches it.
+
+## State, evidence, and isolation
+
+For mutable controlled dependencies, create one backend instance and state store per trial. Preserve state across turns, then reset from a declared baseline even after Harness, timeout, or Verifier failures. Make reset idempotent.
+
+Record non-secret task-relevant requests, responses, errors, and mutations as they occur. Preserve initial and final state for verification.
+
+The Harness sees state through the same interface it has in production. The Verifier may inspect raw final state after the run through a boundary unavailable to the Harness. Example: the Harness can list tables and create reservations; the service owns `reservations.sqlite`; the Verifier reads final rows, but the Harness cannot open that database or call a `dump_state` endpoint. Keep expected outcomes, judge rules, and hidden tests unavailable to the Harness.
+
+Default to no production access. Allow only approved live hosts and pass credentials at runtime, never through images, prompts, fixtures, or logs.
 
 ## Validate
 
-Prove that Harbor starts the approved runtime; the target can use the required information and actions; relevant success and error paths work through the dependency interface; state resets; production access is blocked; and the verifier can observe the intended result.
+Before accepting the Environment:
 
-Keep credentials out of files, images, prompts, fixtures, and logs.
+1. Call every operation exercised by the task and check its response shape.
+2. Confirm relevant valid actions succeed and invalid actions fail for the right reason.
+3. Confirm mutations are observable and two resets produce the same baseline.
+4. When an approved production read or fixture exists, send the same fixed request through it and the replacement; compare response schema, ordering, permissions, and errors, then record known differences.
+5. For a complex scenario whose solvability is uncertain, run one reference path. It proves reachability but never constrains the Harness's tool sequence; the Verifier must accept equivalent successful states.
+6. Run the real Harness through Harbor and confirm the Environment created the intended decision rather than leaking the answer or causing an infrastructure failure.

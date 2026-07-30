@@ -1,99 +1,87 @@
 ---
 name: eval-engineering
-description: Iteratively inspect an agent repository and optional traces, interview the user, and create, run, and audit Harbor evals one at a time. Use for agent evals, benchmark tasks, regression cases, trace-informed evals, verifier design, or controlled agent environments.
+description: Iteratively inspect an agent repository and optional user-provided traces, interview the user, and create, run, and audit Harbor evals one at a time. Use for agent evals, Harbor tasks, benchmark cases, verifier design, or controlled agent environments.
 ---
 
 # Eval Engineering
 
-Build evals iteratively:
+Create one Harbor task at a time, run it, inspect the result, and repeat with the user.
 
 ```text
-inspect agent and interview user -> propose directions -> user chooses
--> approve runtime and environment -> build, run, audit -> review and repeat
+map harness + environment -> propose directions -> user chooses
+-> propose task boundary -> user approves -> build + run + audit -> repeat
 ```
 
-Use the latest version of Harbor. Put task source under `evals/`. Read [references/harbor.md](references/harbor.md) before creating or running a task.
+Use the latest Harbor release. Put task source under `evals/`.
 
-## 1. Map the agent
+## Boundaries
 
-Inspect the active agent and code reachable from its public entrypoint. Find:
+- **Task:** `instruction.md` plus an Environment and Verifier.
+- **Harness:** the complete agent Harbor runs: model, prompts, loop, repository-defined tools, middleware/hooks, memory/session behavior, and Harbor adapter. Harbor calls this the Agent.
+- **Environment:** the container/world around the Harness: OS, files, backing data, services, identity, permissions, network, clock, and mutable state.
+- **Verifier:** the test script that independently scores the response, trajectory, or resulting Environment state.
 
-- runtime: entrypoint, input/output, prompts, models, routing, retries, hooks, middleware, and memory;
-- actions: tools, inputs, outputs, failures, external dependencies, and effects;
-- backing data: documents, records, indexes, files, policies, schemas, and source/version when available;
-- state: identity, permissions, filesystem, network, time, sessions, and mutable state;
-- purpose: intended users, jobs, and what a good result provides;
-- evidence: tests, fixtures, issues, existing evals, and documented failures.
+Repository-defined tool code belongs to the Harness. The data or service behind it belongs to the Environment. Example: a docs agent's `search_docs` definition and result parsing stay in the Harness; the frozen search index and its error behavior live in the Environment. If production supplies a tool server dynamically, keep that server in the Environment and preserve how the Harness discovers and calls it.
 
-Mapping is read-only. Do not start the target or services, install packages, or use external credentials before the user approves the runtime and environment.
+## References
 
-Summarize the map in the conversation:
+Read each reference when its decision appears:
+
+- [Trace sourcing](references/trace-sourcing.md): select and analyze traces only when the user supplies a source.
+- [Harness](references/harness.md): identify the actual agent Harbor will run and preserve its behavior.
+- [Task design](references/task-design.md): turn one selected capability into a judgeable request.
+- [Environment building](references/environment-building.md): choose live, frozen, or simulated backing data and services.
+- [Multi-turn simulation](references/multi-turn-simulation/guide.md): run scripted or LLM-generated user turns through one Harness session.
+- [Verifier design](references/verifier-design.md): define independent evidence, scoring, and calibration.
+- [Harbor](references/harbor.md): create, run, and inspect the Harbor task.
+
+## 1. Map the Harness and production Environment
+
+Start at the public agent entrypoint and follow reachable code.
 
 ```text
-Agent: target and entrypoint
-Purpose: users and jobs
-Abilities: work it is expected to perform
-Tools and data: actions, backing data, and dependencies
-Effects: reads, writes, and state changes
-Evidence: tests, failures, or traces
+Harness: entrypoint; prompts; models; loop; routing; retries; hooks; memory;
+         repository-defined tools, inputs, outputs, and effects
+Environment: files; records; indexes; services behind tools; identity;
+             permissions; network; time; mutable state
+Purpose: intended users, jobs, and useful outcomes
+Evidence: tests, fixtures, issues, existing evals, and documented failures
 ```
 
-Use code to model the agent; do not turn implementation details into the eval question unless answering questions about that code is the agent's job.
+Do not start services, install packages, or use credentials during mapping. Explain the map in the conversation and ask only what code cannot answer, such as “Which user job matters most?” or “What failure must this eval catch?”
 
-Keep the user involved: explain the map and what it implies in plain language, then ask only for information the repository and traces cannot establish. For example: “Which user job matters most?”, “What failure should never happen?”, or “What would a good result look like?”
+If the user provides traces, read [Trace sourcing](references/trace-sourcing.md). Use trace evidence only when it changes an eval direction, dependency behavior, realistic request, or failure case. Never treat the recorded answer as truth.
 
-### Optional traces
+## 2. Propose eval directions
 
-Use traces only when the user provides a source or asks to use them. Read [references/trace-sourcing.md](references/trace-sourcing.md). Use selected traces to identify real requests and dependency behavior, and never treat a recorded target answer as truth.
-
-## 2. Discuss and choose an eval direction
-
-Propose two or three capabilities grounded in the map. For each, give:
+Offer two or three capabilities grounded in the map and any supplied traces:
 
 ```text
-Name
-Example request: realistic request sent to the agent
-Tests: behavior the eval distinguishes
-Needs: main obstacle, data, or environment requirement
-```
-
-Example:
-
-```text
-Name: choose the right account lookup
+Name: choose the correct account lookup
 Example request: “What plan is account A on?”
-Tests: retrieves account A, uses the returned plan, and does not invent account details
-Needs: a read-only account lookup with known records
+Tests: looks up A, uses the returned plan, and does not invent account details
+Needs: known account records behind the existing read-only lookup
 ```
 
-Recommend one and ask the user which to build. The request must make the agent exercise the capability: use multiple turns for context use, competing tools for tool choice, source material for retrieval, or known state for an action.
+Recommend one and explain why. The user chooses before implementation.
 
-Do not implement until the user chooses.
+## 3. Propose one task boundary
 
-## 3. Checkpoint: approve runtime and environment
-
-Read [references/task-design.md](references/task-design.md) and [references/environment-building.md](references/environment-building.md). Design one scenario that requires the selected capability.
-
-Recommend a target runtime:
-
-- **Active entrypoint:** preserve the repository's agent behavior. Recommend this when it can run safely.
-- **Reconstruction:** use only when the active entrypoint cannot run in a controlled eval. Name the behavior it cannot preserve and label the eval as a reconstruction.
-
-Before implementation, give the user one proposal under 150 words:
+Read the Harness, task, Environment, and verifier references. Then give the user one proposal under 150 words:
 
 ```text
 Task: request and capability
-Runtime: active entrypoint or reconstruction, with tradeoff
-Dependencies and backing data: live, frozen, or simulated; required credentials if live, effects, and source/version
-Success: how the result is judged
+Harness: active repository entrypoint or a reconstruction, with lost behavior named
+Environment: live, frozen, or simulated dependencies/data; effects and credentials
+Verifier: independent evidence and pass condition
 Recommendation: preferred setup and why
 ```
 
-The user approves or revises the target runtime and environment boundary. Never write to production; isolate mutations.
+For each dependency, recommend live, frozen, or simulated use. Read-only, low-cost services backed by hard-to-reproduce data are strong live candidates. Stable copied data is a strong frozen candidate. Writes, unstable services, and resettable state are strong simulation candidates. State required credentials for live use. The user approves or revises this boundary.
+
+For multiple user turns, prefer fixed follow-ups when they do not depend on Harness responses. Use an LLM user only when replies must react, correct, reject, or stop; read the multi-turn reference and include simulator credentials in the proposal.
 
 ## 4. Build one Harbor task
-
-Create one task for the selected capability:
 
 ```text
 evals/<task-id>/
@@ -103,32 +91,30 @@ evals/<task-id>/
 └── tests/
 ```
 
-Add an adapter or non-default configuration only when Harbor needs it to invoke the approved target runtime. Keep instructions and environment facts visible to the target; keep expected outcomes, judge criteria, and judge credentials unavailable to it.
+Use the approved Harness unchanged when possible. Add an adapter only when Harbor needs one to invoke it. Do not expose hidden truth, simulator instructions, verifier criteria, or judge credentials to the Harness.
 
-An adapter may translate I/O and inject approved dependencies. It must not make target decisions, contain answers, or fabricate actions. Custom adapters and verifiers must write the target response/action record, verifier evidence, verdict/reason, reward, and errors to Harbor artifacts or verifier logs. Do not add `audit.json` or another result ledger.
+Use an LLM judge for semantic success and deterministic checks for objective state. Example: a judge checks whether an answer is supported by supplied documents; code checks whether the requested record changed. Emit one primary reward.
 
-Use an LLM judge for semantic success and deterministic checks for execution, parsing, files, or state. Read [references/verifier-design.md](references/verifier-design.md). Emit one primary reward.
+## 5. Run and audit
 
-## 5. Test, run, and audit
+Test the Verifier with one clearly valid result and one realistic wrong result. Run the Harness through Harbor, then inspect:
 
-Start the minimum environment before completing the scenario. Test the verifier directly with one clearly valid result that passes and one realistic incorrect result that fails.
+- Harness-recorded messages, model/tool calls, results, retries, and errors;
+- Environment-observed service results, initial/final state, and reset;
+- Verifier evidence, decision, reason, reward, and errors;
+- resolved Harness and Environment configuration.
 
-Run the approved target runtime through Harbor. Inspect:
+Fix and rerun until the Harness exercised the selected capability and the Verifier scored that behavior. If the Environment leaked the answer, a wrong answer passed, a valid answer failed, or infrastructure failed, the eval is not complete.
 
-- target response and trajectory;
-- harness-observed tool calls, actions, and state;
-- verifier evidence, verdict, reason, reward, and errors;
-- resolved target and environment configuration.
+For an LLM user, inspect representative correct, wrong, clarification, and stop paths. Revise its contract or model when its replies are implausible. Simulator termination is not success; the Verifier alone assigns reward.
 
-Fix and rerun when the task is unclear, the environment is unrealistic, the verifier is wrong, or infrastructure failed. Before approval, confirm that the target exercised the selected capability and the verifier scored that behavior, not an environment or verifier failure. If the environment returned the answer before the target used the intended tool, revise the task.
+## 6. Review and repeat
 
-## 6. Review with the user
-
-Explain the task path and run command, capability and scenario, runtime and dependency boundary, target behavior, verifier decision, and limitation. Ask the user to approve, revise, drop, or choose the next direction. If continuing, reuse the map and trace findings, then propose a distinct capability.
+Explain the task path and exact Harbor command, request, Harness, Environment, run behavior, Verifier decision, and main limitation. Completion requires a real Harbor run, evidence that the Verifier measured the intended capability, and user approval. If continuing, reuse the available evidence and propose a distinct capability.
 
 ## Invariants
 
-- One capability per Harbor task under `evals/`.
+- One capability per Harbor task.
 - No production writes; reset mutable state between trials.
-- Keep hidden truth and judge credentials unavailable to the target.
-- Treat build, credential, reset, timeout, judge, and verifier failures as infrastructure errors.
+- Keep hidden truth and simulator/judge credentials unavailable to the Harness.
+- Treat build, credential, reset, timeout, judge, and Verifier failures as infrastructure errors, not failed agent work.

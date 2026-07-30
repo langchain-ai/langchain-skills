@@ -1,32 +1,34 @@
 # Task Design
 
-Design one question that makes the selected capability necessary.
+Design one request that makes the selected capability necessary.
 
 ## The contract
 
-Define four lines internally before implementing:
+Define this before implementation:
 
 ~~~text
-Capability: the behavior being measured
-Question: the concrete request given to the target
-Environment: the information and actions available
-Success: the observable qualities of a capable result
+Capability: behavior being measured
+Request: concrete instruction sent to the Harness
+Initial conditions: information, permissions, and state available
+Required outcome: independently observable success
 ~~~
 
-Reject the design when a target can succeed without the capability, when required information is missing, or when success is too ambiguous to judge.
+Reject it when the Harness can succeed without the capability, required information is missing, or success is ambiguous.
+
+When a trace informs the task, preserve the condition that required the capability, not the production wording or records. Example: recreate “lookup returned two same-name accounts and required disambiguation” with synthetic accounts.
 
 Compare it with existing evals. Reject a case that changes only names, wording, or fixtures. Reusing a capability is useful when the new case introduces a distinct obstacle, state, evidence condition, or failure mode.
 
 ## Judge evidence
 
-Choose evidence independently of the target's answer. A reference answer is valid only when it comes from independent source material:
+Choose evidence independently of the Harness's answer. A reference answer is valid only when it comes from independent source material:
 
 | Domain | Evidence |
 |---|---|
 | Coding | failing case plus behavior and regression tests |
 | Search / Q&A | pinned source records supporting or contradicting the answer |
 | Analysis | independently recomputed result from the supplied raw data |
-| Tool use | harness-observed calls, returned data, and resulting state |
+| Tool use | Harness-recorded calls plus Environment-observed results/state |
 | Stateful action | initial state, policy/permissions, final state, and allowed change |
 
 If the judge cannot determine success from this evidence, change the question or environment before writing the rubric.
@@ -43,9 +45,7 @@ If the judge cannot determine success from this evidence, change the question or
 
 ## Rules
 
-- Use the user-approved target runtime; prefer the active entrypoint.
 - Put the task under `evals/<task-id>/`.
-- Prefer the existing runtime and data.
 - Include only context needed for this capability.
 - Do not expose expected conclusions or verifier criteria.
 - Do not prescribe a tool sequence, file, wording, or implementation unless it is part of the capability.
