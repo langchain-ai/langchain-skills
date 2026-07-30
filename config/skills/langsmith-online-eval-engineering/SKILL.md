@@ -1,6 +1,6 @@
 ---
-name: online-eval-engineering
-description: Iteratively inspect traces, interview the user, and create LangSmith online evaluators one at a time. Use for LLM-as-judge evaluators, code-based evaluators, automated trace scoring, or continuous quality monitoring.
+name: langsmith-online-eval-engineering
+description: Iteratively inspect traces, interview the user, and create LangSmith online evaluators one at a time. Use specifically for creating online evaluators for use within LangSmith -- use "eval-engineering" for Harbor-style online evaluations. 
 ---
 
 # Online Eval Engineering
