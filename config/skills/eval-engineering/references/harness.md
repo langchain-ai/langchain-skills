@@ -11,6 +11,24 @@ It owns:
 
 The Environment owns what surrounds it: files, data, services behind tools, permissions, network, time, and mutable external state.
 
+## Write `harness.md`
+
+Before implementation, write `evals/specs/<task-id>/harness.md`:
+
+```text
+Status: draft | approved
+Entrypoint: exact callable or command
+Source: repository path and revision
+Preserved behavior: prompts, model loop, tools, hooks, memory, stopping
+Adapter: I/O translation and dependency binding, or none
+Session: single-turn or exact multi-turn persistence
+Credentials: environment-variable names only
+Recorded evidence: messages, model/tool calls, results, state, errors
+Reconstruction differences: none, or exact lost/changed behavior
+```
+
+Set `Status: approved` only after the user approves this file with `environment.md` and `task.md`.
+
 ## Choose what Harbor runs
 
 Prefer the active repository entrypoint. Use a reconstruction only when the entrypoint cannot run safely or reproducibly, and name what changes.

@@ -22,6 +22,35 @@ It does not own the Harness's prompts, loop, model decisions, repository-defined
 
 Tell the user what is live, frozen, or synthetic; what credentials live access needs; and what effects are possible. Record a source revision, timestamp, or hash for copied data. Mark constructed records as synthetic.
 
+## Write `environment.md`
+
+Before implementation, write `evals/specs/<task-id>/environment.md`:
+
+```text
+Status: draft | approved
+Dependencies: name, live/frozen/simulated mode, implementation, credentials, effects
+Backend contracts: exercised operations, schemas, rules, failures, and permissions
+Data: each dataset's purpose, source or generation rule, structure, relationships,
+      representative records, storage backend, and reset
+Isolation: filesystem, network, identity, clock, and per-trial state
+Fidelity limits: behavior intentionally not reproduced
+```
+
+Make generated data concrete enough to review before it exists. Example:
+
+```text
+Dataset: accounts and tickets
+Purpose: require disambiguation between two same-name accounts
+Structure: accounts{id, name, plan, active}; tickets{id, account_id, status}
+Relationships: tickets.account_id -> accounts.id
+Records: two active Sam Lee accounts on different plans; one closed distractor
+Storage: seed.json materialized into SQLite tables `accounts` and `tickets`
+Generation: fixed synthetic records; neutral IDs and shuffled insertion order
+Reset: recreate the SQLite file from seed.json for every trial
+```
+
+Set `Status: approved` only after the user approves this file with `harness.md` and `task.md`.
+
 ## Define the backend contract
 
 Write the contract before choosing an implementation:
