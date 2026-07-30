@@ -1,6 +1,6 @@
 ---
 name: eval-engineering
-description: Iteratively inspect an agent repository and optional user-provided traces, interview the user, and create, run, and audit Harbor evals one at a time.
+description: Iteratively inspect an agent repository and optional user-provided traces, interview the user, and create, run, and audit Harbor evals one at a time. Use for agent evals, Harbor tasks, benchmark cases, verifier design, or controlled agent environments.
 ---
 
 # Eval Engineering
@@ -54,7 +54,7 @@ If the user provides traces, read [Trace sourcing](references/trace-sourcing.md)
 
 ## 2. Propose eval directions
 
-Offer two or three capabilities grounded in the map and traces:
+Offer two or three capabilities grounded in the map and any supplied traces:
 
 ```text
 Name: choose the correct account lookup
@@ -110,7 +110,7 @@ For an LLM user, inspect representative correct, wrong, clarification, and stop 
 
 ## 6. Review and repeat
 
-Explain the request, Harness, Environment, run behavior, Verifier decision, and main limitation. Completion requires a real Harbor run, evidence that the Verifier measured the intended capability, and user approval. If continuing, reuse the map and trace findings and propose a distinct capability.
+Explain the task path and exact Harbor command, request, Harness, Environment, run behavior, Verifier decision, and main limitation. Completion requires a real Harbor run, evidence that the Verifier measured the intended capability, and user approval. If continuing, reuse the available evidence and propose a distinct capability.
 
 ## Invariants
 

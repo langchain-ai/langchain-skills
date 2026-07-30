@@ -32,6 +32,8 @@ Do not approximate semantic correctness with keywords, substrings, or required i
 - Stateful work: decide required and prohibited changes from observed initial/final state; ignore unrelated fields unless collateral effects are part of the capability.
 - Tool use: grade Harness-recorded calls and Environment-observed results/state; never accept an agent-authored tool-use list as proof.
 
+The Verifier may share state schemas with the Environment, but it must not reuse the Environment's success helper or trust a service-provided success flag. Determine the required outcome independently from raw evidence.
+
 ## Use deterministic gates narrowly
 
 Code should decide objective facts:
