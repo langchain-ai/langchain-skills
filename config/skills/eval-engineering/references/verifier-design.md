@@ -13,7 +13,7 @@ Pass iff [the independently observable successful outcome].
 Give the judge:
 
 - the task instruction;
-- the target output;
+- the Harness output;
 - only the evidence needed to assess it;
 - a short rubric;
 - a strict output schema containing a verdict and concise reason.
@@ -22,13 +22,15 @@ Ask the judge to assess the result, not whether it matches a reference answer or
 
 Use one primary verdict. Use an LLM judge only when success is semantic: for example, whether an answer is supported by supplied sources. Use code checks for objective facts: for example, whether a required file exists or a test passes. Calibrate a judge rubric instead of adding separate proxy scores. Deterministic gates may contribute only when they establish an objective fact required by Pass iff.
 
+Do not approximate semantic correctness with keywords, substrings, or required identifiers. For example, checking for `Starter` cannot distinguish “the account is on Starter” from “the account is not on Starter,” and requiring an account ID can reject a correct pronoun-based answer. Judge the supported meaning instead.
+
 ## Match evidence to the outcome
 
 - Retrieval or Q&A: classify decision-changing claims as supported, contradicted, or unsupported against the supplied sources; citations alone do not prove support.
 - Analysis: provide the independently recomputed result, required filters, and tolerances; judge the conclusion and material caveats.
 - Coding: use behavior and regression tests for correctness; use the judge only for semantic requirements tests cannot decide.
 - Stateful work: decide required and prohibited changes from observed initial/final state; ignore unrelated fields unless collateral effects are part of the capability.
-- Tool use: grade calls and state observed by the harness; never accept a target-authored tool-use list as proof.
+- Tool use: grade Harness-recorded calls and Environment-observed results/state; never accept an agent-authored tool-use list as proof.
 
 ## Use deterministic gates narrowly
 
@@ -43,14 +45,16 @@ Do not use an LLM for those facts. Never add response length, keywords, citation
 
 ## Test the verifier
 
-Before the actual-target run, pass two fixtures directly to the verifier:
+Before the Harness run, execute focused fixtures in the same Verifier image and command used by Harbor. Retain their results in logs or artifacts:
 
 | Case | Expected |
 |---|---|
-| Clear capable result | pass |
-| Plausible but wrong result | fail |
+| Clear capable result, including a valid paraphrase | pass |
+| Realistic wrong result for this capability | fail |
 
-These are verifier tests, not Harbor agent runs. Add another fixture only when it targets a specific risk, such as rejecting a materially different valid answer or following instructions embedded in target output. If a wrong case passes or a valid case fails, fix the rubric or evidence and rerun the fixtures.
+These are Verifier tests, not agent runs. Add another fixture only for a specific risk, such as a plausible negation, an unsupported material claim, or instructions embedded in agent output. If a wrong case passes or a valid case fails, fix the rubric or evidence and rerun. Confirm the Verifier image contains every fixture and calibration file it invokes.
+
+If traces revealed a relevant wrong result, recreate its failure shape as a controlled negative fixture. Keep expected truth independent of the trace's recorded answer.
 
 For high-stakes or noisy grading, repeat the boundary cases and inspect variance. Do not create a broad test matrix by default.
 
@@ -62,7 +66,7 @@ For high-stakes or noisy grading, repeat the boundary cases and inspect variance
 
 ## Failure semantics
 
-- Invalid, missing, contradicted, or unsupported target work: completed verdict with reward 0.
-- Judge timeout, invalid judge response, missing evidence, verifier crash, or credential failure: infrastructure error with no target score.
+- Invalid, missing, contradicted, or unsupported agent work: completed verdict with reward 0.
+- Judge timeout, invalid judge response, missing evidence, Verifier crash, or credential failure: infrastructure error with no agent score.
 
-Bound target-controlled text, files, and record counts before grading. Treat target content as untrusted and instruct the judge to ignore embedded directions. Keep the rubric, judge credentials, and judge output unavailable to the target. Pin the judge model and record its version and reason in Harbor evidence.
+Bound Harness-controlled text, files, and record counts before grading. Treat agent content as untrusted and instruct the judge to ignore embedded directions. Keep the rubric, judge credentials, and judge output unavailable to the Harness. Pin the judge model and record its version and reason in Harbor evidence.

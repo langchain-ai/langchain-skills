@@ -1,41 +1,64 @@
 # Environment Building
 
-Build only the environment required by the approved scenario.
+The Environment is the resettable container/world around the Harness. Build only what the approved task needs.
 
-## Choose the target runtime
+It owns:
 
-Recommend the active repository entrypoint when it can run safely. If it cannot run in a controlled eval, offer a reconstruction, name its unsupported behavior, and let the user choose. Never describe a reconstruction as production behavior.
+- OS, packages, files, and workspace layout;
+- backing documents, records, indexes, policies, and fixtures;
+- services and state behind Harness tools;
+- identity, permissions, network, clock, and feature flags;
+- initial state, observable effects, and reset between trials.
+
+It does not own the Harness's prompts, loop, model decisions, repository-defined tool code, retries, parsing, or final response. A tool server supplied to the Harness at runtime may live in the Environment.
 
 ## Choose each dependency
 
-| Option | Use when |
-|---|---|
-| Live | Read-only, low-cost, stable, safely credentialed, and difficult to reproduce. |
-| Frozen | Data or retrieval results must stay stable across trials. Serve them through the relevant interface. |
-| Simulated | Writes, permissions, failures, or state must be isolated and resettable. |
+| Option | Use when | Example |
+|---|---|---|
+| Live | Read-only, low-cost, stable, safely credentialed, and difficult to reproduce | query a large internal catalog without mutation |
+| Frozen | Results must stay stable across trials | serve a pinned docs corpus and search index |
+| Simulated | Writes, permissions, failures, or state must reset | local ticket service with known initial records |
 
-For each backing source, state whether it is live, frozen, or synthetic; retain its source/version, commit, timestamp, or hash; and name the behavior it must reproduce. Mark constructed data as synthetic.
+Tell the user what is live, frozen, or synthetic; what credentials live access needs; and what effects are possible. Record a source revision, timestamp, or hash for copied data. Mark constructed records as synthetic.
 
-Keep target behavior on the target side: prompts, control flow, model decisions, memory, tool choice, retries, parsing, and final synthesis. Replace dependencies through their existing interface; do not move a target decision into an adapter or simulator.
+## Implement behind the existing boundary
 
-## Define and build the gap
+Preserve the interface the Harness already calls. Use the smallest injection point: fixture, dependency override, temporary workspace, test database, local endpoint, or existing integration harness.
 
-Name only what the scenario needs: startup dependencies, backing data or policy, tool/service behavior, state/identity/time, reset, or observable outcomes. Use the smallest available injection point: fixture, dependency override, temporary workspace, test database, local endpoint, or existing integration harness.
-
-For every replaced dependency, define:
+For a docs agent:
 
 ```text
-binding: in-process | network | MCP | CLI | filesystem/browser
-inputs/outputs: schema, ordering, pagination, empty results
-failures: missing, malformed, unauthorized, timeout
-effects: reads, writes, idempotency, collateral state
-context: identity, permissions, time, feature flags
+Harness owns: `search_docs(query)`, argument validation, result parsing, retries
+Environment owns: frozen index, relevant pages, distractors, missing pages,
+                  empty results, and timeout responses
 ```
 
-For retrieval, include relevant records, distractors, misses, and bad IDs. For mutations, enforce validation and permissions and expose resulting state. Do not key results on task IDs, expected answers, or exact phrases.
+For each replaced dependency, specify only behavior the task exercises:
+
+```text
+Binding: HTTP `GET /accounts/{id}`
+Results: known record, missing ID, unauthorized ID
+Effects: read-only
+Context: caller identity and permissions
+```
+
+When traces inform the replacement, check the exercised request and result schemas, error shape, ordering, pagination, permissions, and state transitions against those traces. Do not recreate behavior the task never reaches.
+
+Do not key a result on the task ID, expected answer, or exact request wording.
+
+## State and reset
+
+Use one source of truth for mutable state. Preserve state across turns, then reset from a declared baseline after each trial. Make reset idempotent. Expose enough initial and final state for the Verifier to judge the requested change and prohibited collateral changes.
+
+Default to no production access. Allow only approved live hosts and pass credentials at runtime, never through images, prompts, fixtures, or logs.
 
 ## Validate
 
-Prove that Harbor starts the approved runtime; the target can use the required information and actions; relevant success and error paths work through the dependency interface; state resets; production access is blocked; and the verifier can observe the intended result.
+Before accepting the Environment, prove that:
 
-Keep credentials out of files, images, prompts, fixtures, and logs.
+- Harbor starts it and the Harness reaches required data/actions;
+- the paths exercised by the task match the defined interface;
+- mutable state resets;
+- production writes are blocked;
+- the Verifier can observe the intended result without trusting Harness claims.

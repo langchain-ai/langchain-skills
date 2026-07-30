@@ -1,4 +1,9 @@
 .env
+.env.*
+*.pem
+*.key
+*.crt
+credentials.json
 .venv
 logs/
 
