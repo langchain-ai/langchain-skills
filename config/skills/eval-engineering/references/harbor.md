@@ -18,7 +18,7 @@ evals/
 └── jobs/                       # generated run evidence
 ```
 
-Each directory with `task.toml` is a task. Keep only instructions, Environment assets, Verifier code, and hidden judge evidence in it. Do not add plans, trace exports, audit files, credentials, or copied run output.
+Each directory with `task.toml` is a task. Keep instructions, Environment assets, Verifier code, hidden judge evidence, and the task's `task.md`, `harness.md`, and `environment.md` review files in it. Never mount the review files into the Harness workspace or task image. Do not add plans, trace exports, audit files, credentials, or copied run output.
 
 A Harness adapter may translate I/O and bind approved dependencies. It must not decide the task, contain answers, or fabricate actions. It and the Verifier must retain the Harness response/action record, Verifier evidence, verdict/reason, reward, and errors in Harbor artifacts or logs.
 

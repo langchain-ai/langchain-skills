@@ -24,7 +24,7 @@ Tell the user what is live, frozen, or synthetic; what credentials live access n
 
 ## Write `environment.md`
 
-Before implementation, write `evals/specs/<task-id>/environment.md`:
+Before implementation, write `evals/<task-id>/environment.md`:
 
 ```text
 Status: draft | approved
@@ -93,6 +93,12 @@ Use the smallest injection point that preserves the contract: fixture, dependenc
 
 Do not replace repository-defined tool code with a task-specific implementation; replace the service or data behind it.
 
+Preserve the production tool surface for every exercised operation: tool name, input schema,
+output schema, parsing behavior, and relevant errors stay in the Harness. The Environment may
+simulate the behavior behind that surface with controlled data. Example: keep
+`create_ticket(title, priority)` and route it to a local ticket store rather than creating an
+eval-only `create_ticket_for_task` tool.
+
 If generation is necessary, use synthetic identities, a fixed seed, and a materialized fixture so every trial receives the same records. Before implementation, show the proposed records or files and why each exists. Reject a fixture when the Harness can succeed by selecting the only option, following record order, reading answer-coded names, or bypassing the production interface.
 
 ## Build the backend and world state
@@ -158,6 +164,11 @@ Pin the repository revision and dependency lockfiles. Use a writable task worksp
 For mutable controlled dependencies, create one backend instance and state store per trial. Preserve state across turns, then reset from a declared baseline even after Harness, timeout, or Verifier failures. Make reset idempotent.
 
 Record non-secret task-relevant requests, responses, errors, and mutations as they occur. Preserve initial and final state for verification.
+
+Document each simulated operation in `environment.md`: request schema, response schema, relevant
+errors, state changes, permissions, reset behavior, and known production differences. Also document
+synthetic record types, counts, key relationships, initial mutable state, and why each nontrivial
+distractor exists.
 
 The Harness sees state through the same interface it has in production. The Verifier may inspect raw final state after the run through a boundary unavailable to the Harness. Example: the Harness can list tables and create reservations; the service owns `reservations.sqlite`; the Verifier reads final rows, but the Harness cannot open that database or call a `dump_state` endpoint. Keep expected outcomes, judge rules, and hidden tests unavailable to the Harness.
 
