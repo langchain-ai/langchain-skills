@@ -5,23 +5,30 @@ description: Iteratively inspect an agent repository and optional user-provided 
 
 # Eval Engineering
 
-Create one Harbor task at a time, run it, inspect the result, and repeat with the user.
+Work with the user to define, build, run, and audit Harbor tasks.
 
 ```text
 map harness + environment -> propose directions -> user chooses
 -> draft specs -> user approves -> build + run + audit -> repeat
 ```
 
-Use the latest Harbor release. Put task source under `evals/`.
+Use the latest Harbor release. Put task source under `evals/`. Build sequentially while a later task depends on an unproven Harness, Environment, or Verifier. Build independent tasks in parallel when the user requests it.
 
 ## Boundaries
 
 - **Task:** `instruction.md` plus an Environment and Verifier.
 - **Harness:** the complete agent Harbor runs: model, prompts, loop, repository-defined tools, middleware/hooks, memory/session behavior, and Harbor adapter. Harbor calls this the Agent.
 - **Environment:** the container/world around the Harness: OS, files, backing data, services, identity, permissions, network, clock, and mutable state.
-- **Verifier:** the test script that independently scores the response, trajectory, or resulting Environment state.
+- **Verifier:** the test script that independently scores final artifacts or resulting Environment state; it uses trajectory only when final state cannot provide the required evidence.
 
 Repository-defined tool code belongs to the Harness. The data or service behind it belongs to the Environment. Example: a docs agent's `search_docs` definition and result parsing stay in the Harness; the frozen search index and its error behavior live in the Environment. If production supplies a tool server dynamically, keep that server in the Environment and preserve how the Harness discovers and calls it.
+
+## Score the requested outcome
+
+- For stateful work, score independently observed final Environment state first. Example: a booking exists for the requested room and no conflicting booking exists.
+- Keep ATIF as diagnostic evidence by default. Use trajectory or session evidence only when final state cannot establish the requirement, such as proving later user turns used the same session.
+- Do not require a tool name, subagent, retry count, exact number of updates, or exact wording unless that is the user-facing requirement.
+- Before building, state what the agent can see, the required user-visible outcome, prohibited effects, and materially equivalent outcomes that must pass. Do not score a hidden evaluator preference.
 
 ## References
 
@@ -70,13 +77,13 @@ Recommend one and explain why. The user chooses before implementation.
 Read the Harness, task, Environment, and Verifier references. After the user chooses a direction, write:
 
 ```text
-evals/specs/<task-id>/
+evals/<task-id>/
 ├── harness.md
 ├── environment.md
 └── task.md
 ```
 
-These are control-plane review files. Never copy or mount them into the Harness workspace or task image. `task.md` is the review spec; Harbor's `instruction.md` is the Harness-visible request created from the approved spec.
+These are control-plane review files beside the runnable task. Never copy or mount them into the Harness workspace or task image. `task.md` is the review spec; Harbor's `instruction.md` is the Harness-visible request created from the approved spec.
 
 - `harness.md`: entrypoint, preserved behavior, adapter, sessions, credentials, recorded evidence, and reconstruction differences.
 - `environment.md`: live/frozen/simulated dependencies, backend contracts, generated or copied data, schemas and relationships, storage, effects, reset, and fidelity limits.
@@ -84,7 +91,7 @@ These are control-plane review files. Never copy or mount them into the Harness 
 
 For each dependency, recommend live, frozen, or simulated use. Read-only, low-cost services backed by hard-to-reproduce data are strong live candidates. Stable copied data is a strong frozen candidate. Writes, unstable services, and resettable state are strong simulation candidates. State required credential names for live use.
 
-Print the full contents of all three specs in the terminal, keeping them concise. Show their paths and your recommendation, then ask the user to approve or revise them. Mark each spec approved only after explicit user approval. Do not build the Harbor task until all three are approved. If implementation changes an approved boundary, update the affected spec, show the change, and obtain approval again.
+Print the full contents of all three specs in the terminal, keeping them concise. Show their paths and your recommendation, then ask the user to approve or revise them. Mark each spec approved only after explicit user approval. Do not build the Harbor task until all three are approved. If user feedback or implementation changes the request, Harness, Environment, or Verifier boundary, update the affected spec, show the change, and obtain approval again.
 
 For multiple user turns, prefer fixed follow-ups when they do not depend on Harness responses. Use an LLM user only when replies must react, correct, reject, or stop; read the multi-turn reference and include simulator credentials in the proposal.
 
@@ -94,24 +101,27 @@ For multiple user turns, prefer fixed follow-ups when they do not depend on Harn
 evals/<task-id>/
 ├── task.toml
 ├── instruction.md
+├── task.md
+├── harness.md
+├── environment.md
 ├── environment/
 └── tests/
 ```
 
 Use the approved Harness unchanged when possible. Add an adapter only when Harbor needs one to invoke it. Do not expose hidden truth, simulator instructions, verifier criteria, or judge credentials to the Harness.
 
-Use an LLM judge for semantic success and deterministic checks for objective state. Example: a judge checks whether an answer is supported by supplied documents; code checks whether the requested record changed. Emit one primary reward.
+Prefer programmatic checks for final state, artifacts, tests, and independently recomputed facts. Use an LLM judge only for meaning code cannot reasonably decide. Run deterministic checks before the judge; give the judge only the final artifact and independent evidence for that unresolved semantic question. Emit one primary reward.
 
 ## 5. Run and audit
 
-Test the Verifier with one clearly valid result and one realistic wrong result. Run the Harness through Harbor, then inspect:
+Calibrate the Verifier with realistic cases from supplied traces, prior eval runs, or production-like task variants: a valid paraphrase, a plausible wrong result, and any known boundary case. Run them through the same Verifier command Harbor uses. Run the Harness through Harbor, then inspect:
 
 - Harness-recorded messages, model/tool calls, results, retries, and errors;
 - Environment-observed service results, initial/final state, and reset;
 - Verifier evidence, decision, reason, reward, and errors;
 - resolved Harness and Environment configuration.
 
-Fix and rerun until the Harness exercised the selected capability and the Verifier scored that behavior. If the Environment leaked the answer, a wrong answer passed, a valid answer failed, or infrastructure failed, the eval is not complete.
+For every zero reward, classify the evidence as a fair agent failure, Verifier defect, Environment defect or leak, or infrastructure error. Fix and rerun non-agent failures before treating them as evaluation results. If the Environment leaked the answer, a wrong answer passed, or a valid result failed, the eval is not complete.
 
 For an LLM user, inspect representative correct, wrong, clarification, and stop paths. Revise its contract or model when its replies are implausible. Simulator termination is not success; the Verifier alone assigns reward.
 

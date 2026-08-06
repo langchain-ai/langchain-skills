@@ -4,7 +4,7 @@ Design one request that makes the selected capability necessary.
 
 ## Write `task.md`
 
-Before implementation, write `evals/specs/<task-id>/task.md`:
+Before implementation, write `evals/<task-id>/task.md`:
 
 ```text
 Status: draft | approved
@@ -15,6 +15,8 @@ Why this requires the capability: shortcut the task rules out
 Pass iff: independently observable successful outcome
 Verifier: LLM judge, deterministic check, or both
 Verifier evidence: exact sources, trajectory fields, or initial/final state
+Prohibited effects: final changes that must not occur
+Agent-visible information: request, tool results, files, and state the Harness can use
 Accepted alternatives: materially equivalent successful outcomes
 ```
 
@@ -29,9 +31,12 @@ Capability: behavior being measured
 Request: concrete instruction sent to the Harness
 Initial conditions: information, permissions, and state available
 Required outcome: independently observable success
+Prohibited effects: final changes that must not occur
+Accepted alternatives: materially equivalent successful outcomes
+Agent-visible information: request, tool results, files, and state the Harness can use
 ~~~
 
-Reject it when the Harness can succeed without the capability, required information is missing, or success is ambiguous.
+Reject it when the Harness can succeed without the capability, required information is missing, success is ambiguous, or a pass condition depends on information the Harness cannot infer.
 
 When a trace informs the task, preserve the condition that required the capability, not the production wording or records. Example: recreate “lookup returned two same-name accounts and required disambiguation” with synthetic accounts.
 
@@ -46,7 +51,7 @@ Choose evidence independently of the Harness's answer. A reference answer is val
 | Coding | failing case plus behavior and regression tests |
 | Search / Q&A | pinned source records supporting or contradicting the answer |
 | Analysis | independently recomputed result from the supplied raw data |
-| Tool use | Harness-recorded calls plus Environment-observed results/state |
+| Tool use | Environment-observed results/state; Harness-recorded calls only when final state cannot establish the requirement |
 | Stateful action | initial state, policy/permissions, final state, and allowed change |
 
 If the judge cannot determine success from this evidence, change the question or environment before writing the rubric.
@@ -67,5 +72,6 @@ If the judge cannot determine success from this evidence, change the question or
 - Include only context needed for this capability.
 - Do not expose expected conclusions or verifier criteria.
 - Do not prescribe a tool sequence, file, wording, or implementation unless it is part of the capability.
+- Do not require a tool, subagent, retry count, or exact number of updates when the requested final outcome can establish success.
 - Allow materially equivalent valid solutions.
 - Start mutable tasks from known state and reset after every run.
