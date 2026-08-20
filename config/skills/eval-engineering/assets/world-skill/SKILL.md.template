@@ -1,0 +1,86 @@
+---
+name: {{PROJECT_ID}}-world
+description: Use with eval-engineering when generating Task Specs or building evaluation Tasks for {{PROJECT_NAME}}. Contains reusable project-specific knowledge, procedures, scripts, assets, and examples.
+---
+
+# {{PROJECT_NAME}} World Knowledge
+
+Read `$eval-engineering` first. Use its broad references and examples as
+guidance. Use this skill for reusable knowledge about how that guidance applies
+to this project.
+
+Remove sections that have no useful content. Do not create empty resource
+folders.
+
+## Start here
+
+List only sources and commands that help create or check Tasks.
+
+- Read `<path>` when:
+- Run `<command>` to:
+- Existing Task Specs:
+- Existing runnable Tasks:
+- Approved trace or data sources:
+
+## Knowledge routing
+
+| Current need | Read or run | What it provides |
+|---|---|---|
+| `<specific project need>` | `references/<file>.md` | `<specific knowledge>` |
+| `<specific project operation>` | `scripts/<file>` | `<specific output>` |
+
+## Task Spec guidance
+
+Record project-specific Task families, meaningful conditions, evidence sources,
+existing coverage, gaps, and designs that should not be repeated. Do not copy a
+Task's exact request or expected result.
+
+## Environment guidance
+
+Record reusable project-specific objects, relationships, service behavior,
+access, identity, permissions, time, ordering, errors, setup, readiness, reset,
+and known production differences.
+
+## Data guidance
+
+Record reusable approved sources, structured-data methods, text-generation
+methods, relationship rules, review checks, edge cases, builders, and validators.
+
+## Verification guidance
+
+Record reusable independent truth sources, required and prohibited state,
+valid alternatives, semantic checks, shortcuts, prior Verifier defects, and
+reusable assertions.
+
+## Run and audit guidance
+
+Record project-specific startup, readiness, artifact, common infrastructure,
+model, and evidence-inspection guidance only when another Task will use it.
+
+## Reusable scripts and assets
+
+For each item, state when to use it, its inputs and outputs, what it checks, and
+what it does not prove.
+
+## Existing Task coverage
+
+List Task families and the distinct condition each covers. Link the collocated
+`Task.md`; do not copy the full spec.
+
+## Known limits and open questions
+
+Record missing knowledge that could change a future Task's design or validity.
+
+## Update this skill
+
+While designing, building, and auditing each Task:
+
+1. Identify knowledge that will help create or build another Task.
+2. Support it with repository evidence, traces, a human decision, or Task
+   evidence.
+3. Keep Task-specific setup and expected results in the collocated `Task.md`.
+4. Put short, commonly needed guidance here.
+5. Put detailed conditional guidance in a directly routed reference.
+6. Add scripts, assets, and tests only when they are reusable.
+7. Remove or revise guidance contradicted by later evidence.
+8. Reconcile these changes with the human after the Task audit.

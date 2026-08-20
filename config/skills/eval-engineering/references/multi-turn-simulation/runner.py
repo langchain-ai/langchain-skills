@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from datetime import datetime, timezone
+from typing import Literal, Optional, Protocol
 
 
 class SimulatorProtocolError(RuntimeError):
     """The simulator failed; do not score this as Harness failure."""
 
-    def __init__(self, message: str, *, evidence: object | None = None) -> None:
+    def __init__(self, message: str, *, evidence: Optional[object] = None) -> None:
         super().__init__(message)
         self.evidence = evidence
 
@@ -20,12 +21,13 @@ class Turn:
     role: Literal["user", "assistant"]
     content: str
     origin: Literal["instruction", "scripted", "harness", "simulator"]
-    decision_id: str | None = None
+    decision_id: Optional[str] = None
+    timestamp: str = ""
 
 
 @dataclass(frozen=True)
 class UserTurn:
-    message: str | None
+    message: Optional[str]
     stop: bool
 
 
@@ -37,7 +39,7 @@ class ConversationResult:
     ]
     harness_calls: int
     simulator_calls: int
-    error: str | None = None
+    error: Optional[str] = None
 
 
 class ConversationRunError(RuntimeError):
@@ -48,7 +50,7 @@ class ConversationRunError(RuntimeError):
         message: str,
         *,
         result: ConversationResult,
-        simulator_evidence: object | None = None,
+        simulator_evidence: Optional[object] = None,
     ) -> None:
         super().__init__(message)
         self.result = result
@@ -83,6 +85,22 @@ def parse_user_turn(raw: str) -> UserTurn:
     return UserTurn(message=message, stop=False)
 
 
+def validate_user_turn(value: object) -> UserTurn:
+    """Validate turns from custom simulators as strictly as model output."""
+    if not isinstance(value, UserTurn) or type(value.stop) is not bool:
+        raise SimulatorProtocolError("simulator did not return a valid UserTurn")
+    if value.stop:
+        if value.message is not None:
+            raise SimulatorProtocolError("a stop decision must not contain a message")
+    elif not isinstance(value.message, str) or not 1 <= len(value.message.strip()) <= 2_000:
+        raise SimulatorProtocolError("simulator message is invalid")
+    return value
+
+
+def _timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _message(value: object, source: str) -> str:
     if not isinstance(value, str) or not 1 <= len(value.strip()) <= 100_000:
         raise ValueError(f"{source} message is invalid")
@@ -100,10 +118,10 @@ async def run_scripted_conversation(
     for index, raw_message in enumerate((first_message, *followups)):
         message = _message(raw_message, "user")
         turns.append(
-            Turn("user", message, "instruction" if index == 0 else "scripted")
+            Turn("user", message, "instruction" if index == 0 else "scripted", timestamp=_timestamp())
         )
         reply = _message(await session.send(message), "assistant")
-        turns.append(Turn("assistant", reply, "harness"))
+        turns.append(Turn("assistant", reply, "harness", timestamp=_timestamp()))
     return ConversationResult(
         tuple(turns), "script_finished", len(followups) + 1, 0
     )
@@ -121,17 +139,12 @@ async def run_llm_user_conversation(
         raise ValueError("max_turns must be positive")
 
     user_message = _message(first_message, "first user")
-    turns = [Turn("user", user_message, "instruction")]
+    turns = [Turn("user", user_message, "instruction", timestamp=_timestamp())]
     simulator_calls = 0
 
     for harness_calls in range(1, max_turns + 1):
         assistant_message = _message(await session.send(user_message), "assistant")
-        turns.append(Turn("assistant", assistant_message, "harness"))
-
-        if harness_calls == max_turns:
-            return ConversationResult(
-                tuple(turns), "turn_limit", harness_calls, simulator_calls
-            )
+        turns.append(Turn("assistant", assistant_message, "harness", timestamp=_timestamp()))
 
         simulator_calls += 1
         try:
@@ -147,8 +160,8 @@ async def run_llm_user_conversation(
             raise ConversationRunError(
                 str(error), result=result, simulator_evidence=error.evidence
             ) from error
-        if not isinstance(reply, UserTurn):
-            message = "simulator did not return UserTurn"
+        except Exception as error:
+            message = f"simulator failed: {type(error).__name__}"
             result = ConversationResult(
                 tuple(turns),
                 "simulator_error",
@@ -156,16 +169,43 @@ async def run_llm_user_conversation(
                 simulator_calls,
                 message,
             )
-            raise ConversationRunError(message, result=result)
+            raise ConversationRunError(
+                message,
+                result=result,
+                simulator_evidence={"error": type(error).__name__},
+            ) from error
+        try:
+            reply = validate_user_turn(reply)
+        except SimulatorProtocolError as error:
+            message = str(error)
+            result = ConversationResult(
+                tuple(turns),
+                "simulator_error",
+                harness_calls,
+                simulator_calls,
+                message,
+            )
+            raise ConversationRunError(message, result=result) from error
 
         if reply.stop:
             return ConversationResult(
                 tuple(turns), "user_stop", harness_calls, simulator_calls
             )
 
-        user_message = _message(reply.message, "simulator")
+        user_message = reply.message or ""
         turns.append(
-            Turn("user", user_message, "simulator", f"sim-{simulator_calls:03d}")
+            Turn(
+                "user",
+                user_message,
+                "simulator",
+                f"sim-{simulator_calls:03d}",
+                _timestamp(),
+            )
         )
+
+        if harness_calls == max_turns:
+            return ConversationResult(
+                tuple(turns), "turn_limit", harness_calls, simulator_calls
+            )
 
     raise AssertionError("conversation loop terminated unexpectedly")

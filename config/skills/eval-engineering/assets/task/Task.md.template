@@ -1,0 +1,65 @@
+# Task: {{TASK_ID}}
+
+**Status:** Draft
+
+<!--
+Keep this control-plane spec beside task.toml. Do not copy or mount it into the
+evaluated agent's workspace or image.
+-->
+
+## Purpose and evidence
+
+- Work the agent must accomplish:
+- Capability being tested:
+- Why this case matters:
+- Repository, trace, existing Task, or human evidence:
+- Difference from existing Tasks:
+
+## Agent input
+
+- Exact initial instruction:
+- Later user turns or event input, if any:
+- Context supplied outside the instruction:
+
+## Relevant agent conditions
+
+- Agent behavior that affects this Task:
+- Tools, interfaces, session, memory, or timing behavior this Task depends on:
+- Material differences between the evaluated Harness and normal operation:
+- Required credential names and access:
+
+## Environment
+
+- Starting state and important relationships:
+- Agent-visible information and normal discovery paths:
+- Information hidden from the agent:
+- Live, frozen, or simulated dependencies and their exercised behavior:
+- Identity, permissions, clock, network, and resource limits:
+- Setup, readiness, reset, and cleanup:
+- Relevant project World Skill references, scripts, or assets:
+- Material differences from production:
+
+## Verification
+
+| ID | Required or prohibited result | Independent evidence | Exact check or bounded semantic question | Pass condition |
+|---|---|---|---|---|
+
+- Accepted alternatives:
+- Complete pass rule:
+- Invalid-run conditions:
+
+## Fairness and leakage
+
+- Why the Task is solvable:
+- How required information is visible or discoverable:
+- Likely shortcuts or reward hacks:
+- How hidden truth and Verifier logic stay unavailable:
+- Realistic wrong result that must fail:
+- Prohibited collateral change that must fail:
+
+## Open decisions
+
+- Human decisions:
+- Run plan: model, trials, judge, timeout, and maximum expected cost:
+- Assumptions:
+- Remaining questions:

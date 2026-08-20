@@ -1,77 +1,138 @@
-# Task Design
+# Design and Review One Task Spec
 
-Design one request that makes the selected capability necessary.
+## Sections
 
-## Write `task.md`
+- [Find directions](#find-directions)
+- [Select one Task](#select-one-task)
+- [Write the Task Spec](#write-the-task-spec)
+- [Review the Task and World Skill with the human](#review-the-task-and-world-skill-with-the-human)
+- [Build a family](#build-a-family)
 
-Before implementation, write `evals/<task-id>/task.md`:
+## Find directions
 
-```text
-Status: draft | approved
-Capability: behavior being measured
-Request: exact instruction later placed in Harbor's instruction.md
-Initial conditions: information, permissions, and state available
-Why this requires the capability: shortcut the task rules out
-Pass iff: independently observable successful outcome
-Verifier: LLM judge, deterministic check, or both
-Verifier evidence: exact sources, trajectory fields, or initial/final state
-Prohibited effects: final changes that must not occur
-Agent-visible information: request, tool results, files, and state the Harness can use
-Accepted alternatives: materially equivalent successful outcomes
-```
+Use repository capabilities, supplied traces, user priorities, production
+failures, existing eval coverage, and project World knowledge. Start with real
+work and an observable result. Do not create a Task only because an unusual
+fixture is available.
 
-`task.md` is a control-plane review spec, not Harness input. Set `Status: approved` only after the user approves it with `harness.md` and `environment.md`.
+Propose one grounded Task in the first user-facing design response after
+inspection. Use any concise structure that shows the work and capability,
+non-trivial condition, important failure, Environment and access, independent
+Verifier evidence, difference from existing Tasks, source evidence, and open
+decisions. Offer alternatives only when a real user choice changes the design.
 
-## The contract
+In the same response, show relevant knowledge already in the project World
+Skill and the reusable additions or corrections suggested by the Task. If the
+skill does not exist, show the small initial content that will support this Task
+and future Tasks. Frequency in traces can support relevance but does not prove
+business priority. A repository feature can support feasibility but does not
+prove the Task is valuable.
 
-Define this before implementation:
+## Select one Task
 
-~~~text
-Capability: behavior being measured
-Request: concrete instruction sent to the Harness
-Initial conditions: information, permissions, and state available
-Required outcome: independently observable success
-Prohibited effects: final changes that must not occur
-Accepted alternatives: materially equivalent successful outcomes
-Agent-visible information: request, tool results, files, and state the Harness can use
-~~~
+A strong Task:
 
-Reject it when the Harness can succeed without the capability, required information is missing, success is ambiguous, or a pass condition depends on information the Harness cannot infer.
+- represents useful work;
+- requires the selected capability;
+- is solvable from visible information or normal discovery;
+- contains a realistic reason the agent can fail;
+- produces independently observable evidence;
+- accepts materially equivalent results;
+- checks harmful side effects;
+- avoids hidden trivia and answer leakage; and
+- differs from existing Tasks by condition, state, evidence, or failure mode.
 
-When a trace informs the task, preserve the condition that required the capability, not the production wording or records. Example: recreate “lookup returned two same-name accounts and required disambiguation” with synthetic accounts.
+Reject a Task that mainly tests prompt decoding, brittle formatting,
+infrastructure luck, impossible knowledge, or a preferred internal tool
+sequence.
 
-Compare it with existing evals. Reject a case that changes only names, wording, or fixtures. Reusing a capability is useful when the new case introduces a distinct obstacle, state, evidence condition, or failure mode.
+Use normal request language. State the goal, necessary context, expected
+output or effect, and real limits. Do not prescribe steps unless the procedure
+is the capability.
 
-## Judge evidence
+## Write the Task Spec
 
-Choose evidence independently of the Harness's answer. A reference answer is valid only when it comes from independent source material:
+Copy `assets/task/Task.md.template` into the runnable Task directory beside
+`task.toml`. Keep it outside the agent-visible image and workspace. Create or
+update `.agents/skills/<project>-world/SKILL.md` in the same design loop by
+following [World knowledge](world-knowledge.md).
 
-| Domain | Evidence |
-|---|---|
-| Coding | failing case plus behavior and regression tests |
-| Search / Q&A | pinned source records supporting or contradicting the answer |
-| Analysis | independently recomputed result from the supplied raw data |
-| Tool use | Environment-observed results/state; Harness-recorded calls only when final state cannot establish the requirement |
-| Stateful action | initial state, policy/permissions, final state, and allowed change |
+### Purpose and evidence
 
-If the judge cannot determine success from this evidence, change the question or environment before writing the rubric.
+Name the work, capability, value, source, and difference from existing Tasks.
+Use paths, symbols, focused tests, trace IDs, policies, or human decisions for
+important claims.
 
-## Examples
+### Agent input
 
-| Domain | Capability | Question shape | Minimum environment |
-|---|---|---|---|
-| Coding | repair without regression | reproduce and fix a specific failure | repository, failing case, runnable tests |
-| Search / Q&A | evidence-grounded synthesis | answer a question requiring several sources | searchable corpus with relevant and distracting records |
-| Analysis | correct reasoning from data | compute and explain a decision-relevant result | raw data, definitions, relevant edge cases |
-| Tool use | select and use the right tool | complete a request with competing tools | realistic tool interfaces, results, and errors |
-| Stateful action | make a safe change | update requested state while preserving constraints | known initial state, permissions, observable final state |
+Write the exact initial instruction and any later turns or triggers. State
+context passed outside the instruction. The generated `instruction.md` must
+match either the approved input or the reviewed Draft input used under the
+documented no-pause exception.
 
-## Rules
+### Relevant agent conditions
 
-- Put the task under `evals/<task-id>/`.
-- Include only context needed for this capability.
-- Do not expose expected conclusions or verifier criteria.
-- Do not prescribe a tool sequence, file, wording, or implementation unless it is part of the capability.
-- Do not require a tool, subagent, retry count, or exact number of updates when the requested final outcome can establish success.
-- Allow materially equivalent valid solutions.
-- Start mutable tasks from known state and reset after every run.
+Include only Harness behavior this Task depends on: tool interfaces, session
+persistence, time, retries, or reconstruction differences. Do not repeat a
+complete repository map in every Task.
+
+### Environment
+
+Describe initial state, relationships, visible and hidden information,
+dependencies, access, identity, permissions, time, network, setup, readiness,
+reset, and material production differences. Cite project World knowledge used
+by the design.
+
+### Verification
+
+For each required or prohibited result, state independent evidence, the exact
+objective check or bounded semantic question, and its pass condition. List
+accepted alternatives, the complete pass rule, and invalid-run conditions.
+
+### Fairness and leakage
+
+Explain why the Task is solvable, how the agent can find required information,
+which shortcuts might work, and how hidden truth stays inaccessible. Name a
+realistic wrong result and a collateral change that must fail.
+
+## Review the Task and World Skill with the human
+
+Show the full Task Spec and World Skill changes before building by default.
+Explain what already existed, what the current Task adds or corrects, and what
+stays only in `Task.md`. Let the human revise both. Ask the human to review:
+
+- whether the work and failure matter;
+- whether the request is realistic;
+- whether the Environment contains enough and only appropriate information;
+- whether live, frozen, and simulated choices are acceptable;
+- whether the evidence measures the intended outcome;
+- whether valid alternatives are allowed;
+- whether prohibited effects are complete; and
+- whether cost, access, privacy, and safety are acceptable.
+
+Mark `Status: Approved` only after explicit approval. If the user requested a
+full build without another pause, continue with a Draft and label it honestly.
+Treat World Skill changes as accepted only after human review.
+
+After implementation, ask for evidence review. Show representative trajectories,
+final state, Verifier evidence, defects found, revisions made, results, and
+remaining limits. A reviewed markdown design does not prove a good runnable
+Task.
+
+## Build a family
+
+Prove one Task before creating a family. Then vary one meaningful condition:
+
+- longer or conflicting history;
+- similar identities;
+- missing or stale information;
+- permission or policy boundary;
+- required clarification;
+- multiple valid outcomes;
+- delayed or concurrent state;
+- partial failure or retry; or
+- greater collateral-change risk.
+
+Keep the underlying work stable when comparing difficulty. Avoid shallow
+instruction rewrites. Update project World knowledge when a new condition
+reveals a reusable rule, builder, evidence source, or known failure.

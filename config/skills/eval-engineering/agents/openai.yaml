@@ -1,0 +1,4 @@
+interface:
+  display_name: "Eval Engineering"
+  short_description: "Build audited eval Tasks and reusable World knowledge"
+  default_prompt: "Use $eval-engineering to inspect all inputs and relevant source files, draft one Task Spec and its project World Skill together for my review, build and audit the approved Task, reconcile the World Skill with the evidence, and repeat."

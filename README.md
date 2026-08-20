@@ -101,7 +101,7 @@ Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor lo
 Then ask your coding agent:
 
 ```text
-Use eval-engineering to inspect this agent and propose two or three Harbor evals. Traces for this agent can be found here [Tracing Project/Location].
+Use the eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
 ```
 
 ## Available Skills (21)
@@ -134,7 +134,7 @@ Thin wrappers around the official Mintlify quickstarts — ask for provider/mode
 - **langgraph-human-in-the-loop** - Interrupts, human review, approval workflows
 
 ### Evaluation
-- **eval-engineering** - Build, run, and audit Harbor evals for an existing agent with user approval
+- **eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review
 
 ### Utilities
 - **swarm** - Dispatch independent work items in parallel and aggregate the results

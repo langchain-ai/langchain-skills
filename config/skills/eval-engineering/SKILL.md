@@ -1,137 +1,314 @@
 ---
 name: eval-engineering
-description: Iteratively inspect an agent repository and optional user-provided traces, interview the user, and create, run, and audit Harbor evals one at a time. Use for agent evals, Harbor tasks, benchmark cases, verifier design, or controlled agent environments.
+description: Inspect an agent repository and optional traces, interview the user, write reviewed Task Specs, build and audit Harbor tasks, and bootstrap reusable project World Knowledge Skills. Use for agent evals, benchmark design, Task generation, controlled Environments, synthetic data, Verifiers, Harbor runs, calibration, or continuous benchmark maintenance.
 ---
 
 # Eval Engineering
 
-Work with the user to define, build, run, and audit Harbor tasks.
+## Flow
 
-```text
-map harness + environment -> propose directions -> user chooses
--> draft specs -> user approves -> build + run + audit -> repeat
-```
+- Inspect all inputs first: the repository, Harness, optional traces, existing
+  Tasks and runs, existing World knowledge, and the human goal. Identify the
+  source files and skill references that apply before proposing work.
+- Create or update the small project World Knowledge Skill from reusable facts
+  in those inputs. Use it to propose one grounded Task.
+- Draft the Task Spec and World Skill together. Show both to the user, keep exact
+  Task truth only in `Task.md`, and refine both until the user approves them.
+- Implement the approved Task, validate its Environment and Verifier, run the
+  real Harness, inspect the full evidence, and fix only non-agent failures.
+- Reconcile the World Skill with what the run proved, then repeat this flow for
+  the next Task.
 
-Use the latest Harbor release. Put task source under `evals/`. Build sequentially while a later task depends on an unproven Harness, Environment, or Verifier. Build independent tasks in parallel when the user requests it.
+## Terms
 
-## Boundaries
+- **Task Spec:** `Task.md`, which describes the input, relevant agent
+  conditions, Environment, scoring, fairness, and open decisions for one Task.
+- **Task:** the runnable instruction, Environment, and Verifier.
+- **Harness:** the complete agent Harbor runs, including prompts, model loop,
+  tools, hooks, memory, sessions, and adapter.
+- **Environment:** the files, data, services, identity, permissions, network,
+  clock, and mutable state around the Harness.
+- **Verifier:** independent checks that score the result or mark a run invalid.
+- **World Knowledge Skill:** a repository-local skill with reusable
+  project-specific knowledge, references, scripts, assets, and tests that help
+  generate Task Specs and build future Tasks.
+- **Spec2Task:** the full loop that turns a reviewed Task Spec into an audited
+  runnable Task. Follow [Task implementation](references/task-implementation.md)
+  for its concrete build order and reference routing.
 
-- **Task:** `instruction.md` plus an Environment and Verifier.
-- **Harness:** the complete agent Harbor runs: model, prompts, loop, repository-defined tools, middleware/hooks, memory/session behavior, and Harbor adapter. Harbor calls this the Agent.
-- **Environment:** the container/world around the Harness: OS, files, backing data, services, identity, permissions, network, clock, and mutable state.
-- **Verifier:** the test script that independently scores final artifacts or resulting Environment state; it uses trajectory only when final state cannot provide the required evidence.
-
-Repository-defined tool code belongs to the Harness. The data or service behind it belongs to the Environment. Example: a docs agent's `search_docs` definition and result parsing stay in the Harness; the frozen search index and its error behavior live in the Environment. If production supplies a tool server dynamically, keep that server in the Environment and preserve how the Harness discovers and calls it.
-
-## Score the requested outcome
-
-- For stateful work, score independently observed final Environment state first. Example: a booking exists for the requested room and no conflicting booking exists.
-- Keep ATIF as diagnostic evidence by default. Use trajectory or session evidence only when final state cannot establish the requirement, such as proving later user turns used the same session.
-- Do not require a tool name, subagent, retry count, exact number of updates, or exact wording unless that is the user-facing requirement.
-- Before building, state what the agent can see, the required user-visible outcome, prohibited effects, and materially equivalent outcomes that must pass. Do not score a hidden evaluator preference.
-
-## References
+## Reference routing
 
 Read each reference when its decision appears:
 
-- [Trace sourcing](references/trace-sourcing.md): select and analyze traces only when the user supplies a source.
-- [Harness](references/harness.md): identify the actual agent Harbor will run and preserve its behavior.
-- [Task design](references/task-design.md): turn one selected capability into a judgeable request.
-- [Environment building](references/environment-building.md): choose live, frozen, or simulated backing data and services.
-- [Multi-turn simulation](references/multi-turn-simulation/guide.md): run scripted or LLM-generated user turns through one Harness session.
-- [Verifier design](references/verifier-design.md): define independent evidence, scoring, and calibration.
-- [Harbor](references/harbor.md): create, run, and inspect the Harbor task.
+| Need | Read |
+|---|---|
+| Inspect source, traces, the Harness, dependencies, access, and existing evals | [Discovery](references/discovery.md) |
+| Bootstrap or update reusable project knowledge | [World knowledge](references/world-knowledge.md) |
+| Propose Tasks and write the single Task Spec | [Task design](references/task-design.md) |
+| Build data, services, access, state, and reset | [Environment building](references/environment-building.md) |
+| Create structured or natural-language data | [Synthetic data](references/synthetic-data.md) |
+| Define independent evidence and scoring | [Verifier design](references/verifier-design.md) |
+| Apply Spec2Task to turn a reviewed Spec into an audited Task | [Task implementation](references/task-implementation.md) |
+| Compare model runs and classify failures | [Calibration](references/calibration.md) |
+| Package and run Harbor tasks | [Harbor](references/harbor.md) |
+| Adapt a known benchmark design | [Benchmark patterns](references/patterns.md) |
+| Build multi-turn conversations | [Multi-turn simulation](references/multi-turn-simulation/guide.md) |
+| See World knowledge learned across two Tasks | [Service-desk example](references/examples/service-desk.md) |
 
-## 1. Map the Harness and production Environment
+Reusable implementation resources:
 
-Start at the public agent entrypoint and follow reachable code.
+- Multi-turn [runner](references/multi-turn-simulation/runner.py), [model user](references/multi-turn-simulation/model_user.py), and [Harbor adapter example](references/multi-turn-simulation/harbor_example.py)
+- [Tool-schema comparison](scripts/compare_tool_schemas.py), which compares
+  supplied schema fragments but does not resolve external `$ref` targets
+- [Read-only SQLite state snapshot](scripts/snapshot_sqlite_state.py)
+
+## 1. Inspect inputs and existing World knowledge
+
+Review every input the user provides before proposing a Task. Use the guidance
+that matches each available input:
+
+- For a repository, Harness, traces, or dependencies, read
+  [Discovery](references/discovery.md).
+- For existing Tasks and runs, inspect their instructions, Environments,
+  Verifiers, rewards, trajectories, and final state. Read
+  [Calibration](references/calibration.md) when run quality or failure causes
+  affect the new design.
+- For an existing project World Skill, read
+  [World knowledge](references/world-knowledge.md), then check the sources and
+  reusable methods that affect the new Task.
+- For human goals and constraints, read
+  [Task design](references/task-design.md).
+- For relevant benchmark examples, use the domain index and source callouts in
+  [Benchmark patterns](references/patterns.md).
+
+Inspect the repository before asking questions that source and tests can
+answer. Follow the active Harness through prompts, models, tools, services,
+state, effects, and focused tests. Inspect existing Task instructions, parsers,
+Verifiers, reward paths, and run evidence.
+
+If the user supplies traces, review complete runs or threads. Use traces to
+learn real requests, dependency behavior, state shapes, errors, and failure
+conditions. Do not treat a trace answer as independent truth.
+
+If `.agents/skills/<project>-world/SKILL.md` exists, read it. Follow its routing
+only for knowledge relevant to the current Task. Check cited repository paths,
+commands, and scripts when their accuracy affects the design.
+
+## 2. Propose and select a Task
+
+Read [Task design](references/task-design.md) and use the index in
+[Benchmark patterns](references/patterns.md) to find the relevant domain and
+source callouts. Focus on that domain unless the Task crosses another one.
+In the first user-facing design response after inspection, propose one Task
+grounded in repository evidence, supplied traces, existing coverage, or a
+human priority. State:
+
+- the real work and capability;
+- the condition that makes the case non-trivial;
+- the Environment and independent evidence it needs;
+- the important failure it can detect;
+- how it differs from existing Tasks; and
+- the main open decision.
+
+In the same response, show the relevant current World Skill content and the
+specific additions or corrections this Task suggests. If no World Skill
+exists, show the small initial contents that will help create this Task and
+future Tasks. Keep the Task's exact request, focal records, expected result,
+hidden truth, and exact scoring rules out of the World Skill.
+
+Let the user revise the Task proposal and World knowledge together before
+implementation. Offer alternatives only when a real user choice changes the
+design.
+
+## 3. Write and review the Task Spec and World Skill
+
+Copy [the Task template](assets/task/Task.md.template) to
+`evals/<suite>/tasks/<task-id>/Task.md`. Put all Task-specific design in this
+one file. At the same time, create or update the project World Skill by
+following [World knowledge](references/world-knowledge.md). Determine the
+project skill location supported by the active agent and repository.
+`.agents/skills/<project>-world/SKILL.md` and
+`.claude/skills/<project>-world/SKILL.md` are common landing spots. Follow an
+established project convention when one exists. Otherwise, explain the proposed
+location and get user confirmation before creating the skill. Start from
+[the World Skill template](assets/world-skill/SKILL.md.template) when needed.
+
+Keep each `Task.md` beside the Harbor task it describes:
 
 ```text
-Harness: entrypoint; prompts; models; loop; routing; retries; hooks; memory;
-         repository-defined tools, inputs, outputs, and effects
-Environment: files; records; indexes; services behind tools; identity;
-             permissions; network; time; mutable state
-Purpose: intended users, jobs, and useful outcomes
-Evidence: tests, fixtures, issues, existing evals, and documented failures
+evals/<suite>/tasks/<task-id>/
+├── Task.md              # human-reviewed control-plane spec
+├── task.toml             # required Harbor configuration
+├── instruction.md        # required agent input
+├── environment/          # required Environment definition and visible state
+│   ├── Dockerfile        # use this or docker-compose.yaml
+│   └── docker-compose.yaml # optional; primary service must be main
+├── tests/
+│   ├── test.sh           # required Harbor Verifier entry point
+│   ├── test_*.py         # optional Verifier helpers
+│   └── fixtures/         # optional hidden Verifier data
+└── solution/
+    └── solve.sh          # optional reference path
 ```
 
-Do not start services, install packages, or use credentials during mapping. Explain the map in the conversation and ask only what code cannot answer, such as “Which user job matters most?” or “What failure must this eval catch?”
+Never copy or mount `Task.md` into the evaluated agent's workspace or image.
+The agent receives `instruction.md` and only the Environment state intended for
+the run.
 
-If the user provides traces, read [Trace sourcing](references/trace-sourcing.md). Use trace evidence only when it changes an eval direction, dependency behavior, realistic request, or failure case. Never treat the recorded answer as truth.
+Include:
 
-## 2. Propose eval directions
+- purpose and source evidence;
+- exact input and later turns;
+- only the Harness conditions relevant to this Task;
+- initial state, services, access, visibility, reset, and production
+  differences;
+- required results, prohibited effects, accepted alternatives, and independent
+  Verifier evidence;
+- fairness, leakage risks, and invalid-run conditions; and
+- open decisions and assumptions.
 
-Offer two or three capabilities grounded in the map and any supplied traces:
+Show the full Task Spec and the World Skill changes to the user. Explain what
+is already in the World Skill, what this Task adds or corrects, and what stays
+only in `Task.md`. Revise both through the same back-and-forth. Mark the Task
+Spec approved only after explicit approval. Treat World Skill changes as
+accepted only after the user reviews them. If the user requests an end-to-end
+build without an approval pause, continue with an agent-reviewed
+`Status: Draft` and label the World Skill changes as unreviewed.
 
-```text
-Name: choose the correct account lookup
-Example request: “What plan is account A on?”
-Tests: looks up A, uses the returned plan, and does not invent account details
-Needs: known account records behind the existing read-only lookup
-```
+If implementation changes the request, visible information, material
+Environment behavior, or scoring boundary, update `Task.md` and show the
+change. Set its status back to `Draft`. Show the diff and require explicit
+reapproval before setting it to `Approved` again.
 
-Recommend one and explain why. The user chooses before implementation.
+## 4. Apply Spec2Task
 
-## 3. Draft and approve the specs
+Follow [Task implementation](references/task-implementation.md). It gives the
+build order and routes each decision to the Environment, synthetic-data,
+Verifier, Harbor, and calibration references.
 
-Read the Harness, task, Environment, and Verifier references. After the user chooses a direction, write:
+For an existing project, use its pinned or supported Harbor version. Otherwise,
+use the installed supported version and record it. Upgrade only with user
+approval and a stated compatibility reason. Use the installed CLI help as the
+command contract.
 
-```text
-evals/<task-id>/
-├── harness.md
-├── environment.md
-└── task.md
-```
+Before a scored model run:
 
-These are control-plane review files beside the runnable task. Never copy or mount them into the Harness workspace or task image. `task.md` is the review spec; Harbor's `instruction.md` is the Harness-visible request created from the approved spec.
-
-- `harness.md`: entrypoint, preserved behavior, adapter, sessions, credentials, recorded evidence, and reconstruction differences.
-- `environment.md`: live/frozen/simulated dependencies, backend contracts, generated or copied data, schemas and relationships, storage, effects, reset, and fidelity limits.
-- `task.md`: capability, request, initial conditions, pass condition, Verifier evidence, and accepted alternatives.
-
-For each dependency, recommend live, frozen, or simulated use. Read-only, low-cost services backed by hard-to-reproduce data are strong live candidates. Stable copied data is a strong frozen candidate. Writes, unstable services, and resettable state are strong simulation candidates. State required credential names for live use.
-
-Print the full contents of all three specs in the terminal, keeping them concise. Show their paths and your recommendation, then ask the user to approve or revise them. Mark each spec approved only after explicit user approval. Do not build the Harbor task until all three are approved. If user feedback or implementation changes the request, Harness, Environment, or Verifier boundary, update the affected spec, show the change, and obtain approval again.
-
-For multiple user turns, prefer fixed follow-ups when they do not depend on Harness responses. Use an LLM user only when replies must react, correct, reject, or stop; read the multi-turn reference and include simulator credentials in the proposal.
-
-## 4. Build one Harbor task
-
-```text
-evals/<task-id>/
-├── task.toml
-├── instruction.md
-├── task.md
-├── harness.md
-├── environment.md
-├── environment/
-└── tests/
-```
-
-Use the approved Harness unchanged when possible. Add an adapter only when Harbor needs one to invoke it. Do not expose hidden truth, simulator instructions, verifier criteria, or judge credentials to the Harness.
-
-Prefer programmatic checks for final state, artifacts, tests, and independently recomputed facts. Use an LLM judge only for meaning code cannot reasonably decide. Run deterministic checks before the judge; give the judge only the final artifact and independent evidence for that unresolved semantic question. Emit one primary reward.
+1. Confirm the model, trial count, judge, timeout, and maximum expected cost
+   with the user unless the user already authorized that run plan.
+2. Complete the package audit in [Harbor](references/harbor.md). Confirm every
+   required file, entry point, path, permission, configuration value, mount,
+   service, and reward output needed for this exact Task is present and works
+   through Harbor. Confirm hidden Task, Verifier, solution, and secret material
+   is absent from the agent-visible image and workspace.
+3. Check setup and trial isolation in the way that fits the Environment. A
+   fresh container or worktree can provide isolation by replacement. A reused
+   mutable service needs a checked reset. Immutable frozen data needs only a
+   checked load. See [Task implementation](references/task-implementation.md).
+4. Exercise every operation the Task depends on.
+5. Run the reference path when one exists.
+6. Test the Verifier with a clear valid result, a valid alternative, a
+   realistic wrong result, a shortcut, a prohibited collateral change, and
+   missing or corrupt evidence.
+7. Confirm every completed Verifier path writes a valid reward and useful
+   evidence without exposing hidden truth or secrets.
 
 ## 5. Run and audit
 
-Calibrate the Verifier with realistic cases from supplied traces, prior eval runs, or production-like task variants: a valid paraphrase, a plausible wrong result, and any known boundary case. Run them through the same Verifier command Harbor uses. Run the Harness through Harbor, then inspect:
+Run the actual Harness through Harbor. Read the complete trajectory, not only
+the reward. Inspect:
 
-- Harness-recorded messages, model/tool calls, results, retries, and errors;
-- Environment-observed service results, initial/final state, and reset;
-- Verifier evidence, decision, reason, reward, and errors;
-- resolved Harness and Environment configuration.
+- messages, model calls, tool calls, results, retries, and errors;
+- initial and final Environment state and external effects;
+- service, setup, readiness, reset, and cleanup evidence;
+- each Verifier criterion, its evidence, decision, and error; and
+- the resolved Harness, model, Environment, and judge configuration.
 
-For every zero reward, classify the evidence as a fair agent failure, Verifier defect, Environment defect or leak, or infrastructure error. Fix and rerun non-agent failures before treating them as evaluation results. If the Environment leaked the answer, a wrong answer passed, or a valid result failed, the eval is not complete.
+Classify each unsuccessful run as an agent capability failure, missing
+information, Harness defect, Environment defect, Verifier false rejection,
+Verifier false acceptance, leakage, or infrastructure failure. Fix non-agent
+failures before using the score.
 
-For an LLM user, inspect representative correct, wrong, clarification, and stop paths. Revise its contract or model when its replies are implausible. Simulator termination is not success; the Verifier alone assigns reward.
+Model comparison is an optional calibration strategy, not a completion rule.
+When it would answer a real uncertainty, compare a weaker model, the target
+model, or a stronger model and repeat trials when behavior is variable. Read
+every selected trace. Contrast can expose unclear inputs, brittle setup,
+leakage, shortcuts, or reward hacks. Pass rates and model ordering do not prove
+Task quality.
 
-## 6. Review and repeat
+Read [Calibration](references/calibration.md) for the complete audit method.
 
-Explain the task path and exact Harbor command, request, Harness, Environment, run behavior, Verifier decision, and main limitation. Completion requires a real Harbor run, evidence that the Verifier measured the intended capability, and user approval. If continuing, reuse the available evidence and propose a distinct capability.
+## 6. Reconcile project World knowledge
 
-## Invariants
+Use [World knowledge](references/world-knowledge.md) throughout Task design,
+implementation, and audit. Add or correct project-specific knowledge when the
+work supplies evidence that would help another Task. This can include Task
+patterns, Environment methods, data creation, Verifier evidence, run
+procedures, scripts, assets, and examples.
 
-- One capability per Harbor task.
-- No production writes; reset mutable state between trials.
-- Keep hidden truth and simulator/judge credentials unavailable to the Harness.
-- Treat build, credential, reset, timeout, judge, and Verifier failures as infrastructure errors, not failed agent work.
+After the audit, reconcile the World Skill with what the completed Task proved.
+Show the user:
+
+- the proposed reusable knowledge;
+- the evidence supporting it;
+- how another Task would use it;
+- where it should live; and
+- what remains specific to the completed Task.
+
+Remove or narrow ideas that the Task disproved. If the user asked for
+autonomous end-to-end updates without a pause, make the smallest supported
+update, show it in the final review, and do not imply that the human approved
+the generalization.
+
+Create only `SKILL.md` at first. Add `references/`, `scripts/`, `assets/`, or
+`tests/` only when their real contents justify them.
+
+Keep the completed Task's request, focal state, expected result, and exact
+criteria in its collocated `Task.md`. Do not copy broad guidance that is already
+clear in this skill. Record the project-specific adaptation of that guidance.
+
+## 7. Repeat
+
+Use Tasks two and three to test the World Skill. Check whether it reduces
+rediscovery, improves Task Specs, preserves important relationships, reuses a
+proven operation, or prevents a known Verifier defect. Correct rules that are
+missing, stale, or too broad.
+
+When several materially different Tasks have exercised the shared knowledge
+and the construction and verification methods are clear, the next cycle can
+propose several independent Task Specs:
+
+1. Mine new repository, trace, and human evidence.
+2. Use the World Skill to generate distinct Task Specs.
+3. Have the human review the specs.
+4. Build independent approved Tasks in parallel.
+5. Audit every Task individually.
+6. Update World knowledge only with reusable corrections.
+
+Continue this loop as production behavior, user priorities, agents, and models
+change.
+
+## Dependencies, access, and safety
+
+Map required systems, data, roles, network needs, and safe setup methods. Never
+read, print, copy, store, or ask the human to paste secret values. Tell the
+human what dependency is needed, why it is needed, and how the project expects
+access to be provided. Default to controlled local, frozen, or simulated
+dependencies. Never write to production during an eval. Treat access, startup,
+reset, timeout, judge, and Verifier failures as invalid runs, not failed agent
+work.
+
+## Complete only when
+
+- `Task.md` matches the built instruction, Environment, and Verifier.
+- The Task is solvable from agent-visible or normally discoverable information.
+- The Environment starts reliably and isolates trials by replacement, reset,
+  or immutable state as appropriate, without leaking hidden truth.
+- Valid and invalid Verifier cases behave as intended.
+- At least one real Harness run was read in full.
+- Non-agent failures were repaired or reported as unresolved limits.
+- Model comparison, when used, includes trace review rather than pass rates
+  alone.
+- The project World Skill was created or updated with the Task Spec, reviewed
+  during the work, and reconciled with the final evidence.
+- The user receives the Task path, run command, results, evidence, and remaining
+  limits.
