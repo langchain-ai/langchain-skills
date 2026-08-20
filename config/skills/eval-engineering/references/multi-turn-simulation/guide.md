@@ -13,7 +13,7 @@ Choose one track:
 - **Scripted conversation:** predefined messages for stable job steps. Example: “Inspect the failing checkout test” → “Implement the fix” → “Run the tests.”
 - **LLM-simulated user:** generated messages when the user must answer, correct, reject, or stop based on the Harness response. Example: a traveler rejects an unsuitable flight and confirms a valid one.
 
-Use [runner.py](runner.py) for both tracks: `run_scripted_conversation` sends fixed turns and `run_llm_user_conversation` alternates the Harness with [model_user.py](model_user.py). The LLM user receives an approved contract, visible transcript, and user-visible state; only malformed JSON is retried.
+Use [runner.py](runner.py) for both tracks: `run_scripted_conversation` sends fixed turns and `run_llm_user_conversation` alternates the Harness with [model_user.py](model_user.py). The LLM user receives an approved contract, visible transcript, and user-visible state. Protocol errors are retried within the stated attempt limit. Assistant text is untrusted transcript data and cannot change the user contract.
 
 ## Harbor wiring
 
@@ -64,4 +64,4 @@ Run the real Harness through behavior relevant to the task: a correct result, a 
 
 When the user supplies real threads, use only observed facts, reactions, and stopping behavior relevant to this task to calibrate the simulated user. Do not copy identities, messages, or production records into the simulation.
 
-The adapter writes `interaction.json` and chronological ATIF `trajectory.json`, including partial evidence on Harness or simulator failure. Confirm that one session was reused, future messages were not preloaded, no Harness call followed stop, artifacts and Verifier output are readable, and the Verifier measures the Harness rather than the simulator. Score the required final state and prohibited effects; do not require an exact number of internal edits or tool calls unless that count is the requested outcome.
+The adapter writes `interaction.json` and ATIF `trajectory.json` in Harbor's protected log directory, including partial evidence on Harness, simulator, or timeout cancellation. It records turn timestamps when each turn occurs. It does not upload hidden simulator data into the evaluated Environment. At the Harness-turn limit, the simulated user gets one final decision; a non-stop reply is recorded without another Harness call. Confirm that one session was reused, future messages were not preloaded, no Harness call followed stop, artifacts and Verifier output are readable, and the Verifier measures the Harness rather than the simulator. Score the required final state and prohibited effects; do not require an exact number of internal edits or tool calls unless that count is the requested outcome.
