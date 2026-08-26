@@ -386,7 +386,7 @@ export const sandbox = defineSandbox({
 
 `scope="thread"` (the default) creates one sandbox per durable thread. `scope="agent"` shares a single filesystem across threads — **only use it for intentionally shared state**, since threads can then read and modify each other's files. Set the creation source with `template_name` *or* `snapshot_id`, never both.
 
-The agent works through `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`, and `execute`. Use `instructions.md` to say where it should work and what it must not touch. `mda delete` also deletes the managed sandboxes.
+The agent works through `ls`, `read_file`, `write_file`, `edit_file`, `delete`, `glob`, `grep`, and `execute`. Use `instructions.md` to say where it should work and what it must not touch. `mda delete` also deletes the managed sandboxes.
 
 During `mda dev`, if the provider is unavailable the runtime falls back to a local temp directory and prints the path. That fallback is for development only — verify sandbox behavior in a dev deployment.
 
