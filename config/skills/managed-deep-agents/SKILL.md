@@ -60,6 +60,7 @@ The common redirect: if they need custom HTTP routes, their own auth, or non-US 
 | --- | --- | --- |
 | How it should behave, its tone, its rules | Instructions | `instructions.md` |
 | Calls our API / database / internal service | Authored tools | `tools/` |
+| Tools from a remote MCP server | MCP connector | `connectors/mcp.py` |
 | A procedure it should follow for certain tasks | Skills | `skills/<name>/SKILL.md` |
 | Remembers things across conversations | Durable memory (read the warning) | `memory.py` |
 | Runs on a timer, no user message | Schedules | `schedules/<name>.py` |
@@ -127,7 +128,7 @@ Check requests against this list *before* agreeing to build them. Being straight
 | --- | --- |
 | US LangSmith Cloud only | No self-hosted, no hybrid, no EU region. Needs `langgraph deploy`. |
 | CLI-first, public beta | No public create/update/invoke REST surface. Calling a deployed agent from your own application is not documented during beta — tell the user to contact their LangChain team. |
-| No MCP connectors | The `connectors/mcp.*` + `define_mcp_servers` surface was **removed**. Do not write it. Give the agent authored tools instead. |
+| MCP servers must be remote HTTP/SSE | Stdio MCP servers are unsupported. Expose them over HTTP or write an authored tool. |
 | Slack is the only channel | No Discord, Teams, email, or SMS channel. |
 | Memory is deployment-shared | One `/memories/agent/` tree for **all** callers. There is no per-user memory. |
 | Identity is LangSmith key or Supabase | No OIDC, SAML, or custom JWT issuer. Per-user private threads require Supabase. |
@@ -338,6 +339,46 @@ Imports work exactly as in a normal local project. Use clear, unique tool names 
 
 Provider server-side tools can be passed inline where supported — for example `tools=[{"type": "web_search"}]` for OpenAI — which avoids a second API key.
 
+## MCP connectors
+
+A module directly under `connectors/` exporting a module-level `connector` adds
+tools from remote MCP servers. Streamable HTTP (`"http"`) and legacy SSE
+(`"sse"`) only — stdio is unsupported.
+
+```python
+# connectors/mcp.py
+import os
+
+from managed_deepagents import connectors
+
+connector = connectors.mcp(
+    mcp_servers={
+        "langchainDocs": {
+            "transport": "http",
+            "url": "https://docs.langchain.com/mcp",
+            "headers": {"Authorization": f"Bearer {os.environ['SOME_TOKEN']}"},
+            "include_tools": ["search_docs_by_lang_chain"],
+        },
+    },
+    prefix_tool_name_with_server_name=False,
+    throw_on_load_error=True,
+)
+```
+
+Per-server: `transport`, `url`, `headers`, `include_tools` / `exclude_tools`
+(raw names, denylist applied after allowlist), `default_tool_timeout`,
+`automatic_sse_fallback`, `reconnect`. Connector-level:
+`prefix_tool_name_with_server_name` (default `true`, exposing
+`{server}__{tool}`) and `throw_on_load_error` (default `true`).
+
+**Prefixing interacts with `interrupt_on`.** With the default on, a gate keyed on
+the bare tool name never matches. Either disable prefixing or key the gate on the
+prefixed name.
+
+Credentials go in `headers` read from env vars, never hard-coded. Note that a
+server fronting per-user OAuth (such as the Fleet platform tool servers) cannot be
+satisfied by a static header at all.
+
 ## Middleware
 
 Middleware wraps model calls, tool calls, and lifecycle hooks. Order is explicit in the list; MDA never infers it. Use prebuilt LangChain middleware or author your own (see [[langchain-middleware]]).
@@ -510,7 +551,7 @@ Respond to interrupts in Studio during `mda dev`. On a deployed agent, resume th
 - **Model IDs need the provider prefix**: `anthropic:claude-sonnet-4-6`, not a bare model name. Python uses `google_genai:`, TypeScript uses `google-genai:`, and Gateway uses `provider/model`.
 - **Do not set managed fields** (`backend`, `store`, `checkpointer`, `memory`, `skills`, system prompt) in the agent definition.
 - **Memory is opt-in via `memory.py`**, not a constructor argument. `disable_memory` is legacy — declare or delete `memory.py` instead.
-- **MCP connectors do not exist.** `connectors/mcp.*` and `define_mcp_servers` were removed; writing them fails.
+- **MCP connectors DO exist** — a module under `connectors/` exporting `connector = connectors.mcp(mcp_servers={...})`. Tool names are prefixed `{server}__{tool}` unless you set `prefix_tool_name_with_server_name=False`; leaving prefixing on silently breaks `interrupt_on` keys that reference the bare names.
 - **Restart `mda dev` after adding a managed file.** New `memory.py`, `identity.py`, `schedules/`, or `channels/` declarations are discovered at compile time, not by hot reload.
 - **`--no-wait` skips schedule reconciliation** and exits before `DEPLOYED`.
 - **Schedule declarations must be static literals** — the compiler extracts them without running your code.
