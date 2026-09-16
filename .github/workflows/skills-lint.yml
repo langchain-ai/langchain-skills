@@ -1,0 +1,31 @@
+name: skills-lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Provides the `claude` binary for `plugin validate` and `plugin details`.
+      # Validation is offline and consumes no secrets.
+      - run: npm install -g @anthropic-ai/claude-code@2.1.273
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+
+      - run: uv run --no-project scripts/lint_skills.py
