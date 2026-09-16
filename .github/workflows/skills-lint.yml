@@ -28,4 +28,7 @@ jobs:
         with:
           enable-cache: false
 
+      - name: Test skill lint rules
+        run: uv run --no-project --python 3.11 python -m unittest discover -s tests/skills_lint -v
+
       - run: uv run --no-project scripts/lint_skills.py

@@ -57,18 +57,42 @@ class Finding:
 
 
 def parse_frontmatter(text: str) -> dict[str, str]:
-    if not text.startswith("---"):
-        return {}
-    end = text.find("\n---", 3)
-    if end == -1:
+    """Read single-line string fields; leave YAML validation to Claude.
+
+    Comments begin outside quotes, after whitespace. In particular, stripping
+    quotes before comments would misread ``name: "example" # comment``.
+    Unsupported YAML forms are left to the validator, not guessed here.
+    """
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
         return {}
     fields: dict[str, str] = {}
-    for raw in text[3:end].splitlines():
+    for raw in lines[1:]:
+        if raw.strip() in {"---", "..."}:
+            return fields
         if raw.startswith((" ", "\t")) or ":" not in raw:
             continue
         key, _, value = raw.partition(":")
-        fields[key.strip()] = value.strip().strip("\"'")
-    return fields
+        value = value.strip()
+        if value.startswith("'"):
+            match = re.fullmatch(r"'((?:[^']|'')*)'(?:\s+#.*)?\s*", value)
+            if match is None:
+                continue
+            value = match.group(1).replace("''", "'")
+        elif value.startswith('"'):
+            match = re.fullmatch(r'("(?:[^"\\]|\\.)*")(?:\s+#.*)?\s*', value)
+            if match is None:
+                continue
+            try:
+                value = json.loads(match.group(1))
+            except json.JSONDecodeError:
+                continue
+        else:
+            value = re.split(r"\s+#", value, maxsplit=1)[0].rstrip()
+            if not value or value.startswith(("#", "|", ">", "&", "*", "!", "[", "{")):
+                continue
+        fields[key.strip()] = value
+    return {}
 
 
 def parse_tokens(value: str) -> int:
@@ -98,36 +122,59 @@ def within(root: Path, candidate: Path) -> bool:
 
 
 def check_plugin_validate(root: Path, skills_dir: Path) -> list[Finding]:
-    result = run_claude(
-        ["plugin", "validate", str(skills_dir.relative_to(root)), "--strict", "--json"],
-        root,
-    )
+    def failure(message: str) -> list[Finding]:
+        return [Finding(BLOCK, "validate", skills_dir, 1, message)]
+
+    try:
+        result = run_claude(
+            ["plugin", "validate", str(skills_dir.relative_to(root)), "--strict", "--json"],
+            root,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return failure(f"validator could not run: {error}")
     if result is None:
-        return [
-            Finding(WARN, "validate", skills_dir, 1, "claude CLI not on PATH; stage skipped")
-        ]
+        return failure("claude CLI not on PATH; validation is required")
     try:
         report = json.loads(result.stdout)
     except json.JSONDecodeError:
         detail = (result.stderr or result.stdout).strip().splitlines()
-        return [
-            Finding(
-                WARN,
-                "validate",
-                skills_dir,
-                1,
-                f"unreadable validator output: {detail[0] if detail else 'no output'}",
-            )
-        ]
+        return failure(
+            f"unreadable validator output: {detail[0] if detail else 'no output'}"
+        )
 
+    # A successful exit alone is not evidence of validation: require the
+    # expected report envelope, then inspect both manifest and content issues.
+    if (
+        not isinstance(report, dict)
+        or type(report.get("success")) is not bool
+        or not isinstance(report.get("contents"), list)
+        or (report.get("manifest") is not None and not isinstance(report["manifest"], dict))
+    ):
+        return failure("invalid validator report structure")
+
+    entries = list(report["contents"])
+    if report.get("manifest") is not None:
+        entries.insert(0, report["manifest"])
     findings = []
-    for entry in report.get("contents", []):
-        target = Path(entry.get("file", str(skills_dir)))
-        for problem in entry.get("errors", []) + entry.get("warnings", []):
+    for entry in entries:
+        if not isinstance(entry, dict):
+            return failure("invalid validator report entry")
+        file = entry.get("file", str(skills_dir))
+        errors, warnings = entry.get("errors", []), entry.get("warnings", [])
+        if not isinstance(file, str) or not isinstance(errors, list) or not isinstance(warnings, list):
+            return failure("invalid validator report entry")
+        target = Path(file)
+        if not target.is_absolute():
+            target = root / target
+        for problem in errors + warnings:
+            if not isinstance(problem, dict) or not isinstance(problem.get("message"), str):
+                return failure("invalid validator problem entry")
             label = problem.get("path") or "manifest"
             findings.append(
-                Finding(BLOCK, "validate", target, 1, f"{label}: {problem.get('message', '')}")
+                Finding(BLOCK, "validate", target, 1, f"{label}: {problem['message']}")
             )
+    if not findings and (result.returncode != 0 or not report["success"]):
+        return failure(f"validator reported failure (exit {result.returncode}) without diagnostics")
     return findings
 
 
