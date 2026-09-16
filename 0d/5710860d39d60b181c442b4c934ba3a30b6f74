@@ -1,0 +1,21 @@
+.github/workflows/skills-lint.yml
+  s_04f548539c29dd::t_25701ea094fa39 1-31
+scripts/lint_skills.py
+  s_04f548539c29dd::t_7f42bd798e4e16 1-330
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0d5710860d39d60b181c442b4c934ba3a30b6f74",
+  "prompts": {},
+  "sessions": {
+    "s_04f548539c29dd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3e36cf5b-b807-404e-bf84-b78a93a96cfc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
