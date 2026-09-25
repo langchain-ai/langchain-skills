@@ -26,6 +26,7 @@ Invoke when the user wants a minimal working local agent. Skills point at the of
 - **langgraph-fundamentals** - Invoke for StateGraph, state schemas, edges, Command, Send, invoke, streaming, error handling
 - **langgraph-persistence** - Invoke for checkpointers, thread_id, time travel, memory, subgraph scoping
 - **langgraph-human-in-the-loop** - Invoke for interrupts, human review, error handling, approval workflows
+- **langgraph-decision-models** - Invoke for routing on a decision model (TypeSafe Jev, SemIf) instead of an LLM, or auditing an agent for LLM calls that only produce a decision
 
 ### Deep Agents Skills
 - **deep-agents-core** - Invoke for Deep Agents harness architecture
