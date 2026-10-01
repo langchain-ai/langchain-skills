@@ -27,6 +27,9 @@ Copy [runner.py](runner.py), [model_user.py](model_user.py), and [harbor_example
 The wrapper returns `HarnessReply(message, evidence)`. `message` is delivered to the user. `evidence` is JSON-safe activity directly recorded during that Harness turn, such as tool calls, results, state changes, and usage. Never infer tool use from prose or include credentials in `public_config`, observations, or evidence.
 
 ```python
+import os
+
+
 class FlightSession:
     def __init__(self, real_agent, thread_id):
         self.real_agent = real_agent
@@ -38,7 +41,7 @@ class FlightSession:
         return HarnessReply(result.text, {"tool_calls": result.observed_tool_calls})
 
 class FlightAdapter(MultiTurnHarborAgent):
-    SIMULATOR_MODEL = "gpt-5.5"
+    SIMULATOR_MODEL = os.environ["SIMULATOR_MODEL"]
 
     def user_contract(self) -> str:
         return """You are Sam, changing an August 12 return flight.

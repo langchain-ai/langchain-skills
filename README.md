@@ -104,37 +104,33 @@ Then ask your coding agent:
 Use the eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
 ```
 
-## Available Skills (21)
+## Available Skills (15)
 
 ### Getting Started
-- **ecosystem-primer** - Start-here primer: framework selection (LangChain vs LangGraph vs Deep Agents), env setup, and which skill to load next
+- **build-agent** - Opinionated architecture guidance for starting and composing LangChain, LangGraph, Deep Agents, and Managed Deep Agents applications
 - **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
 
-### Quickstarts (local)
-Thin wrappers around the official Mintlify quickstarts — ask for provider/model (default `anthropic:claude-sonnet-5`), new directory, provider API key only:
-- **langchain-python-quickstart** / **langchain-typescript-quickstart** → [Python](https://docs.langchain.com/oss/python/langchain/quickstart) / [JS](https://docs.langchain.com/oss/javascript/langchain/quickstart) (weather)
-- **langgraph-python-quickstart** / **langgraph-typescript-quickstart** → [Python](https://docs.langchain.com/oss/python/langgraph/quickstart) / [JS](https://docs.langchain.com/oss/javascript/langgraph/quickstart) (math)
-- **deepagents-python-quickstart** / **deepagents-typescript-quickstart** → [Python](https://docs.langchain.com/oss/python/deepagents/quickstart) / [JS](https://docs.langchain.com/oss/javascript/deepagents/quickstart) (research; provider web search instead of Tavily)
-
 ### Deep Agents
-- **deep-agents-core** - Agent architecture, harness setup, and SKILL.md format
-- **deep-agents-memory** - Memory, persistence, filesystem middleware
-- **deep-agents-orchestration** - Subagents, task planning, human-in-the-loop
+- **deep-agents** - Build or modify applications with the open-source Deep Agents harness; includes routed Python and TypeScript quickstarts
 - **managed-deep-agents** - Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
 
+### Shared capabilities
+- **memory-and-persistence** - Thread state, durable memory, and filesystem-backed context across supported frameworks
+- **human-in-the-loop** - Interrupt, review, approval, edit, rejection, and resumable execution patterns
+- **subagents-and-composition** - Delegation and composition among agents, tools, graphs, and specialized workers
+- **middleware** - Cross-cutting agent behavior such as prompts, tools, planning, summarization, and guardrails
+
 ### LangChain
-- **langchain-fundamentals** - Agents with create_agent, tools, structured output, middleware basics
-- **langchain-middleware** - Human-in-the-loop approval, custom middleware, Command resume patterns
+- **langchain** - Build or modify Python and TypeScript applications with models, tools, agents, and structured output
 - **langchain-rag** - RAG pipeline (document loaders, embeddings, vector stores)
 
 ### LangGraph
-- **langgraph-fundamentals** - StateGraph, nodes, edges, state reducers
-- **langgraph-persistence** - Checkpointers, thread_id, cross-thread memory
+- **langgraph** - Build or modify Python and TypeScript graphs with explicit state, nodes, edges, routing, parallelism, and streaming
 - **langgraph-cli** - CLI lifecycle: scaffold, dev, build, deploy, langgraph.json config
-- **langgraph-human-in-the-loop** - Interrupts, human review, approval workflows
 
 ### Evaluation
 - **eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review
+- **langsmith-online-eval-engineering** - Build online evaluators from LangSmith traces and production feedback signals
 
 ### Utilities
 - **swarm** - Dispatch independent work items in parallel and aggregate the results
