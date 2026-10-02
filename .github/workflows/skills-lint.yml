@@ -29,8 +29,30 @@ jobs:
 
           base_version="$(git show "$BASE_SHA:.claude-plugin/plugin.json" | jq -r '.version')"
           head_version="$(git show "$HEAD_SHA:.claude-plugin/plugin.json" | jq -r '.version')"
-          if [ "$base_version" = "$head_version" ]; then
-            echo "Skill changes require a version bump in .claude-plugin/plugin.json."
+          version_pattern='^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$'
+
+          if [[ ! "$base_version" =~ $version_pattern ]]; then
+            echo "Base plugin version is not a supported semantic version: $base_version"
+            exit 1
+          fi
+          base_major="${BASH_REMATCH[1]}"
+          base_minor="${BASH_REMATCH[2]}"
+          base_patch="${BASH_REMATCH[3]}"
+
+          if [[ ! "$head_version" =~ $version_pattern ]]; then
+            echo "Head plugin version is not a supported semantic version: $head_version"
+            exit 1
+          fi
+          head_major="${BASH_REMATCH[1]}"
+          head_minor="${BASH_REMATCH[2]}"
+          head_patch="${BASH_REMATCH[3]}"
+
+          if ((
+            head_major < base_major
+            || (head_major == base_major && head_minor < base_minor)
+            || (head_major == base_major && head_minor == base_minor && head_patch <= base_patch)
+          )); then
+            echo "Skill changes require a plugin version greater than $base_version; found $head_version."
             exit 1
           fi
 
