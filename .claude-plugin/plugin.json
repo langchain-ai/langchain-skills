@@ -1,6 +1,6 @@
 {
   "name": "langchain-skills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents",
   "author": {
     "name": "LangChain",

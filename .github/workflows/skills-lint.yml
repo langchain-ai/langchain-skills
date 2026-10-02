@@ -14,7 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Require a plugin version bump for skill changes
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- config/skills/; then
+            exit 0
+          fi
+
+          base_version="$(git show "$BASE_SHA:.claude-plugin/plugin.json" | jq -r '.version')"
+          head_version="$(git show "$HEAD_SHA:.claude-plugin/plugin.json" | jq -r '.version')"
+          if [ "$base_version" = "$head_version" ]; then
+            echo "Skill changes require a version bump in .claude-plugin/plugin.json."
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
