@@ -96,7 +96,8 @@ langgraph up --postgres-uri postgresql://...  # external Postgres
 langgraph up --no-pull                     # use local images (after langgraph build)
 langgraph up --image my-image              # skip build, use pre-built image
 langgraph up -d docker-compose.yml         # add extra Docker services
-langgraph up --debugger-port 8124          # serve debugger UI
+langgraph up --studio-url https://smith.langchain.com/studio  # select the Studio origin
+langgraph up --api-url http://localhost:8123  # API URL embedded in the Studio link
 langgraph up --wait                        # block until services are healthy
 ```
 

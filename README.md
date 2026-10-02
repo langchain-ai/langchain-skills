@@ -26,11 +26,20 @@ npx skills add langchain-ai/langchain-skills --skill '*' --yes
 ```bash
 npx skills add langchain-ai/langchain-skills --skill '*' --yes --global
 ```
-To link skills to a specific agent (e.g. Claude Code):
+To link skills to a specific agent:
 
 ```bash
+# Claude Code
 npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
+
+# Codex
+npx skills add langchain-ai/langchain-skills --agent codex --skill '*' --yes --global
+
+# GitHub Copilot (including Copilot in VS Code)
+npx skills add langchain-ai/langchain-skills --agent github-copilot --skill '*' --yes --global
 ```
+
+Codex also supports installing repository-hosted skills with its built-in skill installer; see the [official Codex skills documentation](https://developers.openai.com/codex/skills/).
 
 ---
 
