@@ -88,49 +88,47 @@ Then run your coding agent from the directory where you installed (for local ins
 
 ### Eval Engineering
 
-To install only the eval-engineering skill:
+To install only the langchain-eval-engineering skill:
 
 ```bash
-npx skills add langchain-ai/langchain-skills --skill eval-engineering --yes
+npx skills add langchain-ai/langchain-skills --skill langchain-eval-engineering --yes
 ```
 
-Or ask Codex: “Install the `eval-engineering` skill from `langchain-ai/langchain-skills`.”
+Or ask Codex: “Install the `langchain-eval-engineering` skill from `langchain-ai/langchain-skills`.”
 
 Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor locally with Docker or use a supported cloud environment.
 
 Then ask your coding agent:
 
 ```text
-Use the eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
+Use the langchain-eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
 ```
 
-## Available Skills (15)
+## Available Skills (13)
 
 ### Getting Started
-- **build-agent** - Opinionated architecture guidance for starting and composing LangChain, LangGraph, Deep Agents, and Managed Deep Agents applications
-- **langchain-dependencies** - Full package version and dependency management reference (Python + TypeScript)
+- **langchain-build-agent** - Opinionated architecture guidance for LangChain ecosystem applications using Deep Agents, LangGraph, framework components, and managed services
 
 ### Deep Agents
-- **deep-agents** - Build or modify applications with the open-source Deep Agents harness; includes routed Python and TypeScript quickstarts
-- **managed-deep-agents** - Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
+- **langchain-deep-agents** - Build or modify applications with the open-source Deep Agents harness; includes routed Python and TypeScript quickstarts
+- **langchain-managed-deep-agents** - Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
 
 ### Shared capabilities
-- **memory-and-persistence** - Thread state, durable memory, and filesystem-backed context across supported frameworks
-- **human-in-the-loop** - Interrupt, review, approval, edit, rejection, and resumable execution patterns
-- **subagents-and-composition** - Delegation and composition among agents, tools, graphs, and specialized workers
-- **middleware** - Cross-cutting agent behavior such as prompts, tools, planning, summarization, and guardrails
+- **langchain-memory-and-persistence** - Thread state, durable memory, and filesystem-backed context across supported frameworks
+- **langchain-human-in-the-loop** - Interrupt, review, approval, edit, rejection, and resumable execution patterns
+- **langchain-subagents-and-composition** - Delegation and composition among agents, tools, graphs, and specialized workers
+- **langchain-middleware** - Cross-cutting agent behavior such as prompts, tools, planning, summarization, and guardrails
+- **langchain-retrieval-and-rag** - Ingestion, indexing, retrieval, citations, and RAG patterns across agents and workflows
 
 ### LangChain
-- **langchain** - Build or modify Python and TypeScript applications with models, tools, agents, and structured output
-- **langchain-rag** - RAG pipeline (document loaders, embeddings, vector stores)
+- **langchain-framework** - Build LangChain framework components or a base create_agent/createAgent application in Python or TypeScript
 
 ### LangGraph
-- **langgraph** - Build or modify Python and TypeScript graphs with explicit state, nodes, edges, routing, parallelism, and streaming
-- **langgraph-cli** - CLI lifecycle: scaffold, dev, build, deploy, langgraph.json config
+- **langchain-langgraph** - Build or modify Python and TypeScript graphs with explicit state, nodes, edges, routing, parallelism, and streaming
+- **langchain-langgraph-cli** - CLI lifecycle: scaffold, dev, build, deploy, langgraph.json config
 
 ### Evaluation
-- **eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review
-- **langsmith-online-eval-engineering** - Build online evaluators from LangSmith traces and production feedback signals
+- **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review
 
 ### Utilities
-- **swarm** - Dispatch independent work items in parallel and aggregate the results
+- **langchain-swarm** - Dispatch independent work items in parallel and aggregate the results
