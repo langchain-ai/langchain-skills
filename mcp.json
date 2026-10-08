@@ -1,0 +1,13 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "langchain-docs": {
+      "type": "streamable-http",
+      "url": "https://docs.langchain.com/mcp"
+    },
+    "langchain-reference": {
+      "type": "streamable-http",
+      "url": "https://reference.langchain.com/mcp"
+    }
+  }
+}

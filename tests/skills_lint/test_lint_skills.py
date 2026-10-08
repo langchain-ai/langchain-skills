@@ -24,7 +24,7 @@ class LintTestCase(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.skills = self.root / "config/skills"
+        self.skills = self.root / "skills"
         self.skill = self.skills / "example/SKILL.md"
         self.skill.parent.mkdir(parents=True)
         self.write_skill("example")

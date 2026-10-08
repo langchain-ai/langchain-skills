@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Lint the skills in config/skills against the Agent Skills guidelines.
+"""Lint the skills in skills/ against the Agent Skills guidelines.
 
 Layers the first-party `claude plugin validate` and `claude plugin details`
 reports with house rules the validator does not cover. Exits 1 on BLOCK.
@@ -323,7 +323,7 @@ def annotate(finding: Finding, root: Path) -> None:
 
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
-    skills_dir = root / "config" / "skills"
+    skills_dir = root / "skills"
     if not skills_dir.is_dir():
         print(f"no skills directory at {skills_dir}", file=sys.stderr)
         return 1

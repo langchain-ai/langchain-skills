@@ -172,9 +172,9 @@ if [ "$INCLUDE_AGENTS_MD" = true ]; then
 fi
 
 # Copy skills
-if [ -d "$SCRIPT_DIR/config/skills" ]; then
+if [ -d "$SCRIPT_DIR/skills" ]; then
     mkdir -p "$INSTALL_DIR/skills"
-    for skill in "$SCRIPT_DIR/config/skills"/*; do
+    for skill in "$SCRIPT_DIR/skills"/*; do
         skill_name=$(basename "$skill")
         if [ -d "$INSTALL_DIR/skills/$skill_name" ]; then
             if [ "$FORCE" = true ]; then
@@ -188,7 +188,7 @@ if [ -d "$SCRIPT_DIR/config/skills" ]; then
         echo "✓ Installed $skill_name"
     done
 else
-    echo "❌ ERROR: config/skills directory not found"
+    echo "❌ ERROR: skills directory not found"
     exit 1
 fi
 

@@ -12,7 +12,38 @@ These skills can be installed via [`npx skills`](https://github.com/vercel-labs/
 
 ## Installation
 
-### Quick Install
+### Plugin install (recommended)
+
+The plugin bundles all skills with the official LangChain guide and API-reference
+MCP connections. The skills still work when an MCP connection is unavailable.
+
+#### Claude Code
+
+```bash
+/plugin marketplace add langchain-ai/langchain-skills
+/plugin install langchain-skills@langchain-skills
+```
+
+#### Codex
+
+```bash
+codex plugin marketplace add langchain-ai/langchain-skills
+codex plugin add langchain-skills@langchain-skills
+```
+
+Plugin installation registers these read-only documentation endpoints:
+
+- `langchain-docs` — guides and product documentation at
+  `https://docs.langchain.com/mcp`
+- `langchain-reference` — API reference at
+  `https://reference.langchain.com/mcp`
+
+The user's coding-agent or workspace policy may still disable MCP servers. In
+that case, the installed skills fall back to official web documentation,
+installed package metadata and types, CLI help, and their lightweight local
+references.
+
+### Skills-only install
 
 Using [`npx skills`](https://github.com/vercel-labs/skills):
 
@@ -32,16 +63,9 @@ To link skills to a specific agent (e.g. Claude Code):
 npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
 ```
 
----
-
-### Claude Code Plugin
-
-Install directly as a [Claude Code plugin](https://code.claude.com/docs/en/plugins):
-
-```bash
-/plugin marketplace add langchain-ai/langchain-skills
-/plugin install langchain-skills@langchain-skills
-```
+`npx skills` installs the skills but does not register MCP servers. Each skill
+contains the same docs/runtime fallback policy, so this remains a supported
+installation path.
 
 ---
 

@@ -9,7 +9,7 @@ export default defineConfig({
     alias: {
       "#swarm": path.resolve(
         import.meta.dirname,
-        "config/skills/langchain-swarm/scripts",
+        "skills/langchain-swarm/scripts",
       ),
     },
   },

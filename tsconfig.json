@@ -7,8 +7,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "#swarm/*": ["./config/skills/langchain-swarm/scripts/*"]
+      "#swarm/*": ["./skills/langchain-swarm/scripts/*"]
     }
   },
-  "include": ["config/skills/langchain-swarm/scripts", "tests"]
+  "include": ["skills/langchain-swarm/scripts", "tests"]
 }

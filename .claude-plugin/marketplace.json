@@ -5,13 +5,13 @@
     "email": "support@langchain.dev"
   },
   "metadata": {
-    "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents"
+    "description": "Agent skills and current documentation access for building with LangChain, LangGraph, and Deep Agents"
   },
   "plugins": [
     {
       "name": "langchain-skills",
       "source": "./",
-      "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents",
+      "description": "Agent skills and current documentation access for building with LangChain, LangGraph, and Deep Agents",
       "homepage": "https://github.com/langchain-ai/langchain-skills"
     }
   ]
