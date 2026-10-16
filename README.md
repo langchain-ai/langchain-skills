@@ -128,31 +128,15 @@ Then ask your coding agent:
 Use the langchain-eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
 ```
 
-## Available Skills (13)
+## Available Skills (5)
 
-### Getting Started
-- **langchain-build-agent** - Opinionated architecture guidance for LangChain ecosystem applications using Deep Agents, LangGraph, framework components, and managed services
-
-### Deep Agents
-- **langchain-deep-agents** - Build or modify applications with the open-source Deep Agents harness; includes routed Python and TypeScript quickstarts
+- **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details, with lightweight references for cross-cutting workflows.
 - **langchain-managed-deep-agents** - Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
-
-### Shared capabilities
-- **langchain-memory-and-persistence** - Thread state, durable memory, and filesystem-backed context across supported frameworks
-- **langchain-human-in-the-loop** - Interrupt, review, approval, edit, rejection, and resumable execution patterns
-- **langchain-subagents-and-composition** - Delegation and composition among agents, tools, graphs, and specialized workers
-- **langchain-middleware** - Cross-cutting agent behavior such as prompts, tools, planning, summarization, and guardrails
-- **langchain-retrieval-and-rag** - Ingestion, indexing, retrieval, citations, and RAG patterns across agents and workflows
-
-### LangChain
-- **langchain-framework** - Build LangChain framework components or a base create_agent/createAgent application in Python or TypeScript
-
-### LangGraph
-- **langchain-langgraph** - Build or modify Python and TypeScript graphs with explicit state, nodes, edges, routing, parallelism, and streaming
 - **langchain-langgraph-cli** - CLI lifecycle: scaffold, dev, build, deploy, langgraph.json config
-
-### Evaluation
 - **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review
-
-### Utilities
 - **langchain-swarm** - Dispatch independent work items in parallel and aggregate the results
+
+The framework, Deep Agents, LangGraph, memory, human-in-the-loop, composition,
+middleware, and retrieval skills are consolidated into `langchain-build-agent`.
+When updating an existing skills-only installation, remove the superseded skill
+folders so the coding agent does not continue loading their older guidance.

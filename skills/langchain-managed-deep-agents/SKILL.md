@@ -1,6 +1,6 @@
 ---
 name: langchain-managed-deep-agents
-description: Build, run, and deploy applications with Managed Deep Agents and the mda CLI, including managed memory, skills, identity, tools, MCP connectors, middleware, sandboxes, schedules, channels, eval packaging, and Context Hub. Use for the hosted Managed Deep Agents runtime; use langchain-deep-agents for the open-source harness.
+description: Build, run, and deploy applications with Managed Deep Agents and the mda CLI, including managed memory, skills, identity, tools, MCP connectors, middleware, sandboxes, schedules, channels, eval packaging, and Context Hub. Use for the hosted Managed Deep Agents runtime; use langchain-build-agent for the open-source harness.
 ---
 
 # Managed Deep Agents
@@ -29,7 +29,7 @@ The platform owns persistence, deployment resources, and managed context. The
 project declares the agent and optional capabilities.
 
 Use MDA when the user wants the `mda` CLI or managed runtime features. Use the
-`langchain-deep-agents` skill for the open-source harness without MDA deployment.
+`langchain-build-agent` skill for the open-source harness without MDA deployment.
 
 ## Start from the request and repository
 
@@ -58,9 +58,9 @@ Read only the references needed for the current task:
 | Add memory, identity, tools, MCP, middleware, sandbox, schedules, channels, or approval | [Runtime capabilities](references/runtime-capabilities.md) |
 | Run locally, package evals, deploy, manage Context Hub, inspect logs, or delete | [Operations](references/operations.md) |
 
-Use the shared `langchain-middleware`, `langchain-human-in-the-loop`, and
-`langchain-subagents-and-composition` skills for the capability itself, then use the MDA
-reference for managed-runtime configuration. Use `langchain-eval-engineering` for Harbor
+Use `langchain-build-agent` and its relevant references for middleware, human
+review, and composition guidance, then use the MDA reference for managed-runtime
+configuration. Use `langchain-eval-engineering` for Harbor
 task design.
 
 ## Managed boundaries

@@ -94,7 +94,7 @@ agent = define_deep_agent(
 )
 ```
 
-Use the shared `langchain-middleware` skill for hook behavior and ordering decisions.
+Use `langchain-build-agent` for guidance on middleware ownership and verifying current hook behavior and ordering.
 
 ## Sandboxes
 
@@ -145,4 +145,4 @@ tools that can initiate operations in the messaging service.
 Configure `interrupt_on`/`interruptOn` for tools that require approval. The
 managed runtime owns durable thread state, but the application must still show
 the pending action, authorize the reviewer, and resume the correct thread.
-Consult the shared `langchain-human-in-the-loop` skill for decision semantics.
+Consult the durability and review reference in `langchain-build-agent` for review and resumption guidance.
