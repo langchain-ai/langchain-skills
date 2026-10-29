@@ -107,21 +107,19 @@ middleware and tools the harness already supplies before adding replacements.
 
 Use runtime context for request identity and dependencies. Decide explicitly
 which data is transient, belongs to one conversation, or should survive across
-conversations and process restarts. Durable storage and conversation history
-solve different needs. Verify configuration and inheritance at integration
-boundaries rather than assuming that nested agents share all parent settings.
+conversations and process restarts. Conversation checkpoints and cross-conversation
+memory have different scopes; verify storage lifetime and user isolation.
+Verify configuration and inheritance at integration boundaries rather than
+assuming that nested agents share all parent settings.
 
 Give tools narrow contracts and descriptions that explain when to call them.
 Enforce consequential operations in application code; prompt instructions and
 model-visible tool filtering do not provide authorization.
 
-Load only the additional guidance that applies:
-
-| Requested behavior | Reference |
-|---|---|
-| Persistent state, recovery, pauses, approvals, or resumption | [Durability and review](references/durability-and-review.md) |
-| Delegation, nested agents/graphs, or shared context boundaries | [Composition](references/composition.md) |
-| Indexed knowledge, retrieval tools, or grounded answers | [Retrieval](references/retrieval.md) |
+For human review, use the harness's supported review capability for tool calls
+and workflow interrupts for other pauses. Implement the caller-facing proposal
+and resume flow; verify that approved or edited actions execute as reviewed and
+rejected actions do not execute. Account for replay when resuming side effects.
 
 ## Verify the requested behavior
 

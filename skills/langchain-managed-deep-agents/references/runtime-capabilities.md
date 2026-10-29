@@ -145,4 +145,4 @@ tools that can initiate operations in the messaging service.
 Configure `interrupt_on`/`interruptOn` for tools that require approval. The
 managed runtime owns durable thread state, but the application must still show
 the pending action, authorize the reviewer, and resume the correct thread.
-Consult the durability and review reference in `langchain-build-agent` for review and resumption guidance.
+Consult `langchain-build-agent` for review and resumption guidance.

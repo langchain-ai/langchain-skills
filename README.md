@@ -130,7 +130,7 @@ Use the langchain-eval-engineering skill to create a new eval Task for this proj
 
 ## Available Skills (5)
 
-- **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details, with lightweight references for cross-cutting workflows.
+- **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details.
 - **langchain-managed-deep-agents** - Managed Deep Agents: deploy with the CLI, use the SDKs, stream runs, connect MCP tools, and build React `useStream` UIs
 - **langchain-langgraph-cli** - CLI lifecycle: scaffold, dev, build, deploy, langgraph.json config
 - **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review

@@ -58,7 +58,7 @@ Read only the references needed for the current task:
 | Add memory, identity, tools, MCP, middleware, sandbox, schedules, channels, or approval | [Runtime capabilities](references/runtime-capabilities.md) |
 | Run locally, package evals, deploy, manage Context Hub, inspect logs, or delete | [Operations](references/operations.md) |
 
-Use `langchain-build-agent` and its relevant references for middleware, human
+Use `langchain-build-agent` for middleware, human
 review, and composition guidance, then use the MDA reference for managed-runtime
 configuration. Use `langchain-eval-engineering` for Harbor
 task design.
