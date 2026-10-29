@@ -1,0 +1,25 @@
+README.md
+  s_2ffc178a979a82::t_aca714df8798ce 133
+skills/langchain-build-agent/SKILL.md
+  s_2ffc178a979a82::t_1c44272f366d33 110-113,119-122
+skills/langchain-managed-deep-agents/SKILL.md
+  s_2ffc178a979a82::t_9d0516655f2539 61
+skills/langchain-managed-deep-agents/references/runtime-capabilities.md
+  s_2ffc178a979a82::t_1d0e17630ea56f 148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c4e05e7d5cd53c5ec5ae2b979b2ea78161446417",
+  "prompts": {},
+  "sessions": {
+    "s_2ffc178a979a82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11e06-a784-71e2-85b1-3ddc09d45ba6",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
