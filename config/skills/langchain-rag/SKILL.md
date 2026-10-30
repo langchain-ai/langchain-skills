@@ -1,6 +1,6 @@
 ---
 name: langchain-rag
-description: "INVOKE THIS SKILL when building ANY retrieval-augmented generation (RAG) system. Covers document loaders, RecursiveCharacterTextSplitter, embeddings (OpenAI), and vector stores (Chroma, FAISS, Pinecone)."
+description: "INVOKE THIS SKILL when building ANY retrieval-augmented generation (RAG) system. Covers document loaders, RecursiveCharacterTextSplitter, embeddings (OpenAI), and vector stores (Chroma, FAISS, Milvus, Pinecone)."
 ---
 
 <overview>
@@ -25,6 +25,7 @@ Retrieval Augmented Generation (RAG) enhances LLM responses by fetching relevant
 | **InMemory** | Testing | Memory only |
 | **FAISS** | Local, high performance | Disk |
 | **Chroma** | Development | Disk |
+| **Milvus** | Local experiments and server deployments | Disk (Lite) or server |
 | **Pinecone** | Production, managed | Cloud |
 
 </vectorstore-selection>
@@ -246,6 +247,20 @@ const vectorstore = await Chroma.fromDocuments(
 ```
 </typescript>
 </ex-chroma-vectorstore>
+
+<ex-milvus-vectorstore>
+<python>
+Use `langchain_milvus.Milvus` with a local `.db` URI for Milvus Lite, or an
+existing Milvus server endpoint. Install `langchain-milvus>=0.4,<0.5` and
+`milvus-lite>=3.2.2,<4` in the project environment.
+
+See [the runnable Python example](references/milvus-python.md) for stable IDs,
+filtered retrieval, and reopening persisted data. Keep `drop_old=False` and
+reuse the same embedding model and dimension. Changing the URI connects to a
+different database; transferring existing data requires export/import or reingestion.
+</python>
+</ex-milvus-vectorstore>
+
 
 <ex-faiss-vectorstore>
 <python>
