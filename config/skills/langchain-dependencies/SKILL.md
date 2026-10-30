@@ -239,6 +239,7 @@ langchain-tavily          # use latest; partner package, semver
 langchain-chroma          # use latest; partner package, semver
 # langchain-pinecone      # use latest; partner package, semver
 # langchain-qdrant        # use latest; partner package, semver
+# langchain-milvus        # dedicated Milvus integration; install milvus-lite for local persistence
 
 # Text processing
 langchain-text-splitters  # use latest; semver
