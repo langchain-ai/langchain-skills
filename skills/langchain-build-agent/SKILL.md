@@ -1,6 +1,6 @@
 ---
 name: langchain-build-agent
-description: "Provides the latest guidance for building or modifying LLM applications with the LangChain open source libraries: Deep Agents, LangGraph, and LangChain, including how the libraries best fit together. The stack evolves quickly, so it's important to verify prior knowledge against this guidance."
+description: "Provides the latest guidance for building or modifying LLM applications with the LangChain open source libraries: Deep Agents, LangGraph, and LangChain, including how the libraries best fit together. The stack evolves quickly, so it's important to verify prior knowledge against this guidance. Also covers when Managed Deep Agents fits."
 ---
 
 # Build and modify LangChain applications
@@ -74,6 +74,15 @@ incompatibility makes Deep Agents unsuitable, and explain that constraint.
 Task simplicity alone does not establish such a constraint.
 
 Use a direct model call when no agent loop is needed.
+
+Managed Deep Agents is LangSmith's hosted way to run Deep Agents. You define
+the agent in code; LangSmith packages it as an Agent Server and manages its
+deployment, persistent state, and agent context such as instructions and skills.
+Consider it when the user wants to operate a Deep Agent without assembling that
+runtime stack, or needs managed capabilities such as sandboxes or schedules.
+Keep agent logic and hosted runtime choices distinct. Verify current capabilities
+and setup in official docs and the installed CLI; a general request to build a
+LangChain agent does not imply managed hosting.
 
 ## Retrieve the implementation contract
 
