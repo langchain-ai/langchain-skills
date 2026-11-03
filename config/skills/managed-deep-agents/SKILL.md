@@ -1,23 +1,25 @@
 ---
 name: managed-deep-agents
-description: "INVOKE THIS SKILL when building, testing, or deploying Managed Deep Agents in LangSmith. Walks a user through their first agent end to end — interviewing them about what they want to build, mapping it onto what MDA can actually do, then scaffolding and deploying it. Covers the file-based project layout; define_deep_agent / defineDeepAgent; instructions, skills, memory, identity, tools, MCP servers, connections, middleware, sandboxes, schedules, channels, and evals; the mda CLI; GitHub deployments; and Context Hub."
+description: "INVOKE THIS SKILL when building, testing, or deploying Managed Deep Agents in LangSmith. Walks a user through their first agent end to end — interviewing them about what they want to build, mapping it onto what MDA can actually do, then scaffolding and deploying it. Covers the file-based project layout; define_deep_agent / defineDeepAgent and per-run agent factories; instructions, skills, agent and user memory, identity, tools, MCP servers, connections, middleware, sandboxes, browser use, subagents, schedules, Slack and HTTP channels, and evals; the mda CLI; regions and BYOC; and Context Hub."
 ---
 
 # Managed Deep Agents
 
 ## Overview
 
-Managed Deep Agents (MDA) is a hosted runtime for code-first Deep Agents in LangSmith. You author an agent in Python or TypeScript, test it locally with `mda dev`, and deploy it with `mda deploy` or from a connected GitHub repository in LangSmith. It pairs the open-source Deep Agents harness (see [[deep-agents-core]]) with managed infrastructure: durable runs, sandboxes, Context Hub-backed instructions and skills, memory, traces, and hosted LangGraph deployment.
+Managed Deep Agents (MDA) is a hosted runtime for code-first Deep Agents in LangSmith. You author an agent in Python or TypeScript, test it locally with `mda dev`, and deploy it with `mda deploy`. It pairs the open-source Deep Agents harness (see [[deep-agents-core]]) with managed infrastructure: Agent Server deployments, sandboxes, browsers, Context Hub-backed instructions, skills, and memory, connections, schedules, channels, and traces.
 
 The core idea is that **an agent is a directory**. A file's location determines its role, and the CLI compiles that directory into a managed LangGraph app.
 
-MDA is in **public beta** and runs on **US LangSmith Cloud only**.
+MDA is in **public beta** on LangSmith Cloud (GCP US, GCP EU, GCP APAC, AWS US) and BYOC data planes. These instructions track SDK/CLI **0.10**.
+
+Docs: <https://docs.langchain.com/langsmith/managed-deep-agents-overview>. When this skill and the installed package disagree, trust `mda --help` and the installed package.
 
 ## When to use
 
-Use this skill when the user wants to build a Deep Agent in code and run it on LangSmith without operating their own server, or to add tools, MCP servers, connections, middleware, memory, identity, schedules, channels, skills, sandboxes, or evals to one.
+Use this skill when the user wants to build a Deep Agent in code and run it on LangSmith without operating their own server, or to add tools, MCP servers, connections, middleware, memory, identity, a sandbox, a browser, subagents, schedules, channels, skills, or evals to one.
 
-Use a standard LangSmith Deployment instead (see [[langgraph-cli]], `langgraph deploy`) when the user needs custom server routes or runtime wiring inside the agent deployment, stronger isolation, maximum scalability, or a region other than US. MDA can still sit behind a separately operated backend that authenticates callers and proxies trusted identity headers.
+Use a standard LangSmith Deployment instead (see [[langgraph-cli]], `langgraph deploy`) when the user needs custom server routes, a custom LangGraph auth handler, application code around the agent, a custom backend/store/checkpointer, or a Python `state_schema`. MDA can still sit behind a separately operated backend that authenticates callers (see backend identity in [references/capabilities.md](references/capabilities.md)).
 
 # Guide the user through their first agent
 
@@ -35,14 +37,14 @@ Ask in plain language, not in MDA vocabulary. The user does not yet know what a 
 Ask these two things first:
 
 - **What should the agent do?** ("Answer questions about our docs", "triage incoming bugs", "post a summary every morning".)
-- **Who or what talks to it, and from where?** (Them in a browser, their app's users, a Slack workspace, nobody — it runs on a timer.)
+- **Who or what talks to it, and from where?** (Them in a browser, their app's users, a Slack workspace, a webhook from another system, nobody — it runs on a timer.)
 
 Then ask only the follow-ups that the answers actually raise:
 
-- Does it need to remember anything between separate conversations?
-- Does it need to reach a private API, database, or internal service?
+- Does it need to remember anything between conversations — shared knowledge, or per-person preferences?
+- Does it need to reach a private API, database, or a third-party account on the user's behalf?
 - Should anything require a human to approve before it happens?
-- Does it need to write files or run code?
+- Does it need to write files, run code, or use websites that have no API?
 
 Stop asking once you can name the capabilities. Two or three questions is usually enough.
 
@@ -50,7 +52,7 @@ Stop asking once you can name the capabilities. Two or three questions is usuall
 
 Before you promise anything, check the request against **[What MDA cannot do](#what-mda-cannot-do)** below. If part of the request is out of scope, say so in one sentence, offer the nearest supported thing, and keep going with the rest. Do not quietly build a smaller agent and present it as what they asked for.
 
-The common redirect: if they need custom HTTP routes, their own auth, or non-US hosting, tell them MDA is the wrong layer and point at `langgraph deploy` ([[langgraph-cli]]).
+The common redirect: if they need custom HTTP routes, a custom auth handler, or self-hosted/hybrid hosting, tell them MDA is the wrong layer and point at `langgraph deploy` ([[langgraph-cli]]).
 
 ## 3. Map the answer onto capabilities
 
@@ -58,26 +60,32 @@ The common redirect: if they need custom HTTP routes, their own auth, or non-US 
 | --- | --- | --- |
 | How it should behave, its tone, its rules | Instructions | `instructions.md` |
 | Calls our API / database / internal service | Authored tools | `tools/` |
-| Uses a remote MCP server | MCP declaration | `tools/mcp.py` or `tools/mcp.ts` |
-| Uses a workspace secret or OAuth grant | Connection | `connections.get(...)` + `mda connections` |
+| Uses a remote MCP server | MCP declaration | `tools/mcp.py` / `tools/mcp.ts` |
+| Uses an API key or acts as the user in GitHub, Notion, … | Connection | `connections.get(...)` + `mda connections` |
 | A procedure it should follow for certain tasks | Skills | `skills/<name>/SKILL.md` |
-| Remembers things across conversations | Durable memory (read the warning) | `memory.py` |
+| Learns shared knowledge across conversations | Agent memory (read the warning) | `memory.py` |
+| Remembers each person's preferences | User memory (needs person identity) | `memory.py` + `identity.py` |
+| Signed-in users must not see each other's chats | Supabase, JWT, or backend identity | `identity.py` |
 | Runs on a timer, no user message | Schedules | `schedules/<name>.py` |
-| Lives in Slack | Channels | `channels/slack.py` |
-| Writes files, runs code or shell commands | Sandbox | `sandbox/__init__.py` |
-| Ask me before it does X | Human-in-the-loop | `interrupt_on=` |
-| Users must not see each other's chats | Supabase identity | `identity.py` |
+| Lets the agent set reminders / follow-ups itself | Runtime schedules API | a tool calling `runtime.schedules` |
+| Lives in Slack | Slack channel | `channels/slack.py` |
+| Triggered by a webhook from another system | HTTP channel | `channels/<name>.py` |
+| Writes files, runs code or shell commands | Sandbox | `sandbox/` |
+| Uses websites with no API, logs in, fills forms | Browser | `browser.py` |
+| Ask me before it does X | Human-in-the-loop | `interrupt_on=` / `permissions=` |
 | Must return structured data, not prose | Structured output | `response_format=` |
-| Hand off specialized work | Subagents | `subagents=` |
+| Hand off specialized or long-running work | Subagents (sync or `async`) | `subagents=` |
+| Different config per caller, repo, or tenant | Agent factory | `agent(runtime)` in `agent.py` |
 | PII redaction, call limits, retries, logging | Middleware | `middleware/` |
 | Prove it still works as we change it | Harbor evals | `evals/<task>/` |
+| Call it as a tool from Claude Code / MCP clients | Built-in MCP endpoint | `<deployment API URL>/mcp` |
 
 ## 4. Confirm the shape before writing files
 
 State the plan back in one short block and get agreement. Name the model, and list only the capabilities you are actually going to create:
 
 ```text
-research-assistant, Python, on anthropic:claude-sonnet-4-6
+research-assistant, Python, on openai:gpt-5.5
   instructions.md   how it researches and cites
   tools/search.py   web search
   schedules/        weekday 8am digest
@@ -89,14 +97,16 @@ research-assistant, Python, on anthropic:claude-sonnet-4-6
 Scaffold with the flags that match the plan, so the project starts correct instead of being edited into shape:
 
 ```bash
-mda init research-assistant --model anthropic:claude-sonnet-4-6
+uvx --from managed-deepagents mda init research-assistant --model openai:gpt-5.5 --no-sandbox
 cd research-assistant
 uv sync
 ```
 
+TypeScript: `npx managed-deepagents init research-assistant --model openai:gpt-5.5 --no-sandbox`, then `npm install`.
+
 Then add **one** capability at a time and confirm each one works before adding the next. A first agent that answers with good instructions and one real tool is a better starting point than a scaffold with every directory filled in.
 
-Do not create directories the plan did not call for. Empty or unused `skills/`, `channels/`, or `schedules/` directories are noise, and a `sandbox/` directory the user does not need turns on a sandbox they will pay attention to for no reason (`mda init --no-sandbox` skips it).
+Do not create files the plan did not call for. Empty `skills/`, `channels/`, or `schedules/` directories are noise; a `sandbox/` directory turns on a sandbox (`mda init` scaffolds one unless you pass `--no-sandbox`), and a root `browser.py` turns on a browser.
 
 ## 6. Handle keys without touching their secrets
 
@@ -106,16 +116,18 @@ Do not create directories the plan did not call for. Empty or unused `skills/`, 
 - Do not echo key values to the terminal or into your reply.
 - Confirm `.gitignore` covers `.env` and `.env.*` — `mda init` does this already.
 
-The project needs LangSmith authentication to deploy and whatever credentials its selected model requires. For a normal provider model, uncomment its key (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, …) and let the user supply it through `.env` or LangSmith workspace secrets. An explicitly configured Gateway-backed client uses its Gateway/LangSmith credential instead of a provider key.
+The project needs a LangSmith API key (`LANGSMITH_API_KEY`) to deploy, and whatever credentials its model requires (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, …) in `.env`, the shell, or LangSmith workspace secrets. A `langsmith:` LLM Gateway model uses Gateway credits or a workspace provider secret instead of a provider key. For a non-default region or BYOC, also set `LANGSMITH_ENDPOINT` (see [Deploy](#deploy)).
 
 ## 7. Run it locally, then deploy
 
 ```bash
-mda dev .       # compiles, opens LangSmith Studio, hot reloads
-mda deploy .    # syncs Context Hub, uploads, waits for DEPLOYED
+uv run mda dev       # compiles, opens LangSmith Studio
+uv run mda deploy    # syncs Context Hub, uploads, waits for DEPLOYED
 ```
 
-Have the user actually send a message in Studio and confirm the agent calls the tool before deploying. `mda deploy` prints the deployment dashboard URL; open it to inspect builds, revisions, and traces.
+TypeScript: `npx mda dev` / `npx mda deploy`.
+
+Have the user actually send a message in Studio (or `mda chat` in the terminal) and confirm the agent calls the tool before deploying. `mda deploy` prints the deployment dashboard URL; open it to inspect builds, revisions, and traces.
 
 ## What MDA cannot do
 
@@ -123,63 +135,59 @@ Check requests against this list *before* agreeing to build them. Being straight
 
 | Limit | Consequence |
 | --- | --- |
-| US LangSmith Cloud only | No self-hosted, no hybrid, no EU region. Needs `langgraph deploy`. |
-| No public management API | Use `mda` or LangSmith's GitHub deployment UI to create and update agents. Do not invent a public create/update REST flow. |
-| Slack is the only channel | No Discord, Teams, email, or SMS channel. Remote MCP servers for those products are tools, not channels. |
-| Memory is deployment-shared | One `/memories/agent/` tree for **all** callers. There is no per-user memory. |
+| LangSmith Cloud and BYOC only | No self-hosted or hybrid MDA. Serverless deployments (the default) need GCP SaaS; elsewhere pass `--deployment-type dedicated`. LangSmith managed tools (for example Parallel search) are GCP US only. |
+| No public management API | Use `mda` to create and update agents. Do not invent a public create/update REST flow. |
+| Channels are Slack and HTTP | One Slack channel per deployment. Any other service (Discord, Teams, email, your app) goes through an HTTP channel adapter. GitHub and Linear channels are experimental. |
+| Agent memory is deployment-shared | `/memories/agent/` is readable and writable by every caller. Per-person memory is the separate user layer and needs person identity. |
+| No custom auth handler or routes | MDA's handler keys threads, credentials, and user memory on the user ID. Use Supabase, a JWT provider, or backend identity. |
+| Workspace members see all threads | Studio/workspace API access can read every thread regardless of identity provider. Privacy holds against end users, not workspace members. |
 | One agent entry per project | No multiple graphs in one project. Use `subagents=` for delegation. |
-| Schedules must be static literals | No env vars, function calls, or computed values in a schedule declaration. |
+| Schedule files are static literals | No env vars, function calls, or computed values in `schedules/`. Use `runtime.schedules` for dynamic schedules. |
+| Remote MCP only | Streamable HTTP or SSE. Stdio MCP servers are not supported. |
 | Build archive capped at 200 MB | Large fixtures or model weights in the project will fail the deploy. |
-| Managed fields are not yours to set | `backend`, `store`, `checkpointer`, `memory`, `skills`, and the system prompt are injected by the runtime. |
-| Sandbox scope is managed | Sandboxes are one per thread. Agent-shared sandbox scope is no longer supported. |
+| Managed fields are not yours to set | `backend`, `store`, `checkpointer`, `memory`, `skills`, and `system_prompt` are runtime-owned. Python `state_schema` is rejected. |
+| Sandbox is one per thread | The sandbox `scope` option was removed; setting it fails the build. |
 
 ## Prerequisites
 
-- A workspace with Managed Deep Agents public beta access, and a LangSmith API key for it.
-- Python and [`uv`](https://docs.astral.sh/uv/) for Python projects; Node.js and npm for TypeScript.
-- Credentials required by the selected model, either in the project `.env` or as LangSmith workspace secrets.
+- A LangSmith workspace on LangSmith Cloud or a BYOC data plane, and a LangSmith API key for it.
+- Python and [`uv`](https://docs.astral.sh/uv/) for Python projects; Node.js and npm (or pnpm/bun) for TypeScript.
+- Credentials required by the selected model.
 
-Install the CLI. Both packages ship the same `mda` binary:
-
-```bash
-uv tool install --prerelease allow managed-deepagents   # Python
-npm install -g managed-deepagents@dev                    # TypeScript
-```
-
-`mda init` generates a project with its own manifest — run `uv sync` (or `npm install`) *inside* that project before `mda dev`.
+`mda init` declares `managed-deepagents` as a project dependency, so run `mda` from inside the project (`uv run mda …` / `npx mda …`) after `uv sync` / `npm install`. The installed package selects the scaffold language: PyPI writes Python, npm writes TypeScript.
 
 ## Project layout
 
-The path passed to `mda` is the project root. A file's location determines its role:
-
 ```text
 my-agent/
-  agent.py | agent.ts              # Required: exports the named `agent`
+  agent.py | agent.ts | agent.tsx  # Required: exports the named `agent`
 
   instructions.md                  # System prompt -> Context Hub
-  skills/<name>/SKILL.md           # Task-specific procedures -> Context Hub
+  skills/<name>/SKILL.md           # On-demand procedures -> Context Hub
 
   tools/                           # Authored tools the agent imports
-    mcp.py | mcp.ts                # Optional remote MCP server declaration
+    mcp.py | mcp.ts                # Remote MCP server declaration (named `mcp`)
   middleware/                      # Authored middleware the agent imports
 
   identity.py | identity.ts        # Who may call the deployment
-  memory.py | memory.ts            # Opt-in durable memory
-  channels/<name>.py               # External messaging (Slack)
-  schedules/<name>.py              # Managed cron schedules
+  memory.py | memory.ts            # Opt-in agent/user memory
+  browser.py | browser.ts          # Opt-in browser
+  channels/<name>.py               # Slack or HTTP channels (one per file)
+  schedules/<name>.py              # Managed cron schedules (one per file)
   sandbox/__init__.py | index.ts   # Managed sandbox
+  sandbox/setup.sh                 # Optional snapshot recipe
 
   pyproject.toml | package.json    # Dependencies
   .env                             # Auth + runtime secrets, never archived
 
-  evals/<task>/                    # Harbor evals, not deployed
+  evals/<task>/                    # Harbor tasks, not deployed
 ```
 
-Only the agent entry is required. `tools/` and `middleware/` are plain conventions — MDA copies project files verbatim, so any local module the agent imports works. The other paths take on managed meaning when present. The TypeScript agent entry may be `agent.ts` or `agent.tsx`; managed auxiliary declarations also accept `.mts` and `.cts` where discovered.
+Only the agent entry is required. `tools/` and `middleware/` are plain conventions — MDA copies project files verbatim, so any local module the agent imports works. For `channels/` and `schedules/`, only direct children are managed declarations. The build copies only the project directory; share sibling code as a local package (`uv add ../shared`).
 
 ## Define the agent
 
-The agent entry returns a pre-runtime spec, not a compiled graph.
+The agent entry returns a definition, not a compiled graph. The runtime compiles it with `create_deep_agent` / `createDeepAgent`.
 
 ```python
 # agent.py
@@ -189,7 +197,7 @@ from tools.search import web_search
 
 agent = define_deep_agent(
     name="research-assistant",
-    model="anthropic:claude-sonnet-4-6",
+    model="openai:gpt-5.5",
     tools=[web_search],
 )
 ```
@@ -202,209 +210,44 @@ import { webSearch } from "./tools/search";
 
 export const agent = defineDeepAgent({
   name: "research-assistant",
-  model: "anthropic:claude-sonnet-4-6",
+  model: "openai:gpt-5.5",
   tools: [webSearch],
 });
 ```
 
-**`name` is required.** Pass a static string starting with a letter, containing only letters, numbers, underscores, or hyphens. It becomes the LangGraph assistant ID and the default deployment name; override the latter with `mda deploy --name`.
+**`name` is required.** Pass an inline static string matching `[a-zA-Z][a-zA-Z0-9_-]*`. It becomes the graph ID / `assistant_id`, the MCP tool name, and the default deployment name; override the latter with `mda deploy --name`.
 
 **Author-set fields:** `name`, `model`, `tools`, `middleware`, `subagents`, `permissions`, `interrupt_on` / `interruptOn`, `response_format` / `responseFormat`, `context_schema` / `contextSchema`, `cache`, `debug`, `metadata`.
 
-**Managed fields — do not set:** `backend`, `store`, `checkpointer`, `memory`, `skills`, `system_prompt` / `systemPrompt`.
+**Managed fields — do not set:** `backend`, `store`, `checkpointer`, `memory`, `skills`, `system_prompt` / `systemPrompt`. A project with `sandbox/` runs with `permissions` cleared, because a permission rule disables the sandbox `execute` tool.
 
-Model IDs use `{provider}:{model_id}` and resolve through `init_chat_model`, so any of its providers work. Note the provider slug differs across languages: Python uses `google_genai:gemini-3.6-flash`, TypeScript uses `google-genai:gemini-3.6-flash`. Pass a chat model instance instead of a string when you need to configure model parameters in code.
+Model IDs use `{provider}:{model_id}` and resolve through `init_chat_model`. Python uses `google_genai:gemini-3.6-flash`; TypeScript uses `google:gemini-3.6-flash`. Pass a chat model instance (for example `AzureAIOpenAIApiChatModel` for Microsoft Foundry) when you need to configure it in code.
 
-The dedicated `mda init --gateway` scaffold was removed. To use LangSmith Gateway, configure a supported chat-model client explicitly in `agent.py` or `agent.ts`; do not pass the removed flag or rely on its former credential preflight.
+**LLM Gateway:** use `model="langsmith:<provider>/<model>"`, for example `langsmith:moonshotai/kimi-k3`. Gateway IDs use a slash after the provider; direct IDs use a colon. The old `mda init --gateway` flag was removed — do not pass it.
 
-## Instructions
+**Per-run configuration:** export a sync or async factory `agent(runtime)` that returns `define_deep_agent(...)` to select model, tools, `instructions`, `skills`, `mcp`, `sandbox`, `memory`, or `browser` per run from `runtime.execution_runtime.context`. Keep it side-effect free. See [references/capabilities.md](references/capabilities.md#per-run-agent-factory).
 
-`instructions.md` at the project root is the system prompt. It is inserted on every run.
+## Instructions and skills
 
-```markdown
-# Research assistant
+`instructions.md` at the project root is the system prompt, inserted on every run. Skills live under `skills/<name>/SKILL.md` with `name` and `description` frontmatter; the agent sees only names and descriptions until a task matches, then reads the file. A skill directory may hold scripts, references, and templates.
 
-You are a careful research assistant. Find sources, keep notes, and return
-concise answers with citations.
+Use **instructions** for always-on behavior, **skills** for procedures loaded on demand, and **memory** for knowledge the agent itself updates. The agent cannot modify instructions or skills.
 
-## Behavior
+`mda deploy` syncs both to Context Hub and deletes deployed skill files that no longer exist locally. Hub edits apply without a redeploy, but the project copy is the source of truth: if Hub changed since the last sync, deploy prompts to overwrite, and non-interactive shells must pass `--context-strategy overwrite|keep-hub`. `mda dev` uses a local Context Hub mock.
 
-- Use the `web_search` tool to find sources instead of guessing.
-- Cite the sources you used.
-```
+## Capabilities
 
-`mda dev` embeds it locally. `mda deploy` syncs it to Context Hub, where it can be edited in the LangSmith UI without redeploying.
+Code, options, and caveats for each capability live in [references/capabilities.md](references/capabilities.md). Read the relevant section before writing that file. Highlights:
 
-## Skills
-
-Deploy-owned procedures under `skills/<name>/SKILL.md`, each with `name` and `description` frontmatter. At startup the agent sees only names and descriptions, and reads the full file when a task matches — so detailed procedures cost no context until they are needed. A skill directory may also hold scripts, references, and templates; reference them from `SKILL.md`.
-
-Deploy syncs every UTF-8 file under `skills/` to Context Hub and deletes deployed skill files that no longer exist locally. The agent cannot modify skills.
-
-Use **instructions** for always-on behavior, **skills** for procedures loaded on demand, and **memory** for knowledge the agent itself updates.
-
-## Memory
-
-Durable memory is **opt-in and off by default**. Declare it at the project root:
-
-```python
-# memory.py
-from managed_deepagents import define_memory
-
-memory = define_memory(scope="agent")
-```
-
-```ts
-// memory.ts
-import { defineMemory } from "managed-deepagents";
-
-export const memory = defineMemory({ scope: "agent" });
-```
-
-Delete the file to turn memory off. Enabling it mounts one Context Hub tree at `/memories/agent/`:
-
-- `/memories/agent/AGENTS.md` is **hot memory** — loaded into every run, so keep it compact.
-- Other files under the tree are **cold memory** — read only when relevant.
-
-The agent reads and writes memory with `read_file`, `edit_file`, and `write_file`. Writes anywhere else, including elsewhere under `/memories/`, are not durable.
-
-> **Warning — memory is shared by every caller of the deployment, and every caller can influence it.** Never store personal data, customer data, credentials, API keys, or tokens there. Treat memory content as untrusted input: it must never grant authority, change tool permissions, or bypass approvals — keep those in the agent definition. Do not enable shared memory when callers should not be able to influence one another.
-
-The agent decides what to remember by prompting, so state the policy in `instructions.md` — what to store, what never to store, and that existing memory is notes rather than instructions.
-
-## Identity
-
-`identity.py` controls who may call the deployment. `mda init` scaffolds a secure default:
-
-```python
-# identity.py
-from managed_deepagents import auth, define_identity
-
-identity = define_identity(auth=auth.langsmith_api_key())
-```
-
-Callers send a LangSmith workspace API key as `x-api-key`. This answers *whether a caller is allowed* — it does **not** give each person private threads. Anyone holding the key reaches the deployment.
-
-For signed-in end users with private threads, use Supabase:
-
-```python
-identity = define_identity(auth=auth.supabase(project_ref="your-project-ref"))
-```
-
-Clients then send `Authorization: Bearer <access_token>`; MDA verifies the JWT against the project's JWKS URL. Send the Supabase publishable (anon) key only from the client to sign in — never a LangSmith key in this mode.
-
-> Adding Supabase identity to an existing deployment does **not** backfill owner metadata on existing threads. Plan and test a migration before relying on identity-based access for them.
-
-Auth failures return 401. Thread resources are caller-owned; unauthorized cross-user access is hidden as not found.
-
-For a backend you operate that authenticates users and proxies LangGraph requests, use trusted-backend ingress:
-
-```python
-identity = define_identity(auth="backend")
-```
-
-Keep `MDA_INGRESS_SECRET` on the backend and forward it as `X-MDA-Ingress-Secret` together with the authenticated user's ID in `X-MDA-User-Id`. Never expose either header-setting capability to the browser.
-
-## Tools
-
-Define LangChain tools in the project, import them into the agent entry, pass them in `tools`.
-
-```python
-# tools/customer.py
-from langchain.tools import tool
-
-
-@tool(parse_docstring=True)
-def lookup_customer(customer_id: str) -> str:
-    """Look up a customer record by ID.
-
-    Args:
-        customer_id: Customer ID from the CRM.
-    """
-    return f"Customer {customer_id} is on the enterprise plan."
-```
-
-```ts
-// tools/customer.ts
-import { tool } from "langchain";
-import { z } from "zod";
-
-export const lookupCustomer = tool(
-  async ({ customerId }) => `Customer ${customerId} is on the enterprise plan.`,
-  {
-    name: "lookup_customer",
-    description: "Look up a customer record by ID.",
-    schema: z.object({ customerId: z.string().describe("Customer ID from the CRM.") }),
-  },
-);
-```
-
-Imports work exactly as in a normal local project. Use clear, unique tool names to avoid collisions. Tools read deployment secrets from environment variables; put local values in `.env`. For per-run values such as request metadata or feature flags, use the normal LangChain runtime context APIs.
-
-Provider server-side tools can be passed inline where supported — for example `tools=[{"type": "web_search"}]` for OpenAI — which avoids a second API key.
-
-Tools and middleware read the resolved caller from `runtime.serverInfo?.principal` in TypeScript or `runtime.server_info.principal` in Python. The former `runtime.identity` surface has no compatibility shim. Email and groups are under `principal.claims`; channel provenance is under `serverInfo.source` / `server_info.source`.
-
-## MCP servers and connections
-
-Declare remote MCP servers in `tools/mcp.py` or `tools/mcp.ts`. Do not import the declaration into `agent.py` or add its tools manually; MDA discovers the named `mcp` export and mounts the servers.
-
-```python
-# tools/mcp.py
-from managed_deepagents import connections, define_mcp
-
-mcp = define_mcp(
-    servers={
-        "langchainDocs": {
-            "transport": "http",
-            "url": "https://docs.langchain.com/mcp",
-            "include_tools": ["search_docs_by_lang_chain"],
-        },
-        "notion": {
-            "transport": "http",
-            "url": "https://mcp.notion.com/mcp",
-            "connection": connections.get("notion", {"type": "user"}),
-        },
-    }
-)
-```
-
-```ts
-// tools/mcp.ts
-import { connections, defineMcp } from "managed-deepagents";
-
-export const mcp = defineMcp({
-  servers: {
-    langchainDocs: {
-      transport: "http",
-      url: "https://docs.langchain.com/mcp",
-      includeTools: ["search_docs_by_lang_chain"],
-    },
-    notion: {
-      transport: "http",
-      url: "https://mcp.notion.com/mcp",
-      connection: connections.get("notion", { type: "user" }),
-    },
-  },
-});
-```
-
-`connectors.mcp(...)`, `connectors/mcp.*`, and `mcpServers` / `mcp_servers` are deprecated compatibility aliases in 0.7.x and will be removed in 0.8.0. For new work use `defineMcp` / `define_mcp`, `tools/mcp.*`, the named `mcp` export, and `servers` exactly as shown.
-
-A connection is a workspace-scoped opaque secret or OAuth registration referenced by slug. `connections.get(slug, { type: "user" })` resolves per-caller OAuth or opaque material; the current CLI creates user-owned OAuth slots, not user-owned opaque slots. Use `{ type: "agent" }` only when every run should use the same agent-owned secret or grant. Manage connections without printing their values:
-
-```bash
-mda connections catalog
-mda connections catalog --json
-mda connections create acme-api --secret-from-env ACME_API_KEY
-mda connections create notion --mcp https://mcp.notion.com/mcp
-mda connections create github --oauth github --client-id "$GITHUB_CLIENT_ID" --secret-from-env GITHUB_CLIENT_SECRET --authorize
-mda connections list
-```
-
-For user-owned OAuth, omit `--authorize`; the runtime requests each caller's grant when needed. `--authorize` signs in once for an agent-owned grant, and the connection declaration must select `{ type: "agent" }` to use it. `mda deploy` can infer and create a missing user-owned MCP OAuth registration when exactly one server references the slug. In `mda dev`, user-owned grants resolve through Agent Auth and require a personal LangSmith key or browser sign-in for Studio; other service principals cannot own user OAuth grants. Agent-owned opaque connections resolve from `MDA_DEV_<SLUG>`.
-
-The OAuth catalog supplies provider endpoints, methods, default scopes, and authorization parameters — not your app's client credentials. Use `--auth-method`, repeatable `--scope` / `--allowed-scope`, and `--authorization-param` for overrides; `--scope` replaces rather than extends catalog defaults.
+- **Memory** — `define_memory(agent=MemoryLayer())` / `defineMemory({ agent: memoryLayer() })`. Add `user=MemoryLayer()` for per-person memory at `/memories/user/`, which mounts only for an authenticated person. `define_memory(scope="agent")` is rejected.
+- **Identity** — scaffolded default is `auth.langsmith_api_key()` (`x-api-key`, no per-user privacy). For private threads use `auth.supabase(...)`, a generic JWT provider dict, or `auth="backend"` with `MDA_INGRESS_SECRET`.
+- **Tools, MCP, connections** — tools are imported normally; MCP servers go in `tools/mcp.*` via `define_mcp(servers=...)`; credentials come from `await connections.get(slug, {"type": "agent"|"user"})`.
+- **Sandbox** — `define_sandbox(...)`, optional `sandbox/setup.sh` snapshot, proxy headers with connections, `runtime.backend` from tools.
+- **Browser** — root `browser.py` with `define_browser(scope="thread"|"user")`; adds `browser_run`, `browser_snapshot`, `browser_screenshot`, `browser_handoff`.
+- **Subagents** — sync subagents via `task`; `"async": True` subagents run as their own graph and report back.
+- **Schedules** — static `schedules/<name>.py`, or `runtime.schedules.create(...)` from a tool.
+- **Channels** — `channels.slack()` (LangSmith provisions the Slack app on deploy) or `channels.http(provider=..., verify=..., parse=...)`.
+- **Runtime** — tools read the caller from `runtime.server_info.principal`, the conversation from `runtime.thread.origin`, and the sandbox from `runtime.backend`. `runtime.channel` is deprecated.
 
 ## Middleware
 
@@ -416,7 +259,7 @@ from managed_deepagents import define_deep_agent
 
 agent = define_deep_agent(
     name="support-agent",
-    model="anthropic:claude-sonnet-4-6",
+    model="openai:gpt-5.5",
     middleware=[
         PIIMiddleware("email", strategy="redact", apply_to_input=True),
         ModelCallLimitMiddleware(run_limit=50),
@@ -424,123 +267,72 @@ agent = define_deep_agent(
 )
 ```
 
-Middleware is the right place for PII handling, rate limits, retries, model fallbacks, dynamic model selection, and tool-call monitoring.
+## Human-in-the-loop
 
-## Sandboxes
-
-A sandbox gives the agent an isolated filesystem and shell. `mda init` scaffolds one; **delete the `sandbox/` directory to opt out**, which is right for an agent that only needs its prompt, tools, and memory.
+Pause before sensitive tool calls with `interrupt_on`, or pause on filesystem paths with `permissions` in `mode="interrupt"`:
 
 ```python
-# sandbox/__init__.py
-from managed_deepagents import define_sandbox
-
-sandbox = define_sandbox(
-    idle_ttl_seconds=600,
-    default_timeout=600,
+agent = define_deep_agent(
+    name="support-agent",
+    model="openai:gpt-5.5",
+    tools=[refund_customer],
+    interrupt_on={"refund_customer": True},
 )
 ```
 
-```ts
-// sandbox/index.ts
-import { defineSandbox } from "managed-deepagents";
-
-export const sandbox = defineSandbox({
-  idleTtlSeconds: 600,
-  defaultTimeout: 600,
-});
-```
-
-Sandbox reuse is managed as one sandbox per durable thread. Omit `scope`; the legacy value `"thread"` is tolerated, but `"agent"` is rejected. Set at most one bake base: `snapshot_name`, `snapshot_id`, or `docker_image`. For a private Docker image, add `registry` and name the password environment variable; do not put the password in source.
-
-The agent works through `ls`, `read_file`, `write_file`, `edit_file`, `delete`, `glob`, `grep`, and `execute`. Use `instructions.md` to say where it should work and what it must not touch. `mda delete` also deletes the managed sandboxes.
-
-During `mda dev`, if the provider is unavailable the runtime falls back to a local temp directory and prints the path. That fallback is for development only — verify sandbox behavior in a dev deployment.
-
-## Schedules
-
-One schedule per file under `schedules/`, each exporting a named `schedule`. The file name becomes the schedule name.
-
-```python
-# schedules/daily_digest.py
-from managed_deepagents import define_schedule
-
-schedule = define_schedule(
-    cron="0 8 * * 1-5",
-    timezone="America/Los_Angeles",
-    prompt="Summarize what you learned yesterday and list open questions.",
-)
-```
-
-Define **exactly one** of `prompt` (turned into a user message) or `input` (a structured LangGraph input). `cron` must be a standard five-field expression; without `timezone`, crons run UTC.
-
-Schedules use ephemeral threads by default — a fresh thread per run, deleted afterward. Pass `thread={"mode": "persistent", "id": "..."}` only when runs should accumulate durable thread state. Set `deliver_to` to post results through a configured Slack channel.
-
-Declarations are extracted at compile time **without running your code**: use literals and top-level literal constants only. No env vars, function calls, or `**kwargs`.
-
-`mda deploy` reconciles schedules after the deployment is live — it deletes MDA-owned crons and recreates them from the current files, so deleting a file and redeploying removes the cron. **`--no-wait` skips reconciliation entirely**, so never use it when adding, changing, or removing schedules.
-
-## Channels
-
-A channel connects the agent to an external messaging service: inbound events start runs, and responses go back to the same conversation. **Slack is the only supported provider.** One channel per file under `channels/`, each exporting a named `channel`.
-
-```python
-# channels/slack.py
-from managed_deepagents import channels
-
-channel = channels.slack()
-```
-
-The file name sets the channel name and its inbound route — `channels/slack.py` receives events at `POST /channels/slack/events`. Names must be unique; never name a file `channels/channel.py`.
-
-Channel-originated runs expose `runtime.channel` to tools and middleware, carrying the normalized event and conversation address plus methods to post and update messages. Ordinary HTTP runs and scheduled runs have no originating channel, so `runtime.channel` is absent.
-
-Slack setup needs a project-root `slack-app-manifest.json` and `SLACK_SIGNING_SECRET` + `SLACK_BOT_TOKEN` in `.env`. Treat the manifest as the source of truth; files generated under `.mda/` are build artifacts and must not be committed. `runtime.channel` never exposes the bot token.
-
-A channel *receives* messages that start runs. It is not the same as giving the agent Slack *tools* for initiating operations — a project may want either or both.
-
-Channel threads are owned by their source conversation, while credentials and store access remain scoped to the delivering caller. When upgrading from a version that owned channel threads by the first principal, existing Slack conversations cannot migrate; start a new conversation or thread after redeploying.
+`interrupt_on` behaves like LangChain's human-in-the-loop middleware; see [[langgraph-human-in-the-loop]]. The managed runtime owns the checkpointer, so no extra setup is required. Respond in Studio or `mda chat` during development; on a deployment, resume through the Agent Server API with `Command(resume=...)`. Slack approval cards offer only approve and reject.
 
 ## Evals
 
-MDA evals are [Harbor](https://www.harborframework.com/docs/tasks) evals. `evals/` is the canonical authored dataset; put complete Harbor tasks directly under `evals/<task>/`. `.mda/evals/` is generated and must not be edited or committed.
+MDA evals are [Harbor](https://www.harborframework.com/docs/tasks) tasks. `evals/` is the authored dataset; put complete tasks under `evals/<task>/`. `.mda/evals/` is generated — do not edit or commit it.
 
 ```bash
-mda evals init -i
+uv run mda evals init -i
 ```
 
-`mda evals init` initializes the workspace and prints the pinned `harbor run` handoff; it does not run trials. `mda evals compile` is now an internal Harbor plugin entrypoint, so do not tell users to invoke it. Harbor needs Docker for its default environment and **does not read `.env`** — export the LangSmith, model, and tool variables in the shell that runs Harbor. Verifiers write a numeric reward to `/logs/verifier/reward.txt` or metrics to `/logs/verifier/reward.json`. For deeper eval design, see [[eval-engineering]].
+`mda evals init` writes `evals/harbor-job.json` and the generated adapter, then `-i` hands off to a coding agent with the `eval-engineering` skill ([[eval-engineering]]). It does not run trials; it prints the pinned `uv run --env-file .env … harbor run` command. Harbor needs Docker. Verifiers write a numeric reward to `/logs/verifier/reward.txt` or metrics to `/logs/verifier/reward.json`. `mda evals compile` is internal — do not tell users to run it. Agents with `async` subagents cannot be evaluated this way.
 
 ## CLI reference
 
 | Command | Use |
 | --- | --- |
-| `mda init <name>` | Scaffold a project. Fails if the destination exists. |
+| `mda init [name]` | Scaffold a project. Fails if the destination exists. |
 | `mda build [path]` | Compile into a managed LangGraph app without deploying. |
-| `mda dev [path]` | Compile and run the local dev server in LangSmith Studio. |
-| `mda deploy [path]` | Compile, sync Context Hub, upload, deploy, reconcile schedules. |
+| `mda dev [path]` | Compile and run the local dev server with LangSmith Studio. |
+| `mda chat [path]` | Chat from the terminal against a local dev server (starts one if needed). |
+| `mda deploy [path]` | Compile, sync Context Hub, upload, deploy, reconcile schedules, set up channels. |
 | `mda logs [path]` | Tail Agent Server logs for a deployed agent. |
 | `mda delete [path]` | Delete a deployment and the LangSmith resources it created. Alias: `destroy`. |
-| `mda connections create\|list\|get\|delete\|catalog` | Manage workspace-scoped opaque secrets and OAuth registrations. Alias: `connection`. |
-| `mda channels init slack` | Add a Slack channel declaration to the current project. Alias: `channel`. |
-| `mda evals init` | Initialize the Harbor eval workspace and print the run handoff. Alias: `eval`. |
+| `mda connections create\|list\|get\|delete\|catalog` | Manage workspace-scoped secrets and OAuth registrations. |
+| `mda channels init slack` | Add a Slack channel declaration. |
+| `mda channels setup` | Experimental: set up a deployed agent's channels without redeploying. |
+| `mda evals init` | Initialize the Harbor eval workspace and print the run handoff. |
 
 Key flags:
 
-- `init`: `-i` / `--interactive`, `--model SPEC`, `--instructions TEXT`, `--instructions-file PATH`, `--memory agent|none`, `--no-sandbox`, `-c` / `--channel slack`
-- `build`: `--out OUT` (defaults to `<path>/.mda/build`; only a missing, empty, or prior MDA build directory is accepted)
-- `dev`: `--port`, `--hostname`, `--no-browser`, `--no-reload`, `--tunnel`
-- `deploy`: `--name`, `--deployment-type dev|prod`, `--workspace-id`, `--no-wait`, `--context-strategy`, `--wait-timeout-seconds`
-- `connections`: `--project PATH` plus verb-specific secret and OAuth flags
+- `init`: `-i`, `--model SPEC`, `--instructions TEXT`, `--instructions-file PATH`, `--memory agent|none`, `--no-sandbox`, `-c` / `--channel slack`
+- `build`: `--out OUT` (defaults to `<path>/.mda/build`)
+- `dev`: `--port`, `--hostname`, `--no-browser`, `--no-reload`, `--tunnel`, `--no-schedules`, `--env-file`
+- `deploy`: `--name`, `--deployment-type serverless|dedicated`, `--workspace-id`, `--context-strategy overwrite|keep-hub`, `--no-wait`, `--wait-timeout-seconds`, `--env-file`, `--yes`
 - `logs`: `--name`, `--lines`, `--level`, `--follow` / `--no-follow`, `--workspace-id`
 - `delete`: `--name`, `--workspace-id`, `--yes`
 
-The installed package selects the language: the PyPI `mda` scaffolds Python and the npm `mda` scaffolds TypeScript. It does not infer language from the current directory. `mda dev` requires `uv` for Python and resolves the LangGraph dev server itself.
+> `mda delete` is destructive and removes the deployment, its sandboxes, snapshots, and other LangSmith resources. **Confirm with the user before running it, and never pass `--yes` unprompted.** The same applies to `mda deploy --yes`, which overwrites same-name resources on a first deploy.
 
-> `mda delete` is destructive and removes the deployment plus its LangSmith resources. **Confirm with the user before running it, and never pass `--yes` unprompted** — that flag exists to skip the confirmation you should be getting.
+## Deploy
 
-## Deploy and Context Hub
+`mda deploy` creates a **Serverless** deployment by default (GCP SaaS only; can scale to zero). Pass `--deployment-type dedicated` for always-on capacity or for AWS US and BYOC. Existing deployments keep their type.
 
-Authentication uses `LANGSMITH_API_KEY` from the project `.env` or shell. In an interactive terminal with no key found, `mda deploy` can prompt for a key or use browser sign-in; browser sign-in caches a short-lived personal token on the machine rather than writing it to `.env`. Use `--workspace-id` or `LANGSMITH_WORKSPACE_ID` when the key requires workspace selection.
+`LANGSMITH_ENDPOINT` selects the region; the default is GCP US. Set it before the first deploy, because it also selects where browser sign-in authenticates:
+
+| Region | `LANGSMITH_ENDPOINT` |
+| --- | --- |
+| GCP US | `https://api.smith.langchain.com` |
+| GCP EU | `https://eu.api.smith.langchain.com` |
+| GCP APAC | `https://apac.api.smith.langchain.com` |
+| AWS US | `https://aws.api.smith.langchain.com` |
+
+For BYOC, set `LANGSMITH_ENDPOINT` to the data plane's API URL (Settings > Data Planes, without `/api-host`), plus `LANGSMITH_WORKSPACE_ID` or `--workspace-id`.
 
 `mda deploy` routes local inputs to different managed surfaces:
 
@@ -549,51 +341,32 @@ instructions.md + skills/**   -> Context Hub deploy-owned context
 .env                          -> deploy auth + non-reserved hosted secrets (never archived)
 project source                -> .mda/build archive -> hosted deployment
 schedules/**                  -> LangSmith cron jobs, after the deployment is live
+channels/**                   -> Slack/HTTP channel setup
 ```
 
-Non-reserved `.env` entries — provider keys, tool credentials, database URLs — are forwarded as hosted deployment secrets. Reserved platform variables such as `LANGSMITH_API_KEY` authenticate or configure the deploy and are not uploaded as user-managed secrets. For deployment secrets, `mda deploy` deliberately does **not** copy values from the process environment: put the provider or tool key in the project `.env`, or configure it as a LangSmith workspace secret. The shell remains appropriate for local `mda dev`.
+The CLI reads `LANGGRAPH_HOST_API_KEY`, `LANGSMITH_API_KEY`, then `LANGCHAIN_API_KEY`. Shell values win over the project `.env` for these and for `LANGSMITH_ENDPOINT` / `LANGSMITH_WORKSPACE_ID`; `mda` warns when the two differ. In an interactive terminal with no key, deploy prompts for one or uses browser sign-in. CI needs `LANGSMITH_API_KEY` for the target region.
 
-Context Hub holds `/instructions.md` and `/skills/**` (deploy-owned, resynced each deploy) and `/memories/agent/**` (runtime-owned, preserved across deploys).
+Non-reserved `.env` entries — provider keys, tool credentials, database URLs, `MDA_INGRESS_SECRET` — are forwarded as hosted deployment secrets. Reserved platform variables authenticate the deploy and are not uploaded. Prefer `.env` or LangSmith workspace secrets for anything the deployment needs.
 
-### Deploy from GitHub
+Python deployments build on Python 3.11–3.14, newest allowed by `requires-python`; pin with `[tool.mda] python-version = "3.13"` in `pyproject.toml` or `MDA_PYTHON_VERSION`.
 
-LangSmith can deploy an MDA project from a connected GitHub repository. Select the repository, branch or tag, and the repo-relative project directory containing `agent.py` or `agent.ts`; `langgraph.json` is generated and should not be committed. The platform runs the hidden `mda prepare` build step to compile the project, sync instructions and skills to Context Hub, bake `sandbox/setup.sh`, and reconcile schedules and channels. Enable build-on-push when revisions should rebuild automatically.
+Every deployment also serves the Agent Server MCP endpoint at `<deployment API URL>/mcp` (copy the API URL from the dashboard), authenticated by the deployment's identity — use the LangSmith API-key default for MCP clients.
 
-For GitHub-sourced deployments, the repository is authoritative for deploy-owned Context Hub content. Edit `instructions.md` and `skills/**` in Git and rebuild rather than treating the Hub copy as independently editable. Supply runtime credentials through the deployment's secrets or secret references; the build does not consume a repository `.env`. Preview builds compile and bake but do not reconcile schedules or channels.
+LangSmith can also build from a connected GitHub repository, running the hidden `mda prepare` step. Never ask a user to run `mda prepare`; in that flow Git is authoritative for `instructions.md` and `skills/**`.
 
-`mda prepare` is platform-internal and hidden from CLI help. Never ask a user to run it manually.
-
-Troubleshooting: `no agent entry file found` → add `agent.py` at the root. 401/403 → the key's workspace lacks beta access. Context Hub conflict → re-run the deploy. Build over 200 MB → remove generated artifacts. `BUILD_FAILED` / `DEPLOY_FAILED` → open the printed URL and read the revision logs.
-
-## Human-in-the-loop
-
-Pause before sensitive tool calls with `interrupt_on`, and gate filesystem paths with `permissions`:
-
-```python
-agent = define_deep_agent(
-    name="support-agent",
-    model="anthropic:claude-sonnet-4-6",
-    tools=[refund_customer],
-    interrupt_on={"refund_customer": True},
-)
-```
-
-`interrupt_on` applies the same behavior as LangChain's human-in-the-loop middleware; see [[langgraph-human-in-the-loop]] for approve/edit/reject semantics. Interrupts need durable thread state, and the managed runtime owns the checkpointer, so no extra setup is required.
-
-Respond to interrupts in Studio during `mda dev`. On a deployed agent, resume through the Agent Server/LangGraph API with a `Command(resume=...)` payload; `mda deploy` prints the Agent Server URL.
+Troubleshooting: `no agent entry file found` → add `agent.py` / `agent.ts` at the root. 401/403 → the key's workspace lacks deployment access or belongs to another region. Context Hub conflict → answer the prompt or pass `--context-strategy`. Missing model key → add it to `.env` or workspace secrets. Build over 200 MB → remove generated artifacts. `BUILD_FAILED` / `DEPLOY_FAILED` → open the printed URL and read the revision logs.
 
 ## Gotchas
 
-- **`name=` is required** in `define_deep_agent` / `defineDeepAgent`. A definition without it fails.
-- **Model IDs need the provider prefix**: `anthropic:claude-sonnet-4-6`, not a bare model name. Python uses `google_genai:`, TypeScript uses `google-genai:`, and Gateway uses `provider/model`.
-- **Do not set managed fields** (`backend`, `store`, `checkpointer`, `memory`, `skills`, system prompt) in the agent definition.
-- **Memory is opt-in via `memory.py`**, not a constructor argument. `disable_memory` is legacy — declare or delete `memory.py` instead.
-- **MCP declarations live at `tools/mcp.*`.** Export `mcp` from `defineMcp({ servers: ... })` / `define_mcp(servers=...)`. `connectors.mcp`, `connectors/mcp.*`, and `mcpServers` are deprecated 0.7.x compatibility surfaces, not the pattern for new code.
-- **Connections are workspace-scoped.** A connection slug is not private to one agent, and `mda connections list` lists the workspace, not only the current deployment.
-- **Restart `mda dev` after adding a managed file.** New `memory.py`, `identity.py`, `tools/mcp.py`, `schedules/`, or `channels/` declarations are discovered at compile time, not by hot reload.
-- **`--no-wait` skips schedule reconciliation** and exits before `DEPLOYED`.
-- **Schedule declarations must be static literals** — the compiler extracts them without running your code.
-- **`.env` is never archived**, and `.gitignore` must keep it out of version control. Do not write live keys into it on a user's behalf. Shell-only provider keys work for local dev but are not persisted into a deployment.
-- **The installed package selects Python or TypeScript.** Do not claim `mda init` infers language from nearby manifests.
-- **`--gateway` was removed.** Configure a Gateway-backed model explicitly instead of using the former scaffold flag.
-- **The SDK moves quickly.** Verify flags with the installed `mda --help` and authoring surfaces against the installed package. Use `define_sandbox(...)`, not `sandboxes.langsmith(...)`; `identity.py` is scaffolded by default; and `mda prepare` plus `mda evals compile` are internal entrypoints.
+- **`name=` is required** and must be an inline string, even in a factory.
+- **Use `openai:gpt-5.5`-style IDs.** Python Gemini is `google_genai:`, TypeScript is `google:`, Gateway is `langsmith:provider/model`.
+- **Memory uses layers.** `define_memory(agent=MemoryLayer())` / `user=MemoryLayer()`. String `scope` is rejected, `disable_memory` is legacy, and `allow` callbacks are deprecated in favor of factory selection.
+- **User memory needs a person.** The LangSmith API-key identity is a service principal and never mounts `/memories/user/`.
+- **MCP lives at `tools/mcp.*`** with a named `mcp` export and `servers`. `connectors.mcp(...)`, `connectors/`, and `mcpServers` were removed in 0.10 and fail the build.
+- **Agent-owned connections belong to a deployment.** Create them after the first successful deploy, and once per project that uses the slug. `mda dev` reads agent-owned opaque connections from `MDA_DEV_<SLUG>`.
+- **Restart `mda dev` after adding a managed file** (`memory.py`, `identity.py`, `browser.py`, `tools/mcp.py`, `schedules/`, `channels/`).
+- **`--no-wait` skips schedule reconciliation** and cannot be used with a Slack channel.
+- **`runtime.channel` is deprecated** (removed in 0.11). Read `runtime.thread.origin.channel`.
+- **Do not set sandbox `scope`.** Sandboxes are always one per thread.
+- **`.env` is never archived**, and `.gitignore` must keep it out of version control. Do not write live keys into it on a user's behalf.
+- **The SDK moves quickly.** Verify flags with the installed `mda --help`. `mda prepare` and `mda evals compile` are internal.
