@@ -1,4 +1,4 @@
-# LangChain + Deep Agents Development Guide
+# LangChain Ecosystem Development Guide
 
 This project uses skills for current ecosystem guidance and workflows. Retrieve
 implementation details from official documentation and verify them against the
@@ -8,12 +8,15 @@ installed package versions.
 
 - **langchain-build-agent** - Invoke when building or modifying applications with Deep Agents, LangGraph, or LangChain, including architecture selection, middleware, memory, human review, composition, and retrieval. Follow its documentation lookup and fallback guidance.
 - **langchain-eval-engineering** - Invoke to design or audit Harbor evaluation tasks.
+- **langchain-langsmith** - Invoke for LangSmith trace inspection, workspace operations, dataset experiments, result diagnosis, or online feedback.
 
-## Environment Setup
+For LangSmith workspace operations, use an authenticated CLI profile when
+the CLI supports the task; use the SDK for application tracing and evaluation
+runs. Retrieve current instructions through the documentation MCP. For Custom
+Apps, follow the CLI scaffold’s generated `AGENTS.md`.
 
-Required environment variables:
+## Environment setup
 
-```bash
-OPENAI_API_KEY=<your-key>  # For OpenAI models
-ANTHROPIC_API_KEY=<your-key>  # For Anthropic models
-```
+The skills and public documentation do not require model-provider credentials.
+When running an application, configure credentials for the provider that
+application uses.
