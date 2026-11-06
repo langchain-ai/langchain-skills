@@ -4,7 +4,10 @@
 
 Agent skills for building agents with LangChain, LangGraph, and Deep Agents.
 
-> For LangSmith-specific trace and dataset workflows, use [langsmith-skills](https://github.com/langchain-ai/langsmith-skills).
+The [skills philosophy](SKILLS_PHILOSOPHY.md) explains what belongs in a skill
+and where to verify current implementation details.
+
+> For LangSmith workflows beyond agent-based workspace IA, use [langsmith-skills](https://github.com/langchain-ai/langsmith-skills).
 
 ## Supported Coding Agents
 
@@ -128,10 +131,11 @@ Then ask your coding agent:
 Use the langchain-eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
 ```
 
-## Available Skills (2)
+## Available Skills (3)
 
 - **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details.
 - **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review
+- **langsmith-agent-ia** - Place traces, datasets, online evaluations, and deployments under the right LangSmith agent and environment; diagnose visibility and migration issues.
 
 The framework, Deep Agents, LangGraph, memory, human-in-the-loop, composition,
 middleware, and retrieval skills are consolidated into `langchain-build-agent`.
