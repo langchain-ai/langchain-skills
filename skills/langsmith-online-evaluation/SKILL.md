@@ -71,15 +71,11 @@ false positives do not drive them. Without a judge, use the primary score and
 account for its uncertainty.
 
 - **Find recurring failure modes:** Create an Insights job filtered to the
-  confirmed feedback, and keep each job focused on one behavior. Schedule it
-  when the pattern matters over time. Inspect judge-rejected flags separately
-  to learn which near misses the decision model keeps catching.
+  confirmed feedback, and keep each job focused on one behavior.
 - **Send cases to people:** Create an automation rule that adds runs with the
   confirmed feedback to an annotation queue with a review rubric. Use a Custom
   App when reviewers need a tailored view of the trace, judge explanation, and
-  related context; follow the current Custom App scaffold and docs. Record
-  reviewer decisions as feedback and use disagreements to improve the
-  first-pass question or the judge.
+  related context; follow the current Custom App scaffold and docs.
 - **Monitor and respond:** Chart confirmed case counts or rates over time and
   alert on that feedback key. Prefer counts for sparse traffic and rates when
   volume supports them; check historical behavior before choosing a threshold.

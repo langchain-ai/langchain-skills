@@ -7,6 +7,9 @@ LangChain; evaluating them with LangSmith; and engineering Harbor
 benchmarks. The plugin also connects to the official
 documentation and API reference.
 
+See [Skills philosophy](SKILLS_PHILOSOPHY.md) for how we decide what belongs in
+a skill and keep the guidance current.
+
 ## Supported Coding Agents
 
 For agents that support the [Agent Skills specification](https://skills.sh),
@@ -47,7 +50,7 @@ Plugin installation registers these read-only documentation endpoints:
 
 Plugin installation loads the skills, but not `config/AGENTS.md`. That file is
 copied only by `./install.sh --deepagents --global`; the LangSmith tool guidance
-is also in `langchain-langsmith`, which plugin users receive.
+is also in `langsmith-online-evaluation`, which plugin users receive.
 
 #### LangSmith CLI setup (optional)
 
@@ -163,7 +166,7 @@ Use the langchain-eval-engineering skill to create a new eval Task for this proj
 
 - **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details.
 - **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review.
-- **langchain-langsmith** - General guidance for understanding and doing work in or with LangSmith, using current docs and tools for details.
+- **langsmith-agent-ia** - Place traces, datasets, online evaluations, and deployments under the right LangSmith agent and environment; diagnose visibility and migration issues.
 - **langsmith-online-evaluation** - Design and operate production evaluations, including broad decision-model checks and optional targeted LLM judging.
 
 For LangSmith Custom Apps, use the bundled documentation MCP and the CLI
@@ -175,3 +178,6 @@ When updating an existing skills-only installation, remove the superseded skill
 folders so the coding agent does not continue loading their older guidance.
 Remove an older `langsmith-skills` installation when switching to this combined
 plugin so its previous skill copies do not compete with the new guidance.
+Remove an existing `langchain-langsmith` skill installation as well; it is no
+longer bundled with this plugin.
+Remove an existing `langsmith-experiment-diagnosis` skill installation too.
