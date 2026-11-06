@@ -163,7 +163,7 @@ Use the langchain-eval-engineering skill to create a new eval Task for this proj
 
 - **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details.
 - **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review.
-- **langchain-langsmith** - Inspect LangSmith traces and workspace data, design focused evaluations, and use production feedback.
+- **langchain-langsmith** - Use current docs, the CLI, and the SDK for LangSmith work; load its focused evaluation guidance only when needed.
 
 For LangSmith Custom Apps, use the bundled documentation MCP and the CLI
 scaffold’s generated `AGENTS.md` for the current app contract.

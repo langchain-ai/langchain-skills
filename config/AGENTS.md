@@ -13,7 +13,8 @@ installed package versions.
 For LangSmith workspace operations, use an authenticated CLI profile when
 the CLI supports the task; use the SDK for application tracing and evaluation
 runs. Retrieve current instructions through the documentation MCP. For Custom
-Apps, follow the CLI scaffold’s generated `AGENTS.md`.
+Apps, follow the CLI scaffold’s generated `AGENTS.md`. For evaluation
+work, read the skill’s linked evaluation reference.
 
 ## Environment setup
 
