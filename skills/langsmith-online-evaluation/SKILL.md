@@ -49,9 +49,30 @@ retain the first-pass score as context.
 After setup or a change, compare first-pass flags with judge verdicts over the
 same window. Investigate missing verdicts, evaluator errors, feedback timing,
 flag rate, and judge spend. Review false positives and missed cases before
-changing the question or threshold. Use confirmed feedback for the downstream
-workflow that fits the goal, such as an annotation queue, an Insights job, a
-chart, an alert, or Engine.
+changing the question or threshold.
+
+## Act on the feedback
+
+Choose the next action before creating downstream rules. When a judge follows a
+decision model, filter those workflows on the judge's verdict key so first-pass
+false positives do not drive them. Without a judge, use the primary score and
+account for its uncertainty.
+
+- **Find recurring failure modes:** Create an Insights job filtered to the
+  confirmed feedback, and keep each job focused on one behavior. Schedule it
+  when the pattern matters over time. Inspect judge-rejected flags separately
+  to learn which near misses the decision model keeps catching.
+- **Send cases to people:** Create an automation rule that adds runs with the
+  confirmed feedback to an annotation queue with a review rubric. Use a Custom
+  App when reviewers need a tailored view of the trace, judge explanation, and
+  related context; follow the current Custom App scaffold and docs. Record
+  reviewer decisions as feedback and use disagreements to improve the
+  first-pass question or the judge.
+- **Monitor and respond:** Chart confirmed case counts or rates over time and
+  alert on that feedback key. Prefer counts for sparse traffic and rates when
+  volume supports them; check historical behavior before choosing a threshold.
+  If using Engine, keep feedback keys and comments clear so scored traces can
+  contribute useful issue signals.
 
 ## Verify current interfaces
 
