@@ -15,6 +15,18 @@ conversation. Map evaluator variables to the exact evidence being judged and
 check that mapping against real traces. Keep feedback keys and score direction
 stable and interpretable.
 
+Common production checks include:
+
+- **Perceived error:** Did a later user turn indicate that the assistant made a
+  mistake? Distinguish this from a neutral follow-up or a new requirement.
+  Confirmed cases can guide bug triage.
+- **Unsupported capability:** Did the user ask for something the application
+  cannot support? Distinguish a product gap from a temporary tool failure or
+  missing information. Confirmed patterns can guide feature planning.
+
+Use these as examples, not required feedback keys; choose behaviors that matter
+to the application and are observable in its traces.
+
 ## Cover more traffic with a decision model
 
 For classification-style checks, recommend a decision model as an economical
