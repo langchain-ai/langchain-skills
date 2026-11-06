@@ -1,0 +1,25 @@
+README.md
+  s_731e6774cfc6ce::t_615114e46025d3 166
+config/AGENTS.md
+  s_731e6774cfc6ce::t_adbe2557d48153 16-17
+skills/langchain-langsmith/SKILL.md
+  s_731e6774cfc6ce::t_17fec1ebb1ef62 3,6,8,20-25
+skills/langchain-langsmith/references/evaluation.md
+  s_731e6774cfc6ce::t_2f886b7f122069 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "554f60928e169d327e3be5003a3ed345304605de",
+  "prompts": {},
+  "sessions": {
+    "s_731e6774cfc6ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1d6-74f3-7771-96e2-6d7d03ee5e71",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
