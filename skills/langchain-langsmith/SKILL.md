@@ -1,6 +1,6 @@
 ---
 name: langchain-langsmith
-description: Guides LangSmith tracing, workspace operations, and evaluation using current documentation, the LangSmith CLI, and the SDK; loads focused evaluation advice only when relevant.
+description: Use whenever a user wants to understand or accomplish something in or with LangSmith. Provides current guidance and directs the coding agent to authoritative documentation and appropriate tools.
 ---
 
 # Work with LangSmith
