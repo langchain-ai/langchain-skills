@@ -71,8 +71,9 @@ account for its uncertainty.
 - **Monitor and respond:** Chart confirmed case counts or rates over time and
   alert on that feedback key. Prefer counts for sparse traffic and rates when
   volume supports them; check historical behavior before choosing a threshold.
-  If using Engine, keep feedback keys and comments clear so scored traces can
-  contribute useful issue signals.
+- **Enrich Engine:** If using Engine, let evaluation feedback on traces inform
+  issue discovery. Keep feedback keys and comments clear so the resulting issue
+  evidence is interpretable.
 
 ## Verify current interfaces
 
