@@ -18,8 +18,9 @@ documented SDK or API. If MCP is unavailable, consult
 https://docs.langchain.com/llms.txt and https://reference.langchain.com/llms.txt.
 Verify installed versions rather than assuming an interface.
 
-## Evaluation workflows
+## Offline evaluation
 
-For offline evaluation design, experiment comparison or diagnosis, and online
-evaluators or rules, read [evaluation.md](references/evaluation.md). Use current
-documentation for feature setup and API details.
+For offline evaluation design, experiment comparison or diagnosis, read
+[evaluation.md](references/evaluation.md). Use current documentation for
+feature setup and API details. For online evaluation, use the standalone
+`langsmith-online-evaluation` skill.

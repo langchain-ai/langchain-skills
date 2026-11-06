@@ -17,7 +17,7 @@ without the plugin via [`npx skills`](https://github.com/vercel-labs/skills).
 
 ### Plugin install (recommended)
 
-The plugin bundles all three skills with the official LangChain documentation and
+The plugin bundles all four skills with the official LangChain documentation and
 API-reference MCP connections. The skills also work when MCP is unavailable.
 
 #### Claude Code
@@ -99,7 +99,7 @@ and CLI help when working offline.
 
 ### Install Script (Claude Code & Deep Agents CLI only)
 
-Alternatively, clone the repo and use the install script. This copies the three
+Alternatively, clone the repo and use the install script. This copies the four
 skills but does not register the documentation MCP servers:
 
 ```bash
@@ -159,11 +159,12 @@ Then ask your coding agent:
 Use the langchain-eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
 ```
 
-## Available Skills (3)
+## Available Skills (4)
 
 - **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details.
 - **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review.
 - **langchain-langsmith** - General guidance for understanding and doing work in or with LangSmith, using current docs and tools for details.
+- **langsmith-online-evaluation** - Design and operate production evaluations, including broad decision-model checks and optional targeted LLM judging.
 
 For LangSmith Custom Apps, use the bundled documentation MCP and the CLI
 scaffold’s generated `AGENTS.md` for the current app contract.
