@@ -1,6 +1,6 @@
 ---
 name: langchain-langsmith
-description: Use whenever a user wants to understand or accomplish something in or with LangSmith. Provides current guidance and directs the coding agent to authoritative documentation and appropriate tools.
+description: Use whenever a user wants to understand or accomplish something in or with LangSmith. Provides current guidance and points to authoritative documentation and appropriate tools.
 ---
 
 # Work with LangSmith
