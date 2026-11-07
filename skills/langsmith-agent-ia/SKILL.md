@@ -14,14 +14,15 @@ production activity separate from staging and local development.
 
 ## Locate the workspace and agent
 
-Confirm the target workspace, region, and whether its current IA is agent-based.
-Check the actual product version and current docs before assuming availability,
-especially for self-hosted installations. If the workspace is project-based,
-use its project model; do not send agent-addressed traces to it.
+Determine whether the target workspace uses agent-based IA. Check the actual
+product version and current docs before assuming availability, especially for
+self-hosted installations. If the workspace is project-based, use its project
+model; do not send agent-addressed traces to it.
 
-Read [how agent-based workspaces differ](https://docs.langchain.com/langsmith/migrate-to-agent-based-workspaces)
-and [Agent Registry](https://docs.langchain.com/langsmith/agent-registry)
-when identifying the workspace and agent.
+When identifying the workspace and agent, search `langchain-docs` for current
+guidance on migration to agent-based workspaces and the Agent Registry. If MCP
+is unavailable, read [how agent-based workspaces differ](https://docs.langchain.com/langsmith/migrate-to-agent-based-workspaces)
+and [Agent Registry](https://docs.langchain.com/langsmith/agent-registry).
 
 Identify the intended agent by its stable ID, not its editable display name.
 Treat that agent as the application identity. Use its environments to distinguish
@@ -40,15 +41,11 @@ are a different system. Some creation flows start the agent with all four
 environments; an agent built in LangSmith's Build tab gains the others when
 their first traces arrive.
 
-If the installed authenticated CLI supports them, use `langsmith agents list`
-to find IDs and `langsmith agents retrieve --agent-id <id> --include runtime_bindings`
-to inspect environments and deployment bindings. Check the installed command's
-help before using it; an ordinary retrieval may omit bindings.
-`langsmith projects list` lists backing trace-storage projects, not the Agent
-Registry. Consult the current guides for behavior, the API reference for symbols,
-and installed SDK or CLI help for syntax. Use the CLI for supported workspace
-operations and the SDK for application tracing and evaluation runs. If the docs
-MCP is unavailable, use the official web docs and installed source or types.
+Use `langsmith agents list` to find IDs and
+`langsmith agents retrieve --agent-id <id> --include runtime_bindings` to
+inspect environments and deployment bindings; an ordinary retrieval may omit
+bindings. `langsmith projects list` lists backing trace-storage projects, not
+the Agent Registry.
 
 ## Place each resource at the right scope
 
@@ -199,3 +196,22 @@ history or active bindings.
 - **Delete only with authorization.** Delete only when the user has authorized
   permanent removal of the specific agents and a fresh inventory, taken
   immediately before deletion, shows them still empty.
+
+## Use current tools
+
+Use the authenticated `langsmith` CLI for supported workspace inventory and
+changes, and the SDK for application tracing and evaluation runs. Before the
+first workspace command, check that the CLI is installed with
+`langsmith --version` and check authentication with `langsmith auth info`.
+Confirm the target workspace and region, then pin the workspace with the CLI's
+global `--workspace` flag instead of relying on a default. Use `--profile` when
+needed. Never call `langsmith auth token` or expose credential values.
+
+Request `--format json` when parsing CLI output, and check the installed
+command's `--help` for current flags. If the CLI is unavailable, use the
+[official CLI guide](https://docs.langchain.com/langsmith/langsmith-cli) for
+setup and continue any documentation-only work.
+
+For current product behavior, use `langchain-docs` → `search_docs_by_lang_chain`.
+For exact SDK contracts, use `langchain-reference` → `search_api` and
+`get_symbol`.

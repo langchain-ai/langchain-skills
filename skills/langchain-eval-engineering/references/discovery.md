@@ -26,8 +26,9 @@ different agent versions or materially different deployments separate. Mark
 unknown facts as unknown.
 
 Read repository instructions, manifests, workspace configuration, and focused
-documentation. During read-only discovery, do not start services, install
-packages, open secret stores, or use credentials.
+documentation. When reviewing the repository, do not start services, install
+packages, open secret stores, or use credentials. Access an external trace
+source only when the human supplied or approved it.
 
 ## Review the repository
 
@@ -102,6 +103,15 @@ condition, capability, failure mode, or evidence requirement.
 Use a trace source supplied or approved by the human. Record enough source
 context to cite findings later, such as project, agent version, filters, time
 range, export time, and stable conversation or trace identifiers.
+
+When traces are in LangSmith, use the authenticated `langsmith` CLI to sample
+with `runs list` or `threads list` and `threads get`. Use `runs export` for a
+repeatable JSONL snapshot when needed. Check authentication with
+`langsmith auth info`, pin the target with `--workspace`, request `--format json`
+for parsed list or get output, and consult each command's `--help` for filters.
+For agent-based tracing, use `langsmith-agent-ia` to resolve the agent environment
+to a session ID before project-scoped queries. Keep raw exports out of the
+repository and Harbor Tasks; synthesize privacy-safe scenarios from them.
 
 A trace system can store one interaction as several related records. Names and
 relationships differ across products. Reconstruct the user-visible interaction

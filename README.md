@@ -41,33 +41,30 @@ These commands install from the repository's default branch. To test an
 unmerged branch, add its local checkout as a Claude Code marketplace source or
 use Codex's `--ref` option when adding the marketplace.
 
-Plugin installation registers these read-only documentation endpoints:
+Plugin installation registers two documentation MCP servers:
 
 - `langchain-docs` — guides and product documentation at
   `https://docs.langchain.com/mcp`
 - `langchain-reference` — API reference at
   `https://reference.langchain.com/mcp`
 
+`langchain-docs` also exposes `submit_feedback`, which sends feedback to the
+documentation team; use it only with the user's agreement. The plugin does not
+register LangSmith Remote MCP. Skills-only installation does not register MCP
+servers.
+
 Plugin installation loads the skills, but not `config/AGENTS.md`. That file is
-copied only by `./install.sh --deepagents --global`; the LangSmith tool guidance
-is also in `langsmith-online-evaluation`, which plugin users receive.
+copied only by `./install.sh --deepagents --global`.
 
 #### LangSmith CLI setup (optional)
 
 The plugin does not install or authenticate the LangSmith CLI. To let a local
 coding agent query or manage an authorized LangSmith workspace, install the CLI
-on the same machine and sign in. On macOS or Linux, the [official CLI guide](https://docs.langchain.com/langsmith/langsmith-cli#install)
-provides these commands:
-
-```bash
-curl -fsSL https://cli.langsmith.com/install.sh | sh
-langsmith auth login
-```
-
-Choose the intended workspace during authentication. For Windows, alternative
-install methods, self-hosted instances, and profile selection, follow the
-[CLI guide](https://docs.langchain.com/langsmith/langsmith-cli). The CLI is
-optional when you only need the documentation MCP or work through the SDK.
+on the same machine using the [official CLI guide](https://docs.langchain.com/langsmith/langsmith-cli),
+then authenticate with `langsmith auth login`. Choose the intended workspace
+during authentication. The guide also covers self-hosted instances and profile
+selection. The CLI is optional when you only need the documentation MCP or work
+through the SDK.
 
 The user's coding-agent or workspace policy may disable MCP servers. In that
 case, use official web documentation, installed package source and types, and
@@ -135,14 +132,15 @@ skills but does not register the documentation MCP servers:
 
 Plugin installation and public documentation access do not require model-provider
 API keys. To run an application you build, configure credentials for the model
-provider that application uses. LangSmith workflows require access to the
-intended workspace through an authenticated CLI profile or SDK configuration.
-Use the [LangSmith CLI](https://docs.langchain.com/langsmith/langsmith-cli) for
-supported workspace queries and resource operations, and the SDK for application
-tracing and evaluation runs. Plugin installation does not install the CLI;
-install and authenticate it separately when needed. Run your coding agent from
-the directory where you installed the skills (for local installs), or from
-anywhere (for global installs).
+provider that application uses. LangSmith workspace actions require access to
+the intended workspace through an authenticated CLI profile or SDK configuration.
+Use the documentation MCPs for general product questions, the
+[LangSmith CLI](https://docs.langchain.com/langsmith/langsmith-cli) for supported
+workspace queries and resource operations, and the SDK for application tracing
+and evaluation runs.
+
+Run your coding agent from the directory where you installed the skills (for
+local installs), or from anywhere (for global installs).
 
 ### Eval Engineering
 

@@ -5,7 +5,14 @@ description: Use when designing or improving LangSmith online evaluations for pr
 
 # Online evaluation with LangSmith
 
+Online evaluations score production runs or threads and produce feedback for
+review, monitoring, and follow-up workflows. Choose the behavior and traffic
+scope before configuring evaluator rules.
+
 ## Choose the signal and scope
+
+In agent-based IA, confirm the agent environment that receives production
+traffic. Do not infer the target from a legacy project name.
 
 Inspect representative production runs or threads before writing an evaluator.
 Define a score for an observable behavior and decide how its feedback will be
@@ -83,12 +90,27 @@ account for its uncertainty.
   issue discovery. Keep feedback keys and comments clear so the resulting issue
   evidence is interpretable.
 
-## Verify current interfaces
+## Use current tools
 
-Use the official guides MCP for current LangSmith setup and the API-reference
-MCP for SDK details. For supported workspace operations, use an authenticated
-LangSmith CLI profile after verifying the target workspace and installed CLI
-help. Use the SDK for application tracing and evaluation runs. If MCP is
-unavailable, consult https://docs.langchain.com/llms.txt and
-https://reference.langchain.com/llms.txt. Verify current interfaces rather than
-relying on remembered API paths, filter syntax, or provider settings.
+For current behavior of online evaluators, decision models, rules, Insights, and
+annotation queues, use `langchain-docs` → `search_docs_by_lang_chain` and read
+relevant pages with `query_docs_filesystem_docs_by_lang_chain`. For SDK calls,
+use `langchain-reference` → `search_api`, then `get_symbol` for exact contracts.
+If MCP is unavailable, follow official docs through
+https://docs.langchain.com/llms.txt and https://reference.langchain.com/llms.txt.
+
+Use the authenticated `langsmith` CLI for supported workspace inspection and
+resource operations, and the SDK for evaluator code and evaluation runs. Before
+the first workspace command, check `langsmith --version` and authentication with
+`langsmith auth info`; do not call `langsmith auth token`. Confirm the target
+workspace and pin it with `--workspace`. Request `--format json` when parsing
+results, and check each command's `--help` for current flags.
+
+Sample production traffic with `langsmith runs list`, `langsmith threads list`,
+and `langsmith threads get`. In an agent-based workspace, find the agent ID with
+`langsmith agents list` if needed, then resolve the production environment with
+`langsmith sessions resolve --kind AGENT --id <agent-id> --environment PRODUCTION`.
+Use its session ID for project-scoped queries; for example,
+`langsmith evaluators rule list --project-id <session-id>` inspects existing
+online rules. Avoid name-based `--project` lookups that can fall back to a legacy
+`LANGSMITH_PROJECT` value.
