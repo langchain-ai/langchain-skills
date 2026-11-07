@@ -1,0 +1,38 @@
+evals/ci_runner.py
+  s_21552cb4b54f73::t_94bb5ba4dd24e8 8,10,38-40,50-52,56-60
+  s_21552cb4b54f73::t_bbf5836a8e6b1e 196,198-202
+  s_21552cb4b54f73::t_85465678236657 1-7,9,11-37,41-46,48-49,53-55,61-121,123-131,133-139,141-144,146-148,150-151,153-161,163-167,169-176,178-186,188-195,203-212
+  s_21552cb4b54f73::t_39b5a75e4620cc 145,152
+  s_21552cb4b54f73::t_4734fdba517006 47,122,132,140,149,162,168,177,187,197
+evals/harness.py
+  s_21552cb4b54f73::t_a9b64e3fd40899 37-41,113,291,507,547,556-557
+  s_21552cb4b54f73::t_de9c0102d57c48 35-36
+.github/workflows/skills-evals.yml
+  s_21552cb4b54f73::t_8d4f5984b2b18f 1-45,47-52,54-60,62-81,83-146
+  s_21552cb4b54f73::t_61ae46e3b0aee4 46,53,61,82
+evals/README.md
+  s_21552cb4b54f73::t_6ac61b95ff2fed 173-178
+  s_21552cb4b54f73::t_2ce277e2e19813 166-170
+  s_21552cb4b54f73::t_6dd7c20213d046 22-23,30-33,37-38,84,88,144-150,155-165,171-172
+  s_21552cb4b54f73::t_ad8a398f89124b 151-154
+evals/test_ci_runner.py
+  s_21552cb4b54f73::t_c8f0ab894ce258 1-65
+evals/patch_harbor.py
+  s_21552cb4b54f73::t_a269a4463a5d69 1-344
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8c7db2e457e17437acc714bab38f62e6fb21a56",
+  "prompts": {},
+  "sessions": {
+    "s_21552cb4b54f73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7f0-3c00-7991-92a1-26fe7aa9c46d",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
