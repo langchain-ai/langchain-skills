@@ -6,34 +6,39 @@ These steps create three things on a tracing project, all with the `langsmith` C
 2. An LLM-judge evaluator gated on stage 1's score (stage 2).
 3. An Insights job that clusters the cases the judge confirmed.
 
-Each step says whether it was run live or only checked locally. Two steps use the CLI's generic `langsmith api` command, because the dedicated subcommands can't set an option the chain needs. Those steps explain why.
+Two steps use the CLI's generic `langsmith api` command, because the dedicated subcommands can't set an option the chain needs. Those steps explain why.
 
 ## 1. Prerequisites
 
 **Log in and set shared variables:**
 
 ```bash
-langsmith auth login                      # OAuth; or export LANGSMITH_API_KEY=<workspace-api-key>
+langsmith --version
+langsmith auth info                       # log in with `langsmith auth login` if needed
 export WS=<workspace-uuid>
-export PROJECT_ID=$(langsmith api "sessions?name=<project-name>" --workspace $WS | jq -r '.[0].id')
+
+# Agent-based workspace: resolve the production environment's tracing project
+export PROJECT_ID=$(langsmith sessions resolve --kind AGENT --id <agent-id> --environment PRODUCTION \
+  --workspace $WS --format json | jq -r '.session_id')
+# Project-based workspace: copy the project UUID from `langsmith projects list --format json`
 ```
 
-- If `LANGSMITH_API_KEY` is set in your shell, it overrides the OAuth login. Unset it if it points at a different workspace.
-- In an agent-based workspace, `PROJECT_ID` is the agent environment's tracing project.
+- If `LANGSMITH_API_KEY` is set in your shell, it overrides the OAuth login. Make sure it belongs to the target workspace.
+- Use the project UUID throughout. Name-based `--project` lookups can fall back to a stale `LANGSMITH_PROJECT` value.
 
-**Find the saved model configurations.** These are saved in the Playground through model settings → Save as preset. They reference provider keys by workspace-secret name (for example `LC_GATEWAY_KEY`), never by value.
+**Find the saved model configurations.** These are saved in the Playground through model settings → Save as preset. They reference provider keys by workspace-secret name, never by value.
 
 ```bash
 langsmith api playground-settings --workspace $WS \
   | jq -r '.[] | "\(.id)  \(.name)  \(.settings.kwargs.model // "")"'
 
-export DM_CONFIG_ID=<decision-model config, e.g. "typesafe/jev-latest-gateway">
-export JUDGE_CONFIG_ID=<judge config, e.g. "gpt-6-luna-gateway">
+export DM_CONFIG_ID=<saved decision-model configuration>
+export JUDGE_CONFIG_ID=<saved judge model configuration>
 export CLUSTER_CONFIG_ID=<Insights clustering config>
 export SUMMARY_CONFIG_ID=<Insights summary config>
 ```
 
-For Jev through the gateway, the config's class is `TypeSafeCompatible`, with model `typesafe/jev-latest`, base URL `https://gateway.smith.langchain.com` and `decision_model: true`.
+The decision-model configuration must be a decision-model preset (its settings include `decision_model: true`), for example one for Jev. The judge configuration can be any chat model preset.
 
 **Data clearance:** confirm the project's traces are allowed to go to the decision-model provider (see "Cover more traffic with a decision model" in `SKILL.md`).
 
@@ -74,8 +79,6 @@ langsmith api runs/rules/decision-models -X POST --body @dm-body.json --workspac
 - The call also creates the evaluator record and a hub prompt for it.
 
 **Why `langsmith api`:** `langsmith evaluators create-decision-model` has no group-by option, so it can't create the thread-level evaluator. Without `group_by` it covers everything else here, and you can set the questions with its `--questions` flag.
-
-*Status: this exact request body was run live on 2026-11-07, and the rule was created with `group_by: thread_id`.*
 
 ## 3. Stage 2: LLM-judge evaluator
 
@@ -123,9 +126,7 @@ langsmith api runs/rules -X POST --body @judge-body.json --workspace $WS | jq '{
 - `is_tracing_disabled: true` keeps judge traces out of your trace volume.
 - `structured.model` is the saved config's model settings, which name the secret but don't contain it. Passing `playground_settings_id` instead is rejected with `400 Evaluator has no model configured`.
 
-**Why `langsmith api`:** `langsmith evaluators create-llm --trace-filter …` sends the gate as `trace_filter` (the root-run filter), with no run-level `filter`. A captured request confirmed this. A rule with only a trace filter matches every run in a flagged trace, so the judge could run once per step instead of once per flagged run. `create-llm` also has no option to turn off evaluator tracing. Its `--model-config` flag takes the same `judge-model.json` if you use it anyway.
-
-*Status: this exact request body was run live on 2026-11-07. The rule was created, with an evaluator record and hub prompt.*
+**Why `langsmith api`:** `langsmith evaluators create-llm --trace-filter …` sends the gate as `trace_filter` (the root-run filter), with no run-level `filter`. A rule with only a trace filter matches every run in a flagged trace, so the judge could run once per step instead of once per flagged run. `create-llm` also has no option to turn off evaluator tracing. Its `--model-config` flag takes the same `judge-model.json` if you use it anyway.
 
 ## 4. Check the chain is running
 
@@ -171,13 +172,11 @@ langsmith insights create --project-id $PROJECT_ID --config insights-body.json -
 
 - `filter` restricts the job to traces the judge confirmed (`feedback_score` 1). Use `eq(feedback_score, 0)` instead to cluster the judge's rejections and see what the decision model keeps getting wrong.
 - `summary_prompt` is required. It must reference at least one trace field: `{{run.inputs}}`, `{{run.outputs}}`, `{{run.error}}`, `{{run.feedback}}` or `{{all_thread_messages}}`.
-- `cluster_model` and `summary_model` must be set together. Use saved model config IDs: with the default `openai`, the job validates the workspace's raw `OPENAI_API_KEY` secret against OpenAI directly, and fails if that secret holds a gateway key.
+- `cluster_model` and `summary_model` must be set together. Use saved model config IDs: with the default `openai`, the job calls OpenAI directly with the workspace's `OPENAI_API_KEY` secret, and fails if that secret isn't a valid OpenAI key.
 - `schedule_cron` makes the job recur. The first run starts immediately. Omit it for a one-off report.
 - Add `--wait` to block until the report finishes, which can take up to 30 minutes.
 
 `insights create` saves an Insights configuration, then starts a job from it. Manage the saved config with `langsmith insights config list|update|delete`, and run it again with `langsmith insights run <config-id>`. Read the results with `langsmith insights list` and `langsmith insights get <insight-id>`.
-
-*Status: the request `insights create` sends was captured locally, not run against a workspace. It matches the shape of the working Juji configs ("Perceived Error Scenarios", "Unsupported Capabilities"). A job created live through the underlying API with saved model config IDs succeeded on 2026-11-07.*
 
 ## 6. Changing a rule later
 
