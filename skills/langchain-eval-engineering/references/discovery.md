@@ -103,6 +103,14 @@ Use a trace source supplied or approved by the human. Record enough source
 context to cite findings later, such as project, agent version, filters, time
 range, export time, and stable conversation or trace identifiers.
 
+When the traces are in LangSmith, pull them with the authenticated `langsmith`
+CLI: `runs` and `threads` for sampling, and `runs export` for a JSONL snapshot
+you can cite and re-read. Confirm the workspace with `langsmith auth info`,
+request `--format json`, and check each command's `--help` for filters. In an
+agent-based workspace, resolve the agent environment to a session ID first
+rather than passing a project name. Exports can contain user data; keep them
+out of Tasks and the repository unless the human approves.
+
 A trace system can store one interaction as several related records. Names and
 relationships differ across products. Reconstruct the user-visible interaction
 and all relevant agent activity in time order. Include the initial request,
