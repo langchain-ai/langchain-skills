@@ -13,3 +13,5 @@ __pycache__
 .DS_Store
 uv.lock
 node_modules/
+evals/jobs/
+evals/.stage/
