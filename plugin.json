@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "langchain-skills",
   "version": "0.1.0",
-  "description": "Agent skills and current documentation access for building with LangChain, LangGraph, and Deep Agents",
+  "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
   "author": {
     "name": "LangChain",
     "url": "https://langchain.com"

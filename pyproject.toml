@@ -1,7 +1,7 @@
 [project]
 name = "langchain-skills"
 version = "0.1.0"
-description = "LangChain skills for coding agents - trace querying and dataset generation"
+description = "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation"
 requires-python = ">=3.11"
 dependencies = []
 

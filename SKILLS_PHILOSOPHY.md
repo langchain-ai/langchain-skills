@@ -3,14 +3,16 @@
 This repository helps coding agents make good decisions across the LangChain
 ecosystem while the libraries and LangSmith product change quickly. **Official
 documentation is the source of truth for current features and APIs. Skills
-carry durable judgment:** how to choose an approach, how the pieces fit
-together, and which workflow tends to produce a reliable result.
+carry durable judgment and tool guidance:** how to choose an approach, how the
+pieces fit together, which tools to use, and how to verify a reliable result.
 
 ## What earns a skill
 
-Keep a skill when its guidance would materially change an agent's decisions
-and is not already explained well by the docs. Good candidates are opinionated
-workflows, architecture choices across products, and non-obvious failure modes.
+Keep a skill when its guidance would materially change an agent's decisions or
+tool use and is not already explained well by the docs. Good candidates are
+opinionated workflows, architecture choices across products, tool choices that
+matter to the outcome, and non-obvious failure modes.
+
 A feature definition, installation guide, command catalog, or rewritten docs
 page does not warrant a skill. If removing the skill would leave only a prompt
 to read the docs, remove it.
@@ -28,22 +30,35 @@ detailed workflow resources are an example of a justified reference set.
 - Explain decisions, tradeoffs, and the relationship between ecosystem
   components. State a recommended default when we have one, and preserve
   explicit user constraints and existing application architecture.
-- Tell the agent where to verify implementation details: official guides MCP
-  for workflows, API-reference MCP for symbols, and installed package versions
-  for the code actually being changed. If MCP is unavailable, use official web
-  docs and installed source or types.
-- For LangSmith work, use current docs for feature behavior; use the
-  authenticated CLI for supported workspace operations and the SDK for
-  application code and evaluation runs. The plugin registers docs MCPs but
-  does not install or authenticate the CLI.
+- Show how to use the relevant tools within the workflow: what to look up,
+  which operation to perform, and what evidence confirms the result. Point to
+  another skill when it owns a distinct step that the current workflow needs.
+- Put general tool routing and preflight in a final `Use current tools` section.
+  Keep task-specific commands at the workflow step that uses them, without
+  repeating the same guidance in both places.
+- For LangChain open-source work, direct the agent to the official
+  `langchain-docs` MCP for guides and implementation patterns, then to the
+  `langchain-reference` MCP for symbols and API details. Check the installed
+  package versions, source, or types against the code being changed. Name a
+  specific guide or useful search terms when that prevents guesswork. If MCP
+  is unavailable, use official web docs and installed source or types.
+- For general LangSmith questions about features and behavior, use the two
+  bundled documentation MCPs. For actions in a LangSmith workspace, prefer the
+  authenticated LangSmith CLI where it supports the operation; verify the
+  target profile and workspace, current CLI help, and the result. Use the SDK
+  for application code, tracing, and evaluation runs.
+- State this tool choice where a skill's workflow needs it. The plugin makes
+  the documentation MCPs available, but does not convey when to prefer the CLI.
+  Avoid repeating server URLs, setup steps, or full tool inventories in skills.
 - Keep the entrypoint concise. Make the name and description broad enough to
   catch the intended class of requests, yet specific enough to avoid unrelated
   invocations. Do not tune wording around one benchmark prompt.
 
-Avoid large code snippets, copied examples, API signatures, CLI flag lists,
-model IDs, and claims about fast-changing defaults. Include a concrete
-identifier only when it prevents a consequential misunderstanding; still
-direct the agent to verify it against current docs and installed versions.
+Avoid large code snippets, copied examples, API signatures, command catalogs,
+model IDs, and claims about fast-changing defaults. Include a short tool or CLI
+example when it prevents a consequential misunderstanding or makes an
+opinionated workflow usable; direct the agent to verify current syntax and
+behavior against the docs and installed versions.
 
 ## How we maintain the repo
 
