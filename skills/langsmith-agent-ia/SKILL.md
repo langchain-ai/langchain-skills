@@ -1,6 +1,14 @@
 ---
 name: langsmith-agent-ia
 description: Work in a LangSmith agent-based workspace when traces, datasets, evaluations, or deployments need to be placed under the right agent and environment. Use for IA setup, navigation problems, and migration from project-based tracing, including when "projects became agents", datasets or evaluators seem to have disappeared, there are duplicate agents per tier or script ("agent sprawl"), or the user asks about LANGSMITH_AGENT_ID, LANGSMITH_AGENT_ENVIRONMENT, agent addressing, or binding a deployment to an environment. Not for unrelated evaluation design or workspaces that still use project-based IA.
+allowed-tools:
+  - Bash(langsmith --version)
+  - Bash(langsmith auth info *)
+  - Bash(langsmith agents list *)
+  - Bash(langsmith agents retrieve *)
+  - Bash(langsmith sessions resolve *)
+  - Bash(langsmith evaluators rule list *)
+  - Bash(langsmith datasets list *)
 ---
 
 # LangSmith agent-first IA
@@ -11,6 +19,26 @@ for where it runs, so traces, online evaluations, and deployments can be associa
 with the same application and the right runtime tier. Datasets attach to the
 agent across tiers. This makes an agent's work easier to find and helps keep
 production activity separate from staging and local development.
+
+## Tools
+
+Inspect and change the workspace with the `langsmith` CLI; use the SDK for
+application tracing and evaluation runs. Before the first workspace command:
+
+1. Run `langsmith --version`. If it is missing, give the user the install link
+   from the [CLI docs](https://docs.langchain.com/langsmith/langsmith-cli) and continue
+   with the UI or the API reference; do not install it without asking.
+2. Run `langsmith auth info` and confirm the workspace and region match the
+   user's target. Pass `--workspace <id>` rather than relying on a default. Do
+   not print tokens or API keys.
+3. Request `--format json` when parsing output, and check `<command> --help`
+   for flags; the CLI changes faster than this skill.
+
+Inventory commands are read-only. Run commands that create, update, attach,
+archive, or delete only after the user approves the specific change.
+
+For feature behavior, search the `langchain-docs` MCP server; the links below
+are the fallback when it is unavailable.
 
 ## Locate the workspace and agent
 
@@ -40,15 +68,11 @@ are a different system. Some creation flows start the agent with all four
 environments; an agent built in LangSmith's Build tab gains the others when
 their first traces arrive.
 
-If the installed authenticated CLI supports them, use `langsmith agents list`
-to find IDs and `langsmith agents retrieve --agent-id <id> --include runtime_bindings`
-to inspect environments and deployment bindings. Check the installed command's
-help before using it; an ordinary retrieval may omit bindings.
-`langsmith projects list` lists backing trace-storage projects, not the Agent
-Registry. Consult the current guides for behavior, the API reference for symbols,
-and installed SDK or CLI help for syntax. Use the CLI for supported workspace
-operations and the SDK for application tracing and evaluation runs. If the docs
-MCP is unavailable, use the official web docs and installed source or types.
+Use `langsmith agents list` to find IDs and
+`langsmith agents retrieve --agent-id <id> --include runtime_bindings` to
+inspect environments and deployment bindings; an ordinary retrieval omits
+bindings. `langsmith projects list` lists backing trace-storage projects, not
+the Agent Registry.
 
 ## Place each resource at the right scope
 
