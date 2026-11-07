@@ -18,3 +18,7 @@ Required environment variables:
 OPENAI_API_KEY=<your-key>  # For OpenAI models
 ANTHROPIC_API_KEY=<your-key>  # For Anthropic models
 ```
+
+LangSmith workspace skills use the `langsmith` CLI, which the plugin does not
+install. Install it from https://docs.langchain.com/langsmith/langsmith-cli and
+authenticate with `langsmith auth login` or `LANGSMITH_API_KEY`.
