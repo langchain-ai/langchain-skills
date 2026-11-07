@@ -1,0 +1,88 @@
+skills/langchain-langsmith-online-evaluation/references/chained-eval-cli-setup.md
+  s_4285b1993ebe68::t_585e3ab80e851a 1-211
+pyproject.toml
+  s_12daf266e9e76f::t_2b8e5f992183c0 3
+README.md
+  s_12daf266e9e76f::t_ec3e3daf2cb1dc 180-183
+  s_12daf266e9e76f::t_aa463d757585c8 16-18,24,41-47,50-51,69-71,114,136-137,147,162-163,168,177-178,189-190,210-212
+  s_12daf266e9e76f::t_7c2e213dc6f871 53-68,72-75
+  s_12daf266e9e76f::t_e116c7472413aa 76-80,84-85,144,146,148-149,152,155,158-160,165,172-176,188,192
+  s_12daf266e9e76f::t_684a4e77c383e8 81-83
+  s_12daf266e9e76f::t_e62981208697b1 52
+  s_12daf266e9e76f::t_9ff38c4b5173ae 166-167
+  s_12daf266e9e76f::t_c82e17f6ec93d7 179
+skills/langchain-langsmith-online-evaluation/SKILL.md
+  s_4285b1993ebe68::t_c4619844d79f6f 2
+  s_4285b1993ebe68::t_585e3ab80e851a 1,3-119
+.github/workflows/skills-lint.yml
+  s_12daf266e9e76f::t_466104c38093b8 60-61,63,66-68
+  s_12daf266e9e76f::t_064fc5fddcd2bb 46-59,62,64-65,69
+  s_12daf266e9e76f::t_529f050e213b2a 39
+  s_12daf266e9e76f::t_d85ae1b5e37bc1 70-73
+  s_12daf266e9e76f::t_2b8e5f992183c0 18,36-38,40-45
+install.sh
+  s_12daf266e9e76f::t_684a4e77c383e8 126
+  s_12daf266e9e76f::t_bfac446cdb0eae 114
+  s_12daf266e9e76f::t_9637ae3dc8cab1 1,3-4,7,9,15-22,25-30,34-37,39-45,47-48,54,57-59,62-67,69-70,72-75,77-78,81-86,89-99,101-104,106-107,109-113,115-116,118,122-124
+  s_12daf266e9e76f::t_0273c021fb4c73 23-24,38,68,76
+install.ps1
+  s_12daf266e9e76f::t_466104c38093b8 56-60
+  s_12daf266e9e76f::t_0273c021fb4c73 3,23,31
+  s_12daf266e9e76f::t_bfac446cdb0eae 77-80
+  s_12daf266e9e76f::t_d89d068d07c547 1-2,4-22,24-30,32-55,61-76,81-89,91-93
+  s_12daf266e9e76f::t_684a4e77c383e8 90
+tests/skills_lint/test_plugin_versions.py
+  s_12daf266e9e76f::t_18e4c478d4a257 1-45
+scripts/lint_skills.py
+  s_4285b1993ebe68::t_9d0bf772f09463 273-290,365
+plugin.json
+  s_12daf266e9e76f::t_2b8e5f992183c0 4
+skills/langchain-langsmith-agent-ia/SKILL.md
+  s_4285b1993ebe68::t_585e3ab80e851a 1,3-217
+  s_4285b1993ebe68::t_c4619844d79f6f 2
+.github/workflows/plugin-release.yml
+  s_12daf266e9e76f::t_db06afd4aa655f 1-45
+scripts/check_plugin_versions.py
+  s_12daf266e9e76f::t_2b8e5f992183c0 1-23,25-60,63-71,75-110
+  s_12daf266e9e76f::t_7c2e213dc6f871 61-62
+  s_12daf266e9e76f::t_aba2a3a78235a5 24
+  s_12daf266e9e76f::t_529f050e213b2a 72-74
+tests/skills_lint/test_lint_skills.py
+  s_4285b1993ebe68::t_9d0bf772f09463 140-163
+.codex-plugin/plugin.json
+  s_12daf266e9e76f::t_2b8e5f992183c0 3
+config/AGENTS.md
+  s_4285b1993ebe68::t_c4619844d79f6f 11-12
+skills/langchain-eval-engineering/references/discovery.md
+  s_4285b1993ebe68::t_c4619844d79f6f 112
+.claude-plugin/plugin.json
+  s_12daf266e9e76f::t_2b8e5f992183c0 3
+  s_12daf266e9e76f::t_bba495be741093 12-17
+tests/test_install.sh
+  s_12daf266e9e76f::t_2e41bf59f31bcb 1-30,39
+  s_12daf266e9e76f::t_d85ae1b5e37bc1 31-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "83d045be2ee27f76f684d51d809155309e926a57",
+  "prompts": {},
+  "sessions": {
+    "s_12daf266e9e76f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7d1-6086-7043-9031-bc8859cc5a9a",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_4285b1993ebe68": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7cc-4672-75a2-8ce3-f86627f4d708",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

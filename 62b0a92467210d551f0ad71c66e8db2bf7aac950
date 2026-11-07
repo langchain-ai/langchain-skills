@@ -1,0 +1,22 @@
+skills/langsmith-online-evaluation/references/chained-eval-cli-setup.md
+  s_104afc537b6962::t_44fea6ed99a8b1 1-12,15-211
+  s_104afc537b6962::t_87caa530972b8e 13-14
+skills/langsmith-online-evaluation/SKILL.md
+  s_104afc537b6962::t_87caa530972b8e 61-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "62b0a92467210d551f0ad71c66e8db2bf7aac950",
+  "prompts": {},
+  "sessions": {
+    "s_104afc537b6962": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b6ea-88a2-7570-9e39-f04b3671a975",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
