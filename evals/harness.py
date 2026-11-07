@@ -32,9 +32,13 @@ MCP_SERVERS = [
     {"name": "langchain-docs", "transport": "streamable-http", "url": "https://docs.langchain.com/mcp"},
     {"name": "langchain-reference", "transport": "streamable-http", "url": "https://reference.langchain.com/mcp"},
 ]
-DEFAULT_CLI = Path(
-    "/Users/jacobkleiman/Documents/Codex/2026-11-07/re/work/chained-eval-harbor/bin/langsmith"
-)
+
+
+def linux_cli_path(value: str | None) -> Path:
+    candidate = value or os.environ.get("LANGSMITH_LINUX_CLI")
+    if not candidate:
+        raise RuntimeError("set LANGSMITH_LINUX_CLI or pass --cli-bin with a Linux LangSmith CLI binary")
+    return Path(candidate).expanduser().resolve()
 
 
 def profiles() -> dict:
@@ -106,7 +110,7 @@ def client() -> Client:
     key = os.environ.get("LANGSMITH_API_KEY")
     workspace = os.environ.get("WORKSPACE_ID")
     if not key or not workspace:
-        raise RuntimeError("source the credential file first; LANGSMITH_API_KEY and WORKSPACE_ID must be set")
+        raise RuntimeError("LANGSMITH_API_KEY and WORKSPACE_ID must be set in the environment")
     return Client(api_key=key, workspace_id=workspace)
 
 
@@ -284,7 +288,7 @@ def run(args: argparse.Namespace) -> None:
     for rel in (".claude-plugin/plugin.json", "hooks/hooks.json"):
         if not (plugin_dir / rel).is_file():
             raise FileNotFoundError(plugin_dir / rel)
-    config_path = stage_run(data, Path(args.cli_bin).expanduser().resolve())
+    config_path = stage_run(data, linux_cli_path(args.cli_bin))
     child_env = os.environ.copy()
     child_env["PYTHONPATH"] = str(EVALS) + os.pathsep + child_env.get("PYTHONPATH", "")
     child_env["LANGSMITH_WORKSPACE_ID"] = data["workspace_id"]
@@ -500,7 +504,7 @@ def check(args: argparse.Namespace) -> None:
         "run_id": placeholder, "task": args.task, "profile": args.profile,
         "target_project_id": placeholder, "workspace_id": placeholder,
     }
-    config_path = stage_run(data, Path(args.cli_bin).expanduser().resolve())
+    config_path = stage_run(data, linux_cli_path(args.cli_bin))
     child_env = os.environ.copy()
     child_env["PYTHONPATH"] = str(EVALS) + os.pathsep + child_env.get("PYTHONPATH", "")
     completed = subprocess.run(["harbor", "run", "--config", str(config_path), "--print-config"], cwd=REPO, env=child_env)
@@ -540,7 +544,7 @@ def main() -> None:
     p = sub.add_parser("check")
     p.add_argument("--task", required=True)
     p.add_argument("--profile", choices=sorted(profiles()), required=True)
-    p.add_argument("--cli-bin", default=str(DEFAULT_CLI))
+    p.add_argument("--cli-bin")
     p.set_defaults(action=check)
     p = sub.add_parser("bootstrap")
     p.add_argument("--project-name", required=True)
@@ -549,8 +553,8 @@ def main() -> None:
     p = sub.add_parser("run")
     p.add_argument("run_id")
     p.add_argument("--tracing-plugin-dir", required=True)
-    p.add_argument("--cli-bin", default=str(DEFAULT_CLI))
-    p.add_argument("--env-file", default="/Users/jacobkleiman/Documents/skills/.env")
+    p.add_argument("--cli-bin")
+    p.add_argument("--env-file")
     p.add_argument("--print-config", action="store_true")
     p.set_defaults(action=run)
     p = sub.add_parser("replay")

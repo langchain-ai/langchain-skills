@@ -19,35 +19,29 @@ shared dataset-linked experiment project, distinguished by `eval_task`,
 ## Runtime setup
 
 Use the Python in the Harbor tool environment. The current integration is
-version-bound to Harbor 0.18.0, `harbor-langsmith` 0.2.0, and the maintained
-Claude adapter patch from `skills-benchmarks/scripts/patch_harbor.py`. It uses
+version-bound to Harbor 0.18.0, `harbor-langsmith` 0.2.0, and the vendored
+Claude adapter patch in `evals/patch_harbor.py`. It uses
 the Claude `langsmith-tracing` plugin from that repo until the plugin is
 packaged independently. `check` verifies the installed versions and adapter
 markers without contacting LangSmith. The task stages the previously verified
 Linux LangSmith CLI binary from the November 7 study; use `--cli-bin` to select
 another verified Linux binary.
 
-Credentials stay in environment variables. The LangChain Inc workspace
-configuration is `/Users/jacobkleiman/Documents/skills/.env` and supplies
-`LANGSMITH_API_KEY` and `WORKSPACE_ID`. The gateway credential is referenced from
-`/Users/jacobkleiman/Documents/projects/juji/api/.env` as in the prior tracing
-guide. Never print, copy, or commit either file's values. In a local shell:
+Credentials stay in environment variables. Supply `LANGSMITH_API_KEY`,
+`WORKSPACE_ID`, and `ANTHROPIC_API_KEY` from your local credential store. The
+Anthropic key must have access to the LangSmith gateway. Never print, copy, or
+commit credential values. In a local shell, after loading your credential store:
 
 ```bash
-source ~/.zshrc
-set -a
-source /Users/jacobkleiman/Documents/projects/juji/api/.env
-source /Users/jacobkleiman/Documents/skills/.env
-set +a
-export ANTHROPIC_API_KEY="$GATEWAY_API_KEY"
 export ANTHROPIC_BASE_URL="https://gateway.smith.langchain.com/anthropic"
+export LANGSMITH_LINUX_CLI="/path/to/verified/linux/langsmith"
+export HARBOR_PY="$(uv tool dir)/harbor/bin/python"
 ```
 
 The shared project must be linked to a dataset. Once its name is chosen,
 create or validate it in the selected workspace with:
 
 ```bash
-HARBOR_PY=/Users/jacobkleiman/.local/share/uv/tools/harbor/bin/python
 $HARBOR_PY evals/harness.py bootstrap \
   --project-name <shared-project-name> \
   --dataset-name <shared-dataset-name>
@@ -73,7 +67,6 @@ fixtures outside `environment/`.
 From this checkout, first resolve each profile without a paid trial:
 
 ```bash
-HARBOR_PY=/Users/jacobkleiman/.local/share/uv/tools/harbor/bin/python
 $HARBOR_PY evals/harness.py check --task chained-eval --profile full
 ```
 
@@ -88,11 +81,11 @@ $HARBOR_PY evals/harness.py prepare --task chained-eval --profile full \
 `prepare` prints the run ID, creates one target project, and emits only the seed
 conversations. It never creates an evaluator or judge. Before running, verify
 that the Claude tracing plugin directory exists. The `run` command uses the
-same credential file by path and keeps all job artifacts under ignored
+same environment credentials and keeps all job artifacts under ignored
 `evals/jobs/<run-id>/`:
 
 ```bash
-PLUGIN=/Users/jacobkleiman/Documents/skills/skills-benchmarks/scaffold/plugins/langsmith-tracing
+PLUGIN=/path/to/skills-benchmarks/scaffold/plugins/langsmith-tracing
 $HARBOR_PY evals/harness.py run <run-id> \
   --tracing-plugin-dir "$PLUGIN" --print-config
 $HARBOR_PY evals/harness.py run <run-id> \
@@ -148,3 +141,38 @@ Workspace-wide annotation queues and Insights configurations are outside this
 automatic cleanup boundary; inspect and remove those by their exact IDs if an
 agent created them. Do not run cleanup merely because a trial failed: its
 target project and local JSONL may be needed for diagnosis.
+
+## Scheduled GitHub Action
+
+`.github/workflows/skills-evals.yml` runs the three profiles sequentially at
+9:00 AM Sunday in `America/New_York`. GitHub evaluates schedules from the
+repository's default branch, so merge the workflow there to activate the
+schedule. `workflow_dispatch` also permits a manual run. The action checks out
+the current `skill-restructure` branch for the skills and the default branch
+for the harness and task definitions. Changes to a skill on `skill-restructure`
+or a task on the default branch appear in the next run without editing the
+workflow.
+
+Configure these GitHub Actions secrets in the `langchain-ai/langchain-skills`
+repository: `LANGSMITH_API_KEY` for the LangChain Inc workspace,
+`LANGSMITH_WORKSPACE_ID`, and `LANGSMITH_GATEWAY_API_KEY`. Configure the
+repository variable `PUBLIC_SKILL_EVALS_PROJECT_ID` with the UUID of the
+long-lived, dataset-linked `public-skill-evals` project. No local credential
+path is needed by the hosted runner. The workflow pins Harbor, the tracing
+plugin revision, the Linux LangSmith CLI checksum, and its GitHub Actions.
+
+The Action uploads only `skill-eval-summary.json`, containing aggregate cost,
+latency, tool count, feedback count, trace nesting, validator outcomes, and run
+IDs. Workflow logs, artifacts, task prompts, synthetic fixtures, and this
+repository are public; do not put confidential content in task definitions.
+Raw Claude transcripts, Harbor trajectories, and complete reports stay on the
+ephemeral runner while it runs and are **not** uploaded as Actions artifacts.
+The shared LangSmith project retains granular traces with
+`eval_task`, `eval_profile`, `eval_run_id`, and `eval_skill_sha` metadata for
+private inspection. A run's temporary task project is deleted after its live
+report is saved. On an earlier failure, the project is left for diagnosis;
+the summary records its run and target project IDs when available. The hosted
+runner's manifest is ephemeral, so inspect and remove that exact project in
+LangSmith after diagnosing a cloud failure. For durable access to raw cloud
+transcripts and trajectories, configure a private artifact store; GitHub Pages
+does not provide that storage boundary for this public repo.

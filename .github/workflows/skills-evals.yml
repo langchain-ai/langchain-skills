@@ -1,0 +1,146 @@
+name: public skill evals
+
+on:
+  schedule:
+    # 9 AM America/New_York is 13:00 UTC in summer and 14:00 UTC in winter.
+    - cron: "0 13 * * 0"
+    - cron: "0 14 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-skill-evals
+  cancel-in-progress: false
+
+jobs:
+  chained-eval:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Select Sunday 9 AM in New York
+        id: slot
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from datetime import datetime, timezone
+          from zoneinfo import ZoneInfo
+
+          if os.environ["EVENT_NAME"] == "workflow_dispatch":
+              selected = True
+          else:
+              today = datetime.now(timezone.utc).date()
+              local_nine = datetime(today.year, today.month, today.day, 9, tzinfo=ZoneInfo("America/New_York"))
+              expected_hour = local_nine.astimezone(timezone.utc).hour
+              selected = os.environ["SCHEDULE"].split()[1] == str(expected_hour)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"run={str(selected).lower()}\n")
+          PY
+
+      - name: Check out harness from the default branch
+        if: steps.slot.outputs.run == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: harness-source
+          persist-credentials: false
+
+      - name: Check out the latest skill revision
+        if: steps.slot.outputs.run == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: skill-restructure
+          path: target-source
+          persist-credentials: false
+
+      - name: Check out pinned Claude tracing plugin
+        if: steps.slot.outputs.run == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: langchain-ai/skills-benchmarks
+          ref: 9cb5575863c770df403e293490b37e4e8beeccc1
+          path: deps/skills-benchmarks
+          persist-credentials: false
+
+      - name: Stage harness with the target skills
+        if: steps.slot.outputs.run == 'true'
+        run: |
+          mkdir -p target-source/evals
+          rsync -a --delete harness-source/evals/ target-source/evals/
+
+      - name: Set up Python
+        if: steps.slot.outputs.run == 'true'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up uv
+        if: steps.slot.outputs.run == 'true'
+        uses: astral-sh/setup-uv@eb1897b8dc4b5d5bfe39a428a8f2304605e0983c # v7.0.0
+        with:
+          version: '0.11.24'
+
+      - name: Protect dependency installation
+        if: steps.slot.outputs.run == 'true'
+        uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f
+        with:
+          mode: firewall-free
+
+      - name: Install pinned Harbor and patch tracing
+        if: steps.slot.outputs.run == 'true'
+        run: |
+          sfw uv tool install 'harbor[langsmith]==0.18.0' --with 'harbor-langsmith==0.2.0' --python 3.13
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/harbor" --version
+          PATH="$HOME/.local/bin:$PATH" python3 target-source/evals/patch_harbor.py
+
+      - name: Install verified Linux LangSmith CLI
+        if: steps.slot.outputs.run == 'true'
+        run: |
+          archive="$RUNNER_TEMP/langsmith_linux_amd64.tar.gz"
+          curl --fail --location --retry 3 --silent --show-error \
+            --output "$archive" \
+            https://github.com/langchain-ai/langsmith-cli/releases/download/v0.3.13/langsmith_linux_amd64.tar.gz
+          printf '%s  %s\n' '71c6f405f08fc0ccf7267a625b9040451bef85830f304bc6139c2d9f6dee0e7b' "$archive" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/skill-eval-bin"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/skill-eval-bin" langsmith
+          chmod 0755 "$RUNNER_TEMP/skill-eval-bin/langsmith"
+          echo "$RUNNER_TEMP/skill-eval-bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/skill-eval-bin/langsmith" --version
+
+      - name: Run Harbor profiles in LangSmith Sandboxes
+        if: steps.slot.outputs.run == 'true'
+        env:
+          LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+          WORKSPACE_ID: ${{ secrets.LANGSMITH_WORKSPACE_ID }}
+          LANGSMITH_WORKSPACE_ID: ${{ secrets.LANGSMITH_WORKSPACE_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.LANGSMITH_GATEWAY_API_KEY }}
+          ANTHROPIC_BASE_URL: https://gateway.smith.langchain.com/anthropic
+          EVAL_TRACE_PROJECT_ID: ${{ vars.PUBLIC_SKILL_EVALS_PROJECT_ID }}
+        run: |
+          for name in LANGSMITH_API_KEY WORKSPACE_ID ANTHROPIC_API_KEY EVAL_TRACE_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required Actions secret or variable: $name" >&2
+              exit 1
+            fi
+          done
+          harbor_python="$(uv tool dir)/harbor/bin/python"
+          "$harbor_python" target-source/evals/ci_runner.py \
+            --task chained-eval \
+            --profiles none full mcp-only \
+            --trace-project-id "$EVAL_TRACE_PROJECT_ID" \
+            --cli-bin "$RUNNER_TEMP/skill-eval-bin/langsmith" \
+            --tracing-plugin-dir "$GITHUB_WORKSPACE/deps/skills-benchmarks/scaffold/plugins/langsmith-tracing" \
+            --summary-path "$RUNNER_TEMP/skill-eval-summary.json"
+
+      - name: Upload sanitized summary only
+        if: always() && steps.slot.outputs.run == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: skill-eval-summary-${{ github.run_id }}
+          path: ${{ runner.temp }}/skill-eval-summary.json
+          if-no-files-found: ignore
+          retention-days: 30
