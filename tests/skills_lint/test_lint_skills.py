@@ -137,6 +137,30 @@ class FrontmatterTests(LintTestCase):
         self.assertEqual(lint.parse_frontmatter("---\nname: example\n"), {})
 
 
+class SkillPrefixTests(LintTestCase):
+    def test_prefixed_directory_and_name_pass(self):
+        self.skill = self.skills / "langchain-example/SKILL.md"
+        self.skill.parent.mkdir()
+        self.write_skill("langchain-example")
+        self.assertEqual(lint.check_skill_prefix(self.skill), [])
+
+    def test_unprefixed_directory_blocks(self):
+        self.write_skill("langchain-example")
+        findings = lint.check_skill_prefix(self.skill)
+        self.assertEqual([f.rule for f in findings], ["skill-prefix"])
+        self.assertIn("directory", findings[0].message)
+        self.assertEqual(findings[0].severity, lint.BLOCK)
+
+    def test_unprefixed_frontmatter_name_blocks(self):
+        self.skill = self.skills / "langchain-example/SKILL.md"
+        self.skill.parent.mkdir()
+        self.write_skill("example")
+        findings = lint.check_skill_prefix(self.skill)
+        self.assertEqual([f.rule for f in findings], ["skill-prefix"])
+        self.assertIn("frontmatter name", findings[0].message)
+        self.assertEqual(findings[0].severity, lint.BLOCK)
+
+
 @unittest.skipUnless(shutil.which("claude"), "Claude CLI integration requires the CI-pinned CLI")
 class ClaudeIntegrationTests(LintTestCase):
     def test_valid_comments_pass_both_validators(self):

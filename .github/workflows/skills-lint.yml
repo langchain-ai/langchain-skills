@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -32,3 +33,41 @@ jobs:
         run: uv run --no-project --python 3.11 python -m unittest discover -s tests/skills_lint -v
 
       - run: uv run --no-project scripts/lint_skills.py
+
+      - name: Check plugin release version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            uv run --no-project scripts/check_plugin_versions.py --base "$BASE_SHA"
+          else
+            uv run --no-project scripts/check_plugin_versions.py
+          fi
+
+      - name: Smoke test linked and copied installs
+        run: bash tests/test_install.sh
+
+  windows-install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Smoke test Windows installer
+        shell: pwsh
+        run: |
+          $project = Join-Path $env:RUNNER_TEMP 'skills-install-test'
+          New-Item -ItemType Directory -Path (Join-Path $project '.agents/skills/unrelated') -Force | Out-Null
+          Set-Content -Path (Join-Path $project '.agents/skills/unrelated/marker') -Value 'keep'
+          ./install.ps1 -Project $project -Agent codex -Yes
+          ./install.ps1 -Project $project -Agent codex -Yes -Force
+          if (-not (Test-Path (Join-Path $project '.agents/skills/langchain-build-agent/SKILL.md'))) {
+            throw 'Codex skill was not copied'
+          }
+          if (-not (Test-Path (Join-Path $project '.agents/skills/unrelated/marker'))) {
+            throw 'Installer changed unrelated content'
+          }
+          ./install.ps1 -Project $project -Agent dcode -Yes
+          if (-not (Test-Path (Join-Path $project '.deepagents/skills/langchain-build-agent/SKILL.md'))) {
+            throw 'Deep Agents Code skill was not copied'
+          }

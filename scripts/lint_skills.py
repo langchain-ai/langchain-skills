@@ -270,6 +270,24 @@ def check_skill(root: Path, skill: Path) -> list[Finding]:
     return findings
 
 
+def check_skill_prefix(skill: Path) -> list[Finding]:
+    findings = []
+    prefix = "langchain-"
+    if not skill.parent.name.startswith(prefix):
+        findings.append(
+            Finding(BLOCK, "skill-prefix", skill, 2,
+                    f"skill directory '{skill.parent.name}' must start with '{prefix}'")
+        )
+
+    declared = parse_frontmatter(skill.read_text(encoding="utf-8")).get("name")
+    if declared and not declared.startswith(prefix):
+        findings.append(
+            Finding(BLOCK, "skill-prefix", skill, 2,
+                    f"frontmatter name '{declared}' must start with '{prefix}'")
+        )
+    return findings
+
+
 def check_document(root: Path, path: Path) -> list[Finding]:
     text = path.read_text(encoding="utf-8")
     findings = []
@@ -344,6 +362,7 @@ def main() -> int:
     findings += check_token_cost(root, plugin_name, skills)
     for skill in skills:
         findings += check_skill(root, skill)
+        findings += check_skill_prefix(skill)
     for document in documents:
         findings += check_document(root, document)
 

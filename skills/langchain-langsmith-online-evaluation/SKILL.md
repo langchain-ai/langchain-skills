@@ -1,5 +1,5 @@
 ---
-name: langsmith-online-evaluation
+name: langchain-langsmith-online-evaluation
 description: Use when designing or improving LangSmith online evaluations for production runs or threads. Guides what to score, when to use a decision model, and when to chain a targeted LLM judge.
 ---
 

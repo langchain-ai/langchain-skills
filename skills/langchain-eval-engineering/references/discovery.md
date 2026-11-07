@@ -109,7 +109,7 @@ with `runs list` or `threads list` and `threads get`. Use `runs export` for a
 repeatable JSONL snapshot when needed. Check authentication with
 `langsmith auth info`, pin the target with `--workspace`, request `--format json`
 for parsed list or get output, and consult each command's `--help` for filters.
-For agent-based tracing, use `langsmith-agent-ia` to resolve the agent environment
+For agent-based tracing, use `langchain-langsmith-agent-ia` to resolve the agent environment
 to a session ID before project-scoped queries. Keep raw exports out of the
 repository and Harbor Tasks; synthesize privacy-safe scenarios from them.
 

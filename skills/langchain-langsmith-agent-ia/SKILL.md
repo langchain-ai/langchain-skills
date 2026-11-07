@@ -1,5 +1,5 @@
 ---
-name: langsmith-agent-ia
+name: langchain-langsmith-agent-ia
 description: Work in a LangSmith agent-based workspace when traces, datasets, evaluations, or deployments need to be placed under the right agent and environment. Use for IA setup, navigation problems, and migration from project-based tracing, including when "projects became agents", datasets or evaluators seem to have disappeared, there are duplicate agents per tier or script ("agent sprawl"), or the user asks about LANGSMITH_AGENT_ID, LANGSMITH_AGENT_ENVIRONMENT, agent addressing, or binding a deployment to an environment. Not for unrelated evaluation design or workspaces that still use project-based IA.
 ---
 

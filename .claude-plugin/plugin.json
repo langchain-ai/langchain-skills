@@ -1,6 +1,6 @@
 {
   "name": "langchain-skills",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
   "author": {
     "name": "LangChain",
@@ -9,5 +9,10 @@
   "repository": "https://github.com/langchain-ai/langchain-skills",
   "license": "MIT",
   "keywords": ["langchain", "langgraph", "deep-agents", "ai-agents", "rag"],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "extensions": {
+    "com.langchain.deepagents.code": {
+      "autoUpdate": true
+    }
+  }
 }

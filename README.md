@@ -13,14 +13,15 @@ a skill and keep the guidance current.
 ## Supported Coding Agents
 
 For agents that support the [Agent Skills specification](https://skills.sh),
-including Claude Code, Cursor, and Windsurf, the skills can also be installed
-without the plugin via [`npx skills`](https://github.com/vercel-labs/skills).
+including Deep Agents Code, Claude Code, Cursor, and Windsurf, the skills can
+also be installed without the plugin via
+[`npx skills`](https://github.com/vercel-labs/skills).
 
 ## Installation
 
 ### Plugin install (recommended)
 
-The plugin bundles all four skills with the official LangChain documentation and
+The plugin bundles the skills with the official LangChain documentation and
 API-reference MCP connections. The skills also work when MCP is unavailable.
 
 #### Claude Code
@@ -37,9 +38,51 @@ codex plugin marketplace add langchain-ai/langchain-skills
 codex plugin add langchain-skills@langchain-skills
 ```
 
+#### Deep Agents Code
+
+```bash
+dcode plugin marketplace add langchain-ai/langchain-skills
+dcode plugin install langchain-skills@langchain-skills
+```
+
 These commands install from the repository's default branch. To test an
 unmerged branch, add its local checkout as a Claude Code marketplace source or
-use Codex's `--ref` option when adding the marketplace.
+use Codex's `--ref` option when adding the marketplace. Deep Agents Code also
+accepts a local marketplace directory.
+
+#### Updates
+
+Plugin updates use the same marketplace source as the initial install. After a
+new release, start a new agent session to load the updated skills.
+
+- **Claude Code:** Open `/plugin` → **Marketplaces**, select
+  `langchain-skills`, and choose **Enable auto-update**. Claude Code leaves
+  auto-update off for third-party marketplaces until you enable it. For an
+  immediate update, run `/plugin marketplace update langchain-skills`.
+- **Codex local install:** Run
+  `codex plugin marketplace upgrade langchain-skills` to refresh the Git
+  marketplace and its installed plugin. Local Git marketplace installs do not
+  currently have a documented auto-update setting.
+- **Managed ChatGPT/Codex workspace:** A workspace admin can import this GitHub
+  marketplace from **Admin → Plugins**. Imported marketplaces sync daily, and
+  admins can select **Sync now** for an immediate refresh.
+- **Deep Agents Code:** The plugin opts in to background updates. After an
+  update, run `/reload` or start a new session. Users can disable background
+  updates in their Deep Agents Code configuration.
+
+Each release that changes a bundled skill or plugin file increases the plugin
+version. CI checks that the versions in `plugin.json`, both compatibility
+manifests, and `pyproject.toml` agree and that changed plugin content has a new
+version. A new version on `main` automatically creates a GitHub release with
+generated release notes. Skills-only installs follow their own update paths:
+
+- **`npx skills`:** Run `npx skills update`, then start a new agent session.
+- **Cloned checkout, default linked install:** Run `git pull` in the checkout,
+  then start a new agent session. Existing linked skills update immediately;
+  rerun the installer to add newly introduced skills. Keep the checkout at the
+  same path so the installed links remain valid.
+- **Cloned checkout, copied install:** Run `git pull`, rerun the installer with
+  `--copy --force` (or `-Force` on Windows), then start a new agent session.
 
 Plugin installation registers two documentation MCP servers:
 
@@ -68,8 +111,7 @@ through the SDK.
 
 The user's coding-agent or workspace policy may disable MCP servers. In that
 case, use official web documentation, installed package source and types, and
-CLI help to verify implementation details. `langchain-eval-engineering` also
-retains its bundled workflow references.
+CLI help to verify implementation details.
 
 ### Skills-only install
 
@@ -91,40 +133,63 @@ To link skills to a specific agent (e.g. Claude Code):
 npx skills add langchain-ai/langchain-skills --agent claude-code --skill '*' --yes --global
 ```
 
+For Deep Agents Code, use `--agent deepagents` instead.
+
 `npx skills` installs the skills but does not register MCP servers. Allow web
 access to official documentation or rely on installed package source, types,
 and CLI help when working offline.
 
 ---
 
-### Install Script (Claude Code & Deep Agents CLI only)
+### Install from a cloned checkout
 
-Alternatively, clone the repo and use the install script. This copies the four
-skills but does not register the documentation MCP servers:
+Alternatively, clone the repo and use an installer. On macOS/Linux, it links
+the skills to the checkout by default. Use `--copy` when the checkout
+will not remain on the machine. The installers do not register the
+documentation MCP servers:
 
 ```bash
-# Install for Claude Code in current directory (default)
+# Install for Claude Code in the current project (default)
 ./install.sh
 
-# Install for Claude Code in a specific project directory
+# Install for Claude Code in a specific project
 ./install.sh ~/my-project
 
-# Install for Claude Code globally
+# Install for Codex or Cursor
+./install.sh --codex ~/my-project
+./install.sh --cursor ~/my-project
+
+# Install for Deep Agents Code
+./install.sh --dcode ~/my-project
+
+# Install globally
 ./install.sh --global
 
-# Install for Deep Agents CLI in a specific project directory
-./install.sh --deepagents ~/my-project
-
-# Install for Deep Agents CLI globally (includes agent persona)
+# Install into a custom Deep Agents Code agent with a bundled persona
 ./install.sh --deepagents --global
 ```
+
+On Windows, PowerShell copies skills by default. Use `-Link` to link them
+instead; Windows Developer Mode or an elevated shell may be required:
+
+```powershell
+.\install.ps1 -Project C:\path\to\my-project -Agent codex -Yes
+.\install.ps1 -Global -Agent dcode -Link -Yes
+```
+
+Deep Agents Code may ask you to trust a linked skill whose checkout is outside
+the project. Use a copied install for headless sessions that cannot show that
+prompt.
 
 | Flag / Argument | Description |
 |------|-------------|
 | `DIRECTORY` | Target project directory (default: current directory, ignored with `--global`) |
 | `--claude` | Install for Claude Code (default) |
-| `--deepagents` | Install for Deep Agents CLI |
+| `--codex`, `--cursor` | Install skills for Codex or Cursor |
+| `--dcode` | Install for the default Deep Agents Code agent |
+| `--deepagents` | Install for a custom Deep Agents Code agent named `langchain_agent` |
 | `--global`, `-g` | Install globally instead of current directory |
+| `--copy` | Copy skills instead of linking to the checkout |
 | `--force`, `-f` | Overwrite skills with same names as this package |
 | `--yes`, `-y` | Skip confirmation prompts |
 
@@ -142,40 +207,6 @@ and evaluation runs.
 Run your coding agent from the directory where you installed the skills (for
 local installs), or from anywhere (for global installs).
 
-### Eval Engineering
-
-To install only the langchain-eval-engineering skill:
-
-```bash
-npx skills add langchain-ai/langchain-skills --skill langchain-eval-engineering --yes
-```
-
-Or ask Codex: “Install the `langchain-eval-engineering` skill from `langchain-ai/langchain-skills`.”
-
-Eval tasks require [Harbor](https://www.harborframework.com/docs). Run Harbor locally with Docker or use a supported cloud environment.
-
-Then ask your coding agent:
-
-```text
-Use the langchain-eval-engineering skill to create a new eval Task for this project. Review the current repository and existing evals. Traces for this agent can be found here [optional Tracing Project/Location].
-```
-
-## Available Skills (4)
-
-- **langchain-build-agent** - Latest guidance for building or modifying applications with Deep Agents, LangGraph, and LangChain: architecture, middleware, memory, human review, composition, and retrieval. Uses current documentation for implementation details.
-- **langchain-eval-engineering** - Design and audit Harbor Tasks while building reusable project World knowledge with human review.
-- **langsmith-agent-ia** - Place traces, datasets, online evaluations, and deployments under the right LangSmith agent and environment; diagnose visibility and migration issues.
-- **langsmith-online-evaluation** - Design and operate production evaluations, including broad decision-model checks and optional targeted LLM judging.
-
-For LangSmith Custom Apps, use the bundled documentation MCP and the CLI
-scaffold’s generated `AGENTS.md` for the current app contract.
-
-The framework, Deep Agents, LangGraph, memory, human-in-the-loop, composition,
-middleware, and retrieval skills are consolidated into `langchain-build-agent`.
-When updating an existing skills-only installation, remove the superseded skill
-folders so the coding agent does not continue loading their older guidance.
-Remove an older `langsmith-skills` installation when switching to this combined
-plugin so its previous skill copies do not compete with the new guidance.
-Remove an existing `langchain-langsmith` skill installation as well; it is no
-longer bundled with this plugin.
-Remove an existing `langsmith-experiment-diagnosis` skill installation too.
+For the current inventory, browse the [skills directory](skills/) or list the
+skills in your agent. Remove superseded skill folders from older installations
+so the agent does not keep loading outdated guidance.

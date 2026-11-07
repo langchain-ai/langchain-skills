@@ -1,0 +1,45 @@
+name: plugin-release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plugin-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Validate plugin version
+        env:
+          BASE_SHA: ${{ github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            python3 scripts/check_plugin_versions.py --base "$BASE_SHA"
+          else
+            python3 scripts/check_plugin_versions.py
+          fi
+
+      - name: Publish release for a new version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("plugin.json"))["version"])')"
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists."
+            exit 0
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --generate-notes
