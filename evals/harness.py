@@ -468,6 +468,10 @@ def report(args: argparse.Namespace) -> None:
             if monotonic() >= deadline:
                 break
             sleep(min(args.poll_seconds, max(0, deadline - monotonic())))
+        if data["task"] == "chained-eval":
+            from validators import collect, validate
+
+            summary["validators"] = validate(collect(data, ls), data["target_project_id"])
         summary["inspected_at"] = datetime.now(timezone.utc).isoformat()
     report_path = manifest_path(args.run_id).with_name("report.json")
     report_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")

@@ -105,11 +105,28 @@ class CleanupTests(unittest.TestCase):
             "trace_project_id": self.trace_id,
             "held_out_count": 1,
             "live": {"traces": []},
+            "validators": {"evidence": {"rules": [], "insights_configs": [], "insights_jobs": []}},
             "inspected_at": "2026-11-07T12:00:00+00:00",
         }
         (self.jobs / self.run_id / "report.json").write_text(json.dumps(report))
         cleanup.cleanup_runs([self.run_id], execute=True)
         self.assertEqual(self.ls.deleted, [self.target_id])
+
+    def test_requires_configuration_evidence_before_cleanup(self) -> None:
+        self.data["held_out_run_ids"] = [str(uuid4())]
+        harness.save_manifest(self.data)
+        report = {
+            "run_id": self.run_id,
+            "target_project_id": self.target_id,
+            "trace_project_id": self.trace_id,
+            "held_out_count": 1,
+            "live": {"traces": []},
+            "inspected_at": "2026-11-07T12:00:00+00:00",
+        }
+        (self.jobs / self.run_id / "report.json").write_text(json.dumps(report))
+        with self.assertRaisesRegex(ValueError, "matching live report"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted, [])
 
 
 if __name__ == "__main__":

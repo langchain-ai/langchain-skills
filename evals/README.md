@@ -5,7 +5,8 @@ LangSmith Sandboxes. `profiles.json` defines treatment profiles; each directory
 under `tasks/` defines one task. The first task, `chained-eval`, preserves the
 exact prompt and synthetic conversations from the November 7, 2026 exploratory
 study. It has no preset evaluator or automated score. The report describes what
-the agent built and what feedback appeared on fresh conversations.
+the agent built and what feedback appeared on fresh conversations, then checks
+the resulting evaluator chain and Insights job configuration.
 
 The `none`, `full`, and `mcp-only` profiles are the supported comparison. `full`
 copies the current `skills/` tree, so a newly added skill participates without
@@ -113,6 +114,17 @@ held-out feedback, and whether `Claude Code Turn` spans are descendants of
 trajectory for deeper review. Successful tracing requires Node in the task
 image, the patched adapter, the tracing plugin, and a completed Stop-hook flush.
 
+For `chained-eval`, the live report also records three configuration checks in
+`validators`: one enabled decision-model evaluator and one enabled LLM judge
+with distinct IDs; a run-level judge filter referring to the decision model's
+feedback key and a distinct judge feedback key; and a persisted Insights job
+whose saved filter selects the judge key with `feedback_score = 1`. The report
+keeps only resource IDs, feedback keys, filters, and type evidence. These checks
+do not require feedback to arrive, a particular decision-model score, or the
+Insights job to finish. A failed check is a regression to inspect; it does not
+prevent the report from being saved. A local `langsmith` CLI must be on `PATH`
+for the Insights queries.
+
 ## Cleanup and retention
 
 The manifest records exact project and run IDs. After saving a live report for
@@ -128,6 +140,7 @@ $HARBOR_PY evals/cleanup.py --all
 `--all --execute` deletes every eligible target project recorded in this
 checkout, so inspect its dry-run list first. The legacy
 `harness.py cleanup <run-id>` command follows the same checks. Cleanup verifies
+that the chained-eval report captured configuration evidence, then verifies
 the live project's ID, name, workspace, and run description before deleting
 it. It preserves the shared trace project, dataset, baseline projects from the
 prior study, and local artifacts.

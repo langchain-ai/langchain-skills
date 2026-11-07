@@ -50,6 +50,7 @@ def validate_manifest(run_id: str, data: dict) -> None:
             or report.get("held_out_count") != len(data["held_out_run_ids"])
             or not isinstance(report.get("live"), dict)
             or not report.get("inspected_at")
+            or (data["task"] == "chained-eval" and not isinstance(report.get("validators", {}).get("evidence"), dict))
         ):
             raise ValueError(f"{run_id}: a matching live report is required before cleanup")
         replayed_at = data.get("replayed_at")
