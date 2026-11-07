@@ -1,6 +1,11 @@
 ---
 name: langchain-build-agent
 description: "Provides the latest guidance for building or modifying LLM applications with the LangChain open source libraries: Deep Agents, LangGraph, and LangChain, including how the libraries best fit together. The stack evolves quickly, so it's important to verify prior knowledge against this guidance. Also covers when Managed Deep Agents fits."
+allowed-tools:
+  - mcp__plugin_langchain-skills_langchain-docs__search_docs_by_lang_chain
+  - mcp__plugin_langchain-skills_langchain-docs__query_docs_filesystem_docs_by_lang_chain
+  - mcp__plugin_langchain-skills_langchain-reference__search_api
+  - mcp__plugin_langchain-skills_langchain-reference__get_symbol
 ---
 
 # Build and modify LangChain applications
@@ -91,10 +96,24 @@ availability and version alongside LangChain and LangGraph when building an agen
 these are separate packages. Verify the APIs you intend to use against the
 installed versions.
 
-Use the official guides MCP to find the intended implementation pattern, then
-the API-reference MCP to verify the symbols, parameters, return values, and
-defaults you will use. Search for the task's capability and language; read the
-relevant sections instead of collecting whole manuals.
+Retrieve documentation in this order, searching for the task's capability and
+language rather than collecting whole manuals:
+
+1. **Pattern** from the `langchain-docs` server: `search_docs_by_lang_chain`,
+   then read the relevant page with `query_docs_filesystem_docs_by_lang_chain`
+   before implementing from a search excerpt.
+2. **Contract** from the `langchain-reference` server: `search_api`, then
+   `get_symbol` for each symbol, parameter, return value, and default you will
+   use. Guides show intended usage; the reference is authoritative for
+   signatures.
+3. **Installed version**: reconcile both against the installed package before
+   writing code.
+
+When guidance from these servers conflicts with this skill on architecture, such
+as which agent builder to start from, follow this skill and verify the API
+details in the docs. When a page is wrong or contradicts the installed package,
+offer to report it with the docs server's `submit_feedback`; send it only with
+the user's agreement.
 
 If the MCPs are unavailable, locate official pages through
 https://docs.langchain.com/llms.txt and https://reference.langchain.com/llms.txt.
