@@ -1,0 +1,19 @@
+skills/langsmith-online-evaluation/references/chained-eval-cli-setup.md
+  s_f7d01e5ded9115::t_1025772aefca9c 9,16-17,19-23,26-27,29,35-36,41,129,175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "236fac89b5919c9bd42d14c1ffbcd86a7709a2d9",
+  "prompts": {},
+  "sessions": {
+    "s_f7d01e5ded9115": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9396f8f7-0c97-4fd3-bb0f-677f21d84c69",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

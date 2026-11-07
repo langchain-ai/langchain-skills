@@ -1,0 +1,41 @@
+plugin.json
+  s_731e6774cfc6ce::t_5626e78d80dda4 5
+.claude-plugin/plugin.json
+  s_731e6774cfc6ce::t_5626e78d80dda4 4
+.codex-plugin/plugin.json
+  s_731e6774cfc6ce::t_feea3db71b982d 17
+  s_731e6774cfc6ce::t_5626e78d80dda4 4,18
+config/AGENTS.md
+  s_731e6774cfc6ce::t_98c8f714b4baad 11
+  s_731e6774cfc6ce::t_5aaf6bc0316e5b 13-16
+  s_731e6774cfc6ce::t_feea3db71b982d 1
+  s_731e6774cfc6ce::t_ff04d036e1cdc3 18,20-22
+.claude-plugin/marketplace.json
+  s_731e6774cfc6ce::t_5626e78d80dda4 8,14
+README.md
+  s_731e6774cfc6ce::t_5626e78d80dda4 6-8
+  s_731e6774cfc6ce::t_84bea8b0993a1b 70-72,94-96
+  s_731e6774cfc6ce::t_98c8f714b4baad 20,102
+  s_731e6774cfc6ce::t_441625ca549e00 5,12-14,21,59,64,69,133-134
+  s_731e6774cfc6ce::t_544a97f391a5f4 37-40,103
+  s_731e6774cfc6ce::t_8285b3de96f3d5 61,66,135-142,162,165-168
+  s_731e6774cfc6ce::t_c9f74d2ee048e9 48-58,60,62-63,65,67-68,169,175-176
+pyproject.toml
+  s_731e6774cfc6ce::t_63ea5ca00239d3 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b3f8fda3784d54904d4e1ee0e36af3aa080100a5",
+  "prompts": {},
+  "sessions": {
+    "s_731e6774cfc6ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1d6-74f3-7771-96e2-6d7d03ee5e71",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+plugin.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 1-14
+tests/skills_lint/test_lint_skills.py
+  s_9b8b49824a1442::t_4c48fefa695f1c 27
+tsconfig.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 10,13
+.claude-plugin/marketplace.json
+  s_9b8b49824a1442::t_cd831ec801f574 8,14
+.codex-plugin/plugin.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 13
+  s_9b8b49824a1442::t_b3b2445f5882b2 1-12,14-24
+mcp.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 1-13
+vitest.config.ts
+  s_9b8b49824a1442::t_4c48fefa695f1c 12
+.mcp.json
+  s_9b8b49824a1442::t_b3b2445f5882b2 1-12
+README.md
+  s_9b8b49824a1442::t_b3b2445f5882b2 15-46,66-68
+install.sh
+  s_9b8b49824a1442::t_4c48fefa695f1c 175,177,191
+scripts/lint_skills.py
+  s_9b8b49824a1442::t_4c48fefa695f1c 5,326
+.claude-plugin/plugin.json
+  s_9b8b49824a1442::t_cd831ec801f574 4
+  s_9b8b49824a1442::t_4c48fefa695f1c 12
+skills/langchain-build-agent/SKILL.md
+  s_9b8b49824a1442::t_a388fdbaee1fdb 8-24
+skills/langchain-deep-agents/SKILL.md
+  s_9b8b49824a1442::t_546846231d69c5 8-24
+skills/langchain-framework/SKILL.md
+  s_9b8b49824a1442::t_214fc9a305fa80 8-24
+skills/langchain-human-in-the-loop/SKILL.md
+  s_9b8b49824a1442::t_b56dfcd0ce3110 8-24
+skills/langchain-langgraph-cli/SKILL.md
+  s_9b8b49824a1442::t_a6148bc07fb47c 8-24
+skills/langchain-langgraph/SKILL.md
+  s_9b8b49824a1442::t_38f6facadd0980 8-24
+skills/langchain-managed-deep-agents/SKILL.md
+  s_9b8b49824a1442::t_c37134fe6b0b86 8-24
+skills/langchain-memory-and-persistence/SKILL.md
+  s_9b8b49824a1442::t_6ed8e0ceaf8ee5 8-24
+skills/langchain-middleware/SKILL.md
+  s_9b8b49824a1442::t_d9e159aec0eb9d 14-30
+skills/langchain-retrieval-and-rag/SKILL.md
+  s_9b8b49824a1442::t_a8f135fb5a0ac9 8-24
+skills/langchain-subagents-and-composition/SKILL.md
+  s_9b8b49824a1442::t_dd94ad6111da88 15-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3370911a153cc34a5730a082b27d18c9d1260ddd",
+  "prompts": {},
+  "sessions": {
+    "s_9b8b49824a1442": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11308-b516-75e0-a8f8-cdca6cfde3db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

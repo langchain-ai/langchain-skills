@@ -1,0 +1,42 @@
+skills/langchain-build-agent/SKILL.md
+  s_f52806ea1f0d5c::t_17ef6e76953951 119,123-128
+  s_f52806ea1f0d5c::t_d81a3457685cad 129-130
+  s_f52806ea1f0d5c::t_ffc25fd67f5be3 132-149
+skills/langsmith-agent-ia/SKILL.md
+  s_f52806ea1f0d5c::t_332807589e260f 17
+  s_f52806ea1f0d5c::t_47417d84f5440c 19-20
+  s_f52806ea1f0d5c::t_5af90cc76e41dd 22-25
+  s_f52806ea1f0d5c::t_fce0d0c43ed064 44-48
+  s_f52806ea1f0d5c::t_a32ae93239697d 18
+  s_f52806ea1f0d5c::t_c9fc8fdd7cffef 199-217
+skills/langsmith-online-evaluation/SKILL.md
+  s_f52806ea1f0d5c::t_7149a4bda27d58 8-11
+  s_f52806ea1f0d5c::t_63d4d3bcea352e 93-116
+  s_f52806ea1f0d5c::t_f3c858f86bc071 16
+  s_f52806ea1f0d5c::t_14fde76df80de1 14-15
+skills/langchain-eval-engineering/references/discovery.md
+  s_f52806ea1f0d5c::t_3acc5b057bdfc4 29-31,107-114
+  s_f52806ea1f0d5c::t_861eb55b79c4f1 115
+README.md
+  s_f52806ea1f0d5c::t_7a0bf97f9ce2f8 44,51-55,57,137-143
+  s_f52806ea1f0d5c::t_5af52ff9330ce2 63-67
+  s_f52806ea1f0d5c::t_bfa6a7de90720a 135-136
+SKILLS_PHILOSOPHY.md
+  s_f52806ea1f0d5c::t_fce27dca0b5e67 6-7,11-15,33-52,57-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "128a8bef91993b78c61d9f0f7f8443ed18fc0bc2",
+  "prompts": {},
+  "sessions": {
+    "s_f52806ea1f0d5c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b249-981b-7120-b59b-1c189a78ecfa",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

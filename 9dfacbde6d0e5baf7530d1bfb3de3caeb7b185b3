@@ -1,0 +1,19 @@
+skills/langchain-langsmith/SKILL.md
+  s_731e6774cfc6ce::t_21a84236c6bdf4 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9dfacbde6d0e5baf7530d1bfb3de3caeb7b185b3",
+  "prompts": {},
+  "sessions": {
+    "s_731e6774cfc6ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1d6-74f3-7771-96e2-6d7d03ee5e71",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

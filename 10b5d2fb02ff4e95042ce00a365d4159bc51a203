@@ -1,0 +1,19 @@
+README.md
+  s_731e6774cfc6ce::t_cc61faf5e79a41 131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "10b5d2fb02ff4e95042ce00a365d4159bc51a203",
+  "prompts": {},
+  "sessions": {
+    "s_731e6774cfc6ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1d6-74f3-7771-96e2-6d7d03ee5e71",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

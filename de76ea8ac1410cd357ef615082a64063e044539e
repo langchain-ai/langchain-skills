@@ -1,0 +1,85 @@
+config/skills/deep-agents/SKILL.md
+  h_fe5ed23bcee8dc 1-77
+  h_fe5ed23bcee8dc 78-85
+README.md
+  h_fe5ed23bcee8dc 107,110,114,117-122,124,128,133
+config/AGENTS.md
+  h_fe5ed23bcee8dc 10,13-17,20,25,28,31-36
+config/skills/build-agent/SKILL.md
+  h_fe5ed23bcee8dc 1-112
+config/skills/deep-agents/references/harness-configuration.md
+  h_fe5ed23bcee8dc 1-131
+config/skills/deep-agents/references/python.md
+  h_fe5ed23bcee8dc 1-95
+config/skills/deep-agents/references/typescript.md
+  h_fe5ed23bcee8dc 1,3-6,8,15-17,19-24,28,30,34,36,39-41,43,45,47-53,55-57,59,61-62,65-68,71-74,77-78,80,82,84-95,97-98,100-101
+config/skills/eval-engineering/references/multi-turn-simulation/guide.md
+  h_fe5ed23bcee8dc 30-32,44
+config/skills/human-in-the-loop/SKILL.md
+  h_fe5ed23bcee8dc 2-3,6,8-12,14,16-21,23-25,27,29-34
+config/skills/human-in-the-loop/references/deep-agents.md
+  h_fe5ed23bcee8dc 1,3-5,7,12,15-20,23-26,29-32,36,40,48,51-54,57-58,63-66,68-71
+config/skills/human-in-the-loop/references/langchain.md
+  h_fe5ed23bcee8dc 1,3-5,7,10-11,14-15,18,20,24-26,31-42,44-45,49,51-52,55,60-62,67-70,73-75,79-82
+config/skills/human-in-the-loop/references/langgraph.md
+  h_fe5ed23bcee8dc 1,3-5,7-8,10,14,18-20,25-27,31-33,36,39-53,56-60,62-67,70,72-75,77-79,81-83,85-87
+config/skills/langchain-rag/SKILL.md
+  h_fe5ed23bcee8dc 3,6-65
+config/skills/langchain-rag/references/python.md
+  h_fe5ed23bcee8dc 1-153
+config/skills/langchain-rag/references/typescript.md
+  h_fe5ed23bcee8dc 1-119
+config/skills/langchain/SKILL.md
+  h_fe5ed23bcee8dc 1-62
+config/skills/langchain/references/python.md
+  h_fe5ed23bcee8dc 1-78
+config/skills/langchain/references/typescript.md
+  h_fe5ed23bcee8dc 1,3-6,8,13-16,19,22,24,28,30,34,36,39-42,44,48,50-51,56,60-62,65-70,73-74,76,78-83
+config/skills/langgraph/SKILL.md
+  h_fe5ed23bcee8dc 1-68
+config/skills/langgraph/references/python.md
+  h_fe5ed23bcee8dc 1,3-5,7,11-12,19-21,25,27,34-36,38,41-43,46-48,51-52,54,58,61-63,66-68,70,76,80-81,83,88-89,92-95,97-98
+config/skills/langgraph/references/typescript.md
+  h_fe5ed23bcee8dc 1,3-5,7,10-11,18-20,23,25,31-33,35,38-39,42,45,50-51,53,56,58-62,64,67-68,70,73,75-76,79-80,82,85,87-92,95-98,100-101
+config/skills/managed-deep-agents/SKILL.md
+  h_fe5ed23bcee8dc 3,8-10,12-13,15,17-23,25-27,29,31,33-37,39-42,44,46-49,51,53-58,60-61,63,65-69
+config/skills/managed-deep-agents/references/operations.md
+  h_fe5ed23bcee8dc 1-88
+config/skills/managed-deep-agents/references/project-setup.md
+  h_fe5ed23bcee8dc 1-111
+config/skills/managed-deep-agents/references/runtime-capabilities.md
+  h_fe5ed23bcee8dc 1,3,5,7-8,10-11,13-14,16-17,19-21,23-26,28,30-34,36-37,39,41-44,46-48,50,52-54,56-59,61-62,64,66,68-69,71-72,74-81,84,86,88-89,91-96,98-101,103-104,106,108-110,112-114,116-118,120,122-125,127-128,130,132-135
+config/skills/memory-and-persistence/SKILL.md
+  h_fe5ed23bcee8dc 1-36
+config/skills/memory-and-persistence/references/deep-agents.md
+  h_fe5ed23bcee8dc 1,3-5,7,9-17,19-22,24,31,33-38,42-43,45,48-54,56,59-64,68-69,71,73-76,78-80
+config/skills/memory-and-persistence/references/langchain.md
+  h_fe5ed23bcee8dc 1-62
+config/skills/memory-and-persistence/references/langgraph.md
+  h_fe5ed23bcee8dc 1-68
+config/skills/middleware/SKILL.md
+  h_fe5ed23bcee8dc 1-36
+config/skills/middleware/references/deep-agents.md
+  h_fe5ed23bcee8dc 1-35
+config/skills/middleware/references/langchain.md
+  h_fe5ed23bcee8dc 1-69
+config/skills/subagents-and-composition/SKILL.md
+  h_fe5ed23bcee8dc 1-36
+config/skills/subagents-and-composition/references/deep-agents.md
+  h_fe5ed23bcee8dc 1-54
+config/skills/subagents-and-composition/references/langchain.md
+  h_fe5ed23bcee8dc 1-66
+config/skills/subagents-and-composition/references/langgraph.md
+  h_fe5ed23bcee8dc 1-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "de76ea8ac1410cd357ef615082a64063e044539e",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

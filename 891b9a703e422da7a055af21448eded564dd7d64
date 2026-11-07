@@ -1,0 +1,18 @@
+scripts/lint_skills.py
+  h_fe5ed23bcee8dc 60-67,70-72,76-95,125-134,136,141-157,159-171,174,176-177
+.github/workflows/skills-lint.yml
+  h_fe5ed23bcee8dc 31-33
+tests/skills_lint/test_lint_skills.py
+  h_fe5ed23bcee8dc 1-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "891b9a703e422da7a055af21448eded564dd7d64",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

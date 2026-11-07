@@ -1,0 +1,56 @@
+SKILLS_PHILOSOPHY.md
+  s_731e6774cfc6ce::t_a0fbd48e69cb22 1-56
+skills/langsmith-agent-ia/SKILL.md
+  s_f52806ea1f0d5c::t_b64d62e32c6af7 6-9,11-13
+  s_f52806ea1f0d5c::t_4237e006292fef 44-45
+  s_f52806ea1f0d5c::t_9fb6593fd9fd3a 97-99
+  s_f52806ea1f0d5c::t_62f143394f242b 22-24,43,58-60,78,89
+  s_f52806ea1f0d5c::t_b5cb373bab115e 39-41,63-65,91-95,172-178,193-194
+  s_3d95654a054578::t_da1f7cbef27a76 3,29-30,32-38,42,48-51,62,69-76,79-84,90,96,100-109,112-123,127-151,155-171,179-186,189-192,195-201
+  s_f52806ea1f0d5c::t_f306a7fce53530 1-2,4-5,14-20,25-28,52-57,61,66-68,85-88,110-111,124-126,152-154,187-188
+  s_f52806ea1f0d5c::t_b2f1f77b6ac63e 21,46-47,77
+  s_f52806ea1f0d5c::t_31823318be501d 10,31
+README.md
+  s_731e6774cfc6ce::t_5ac71af661f8d7 53,183
+  s_f52806ea1f0d5c::t_f306a7fce53530 169
+  s_731e6774cfc6ce::t_a0fbd48e69cb22 10-12
+  s_731e6774cfc6ce::t_b2acf309bc2e6a 181-182
+config/AGENTS.md
+  s_731e6774cfc6ce::t_5ac71af661f8d7 18
+  s_731e6774cfc6ce::t_b2acf309bc2e6a 17
+  s_f52806ea1f0d5c::t_f306a7fce53530 11
+skills/langsmith-online-evaluation/SKILL.md
+  s_731e6774cfc6ce::t_fb06f5bdcedeec 74,78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1cca456851e74ae2ae6957a03bd8ac5812c095cf",
+  "prompts": {},
+  "sessions": {
+    "s_3d95654a054578": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71379ef3-9cc3-4109-92e6-68e256237139",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_731e6774cfc6ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1d6-74f3-7771-96e2-6d7d03ee5e71",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_f52806ea1f0d5c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b249-981b-7120-b59b-1c189a78ecfa",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

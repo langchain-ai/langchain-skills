@@ -1,0 +1,14 @@
+config/skills/langsmith-online-eval-engineering/SKILL.md
+  h_a86a5c27becfe4 2-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "6732f69c053c6e09e630970f557ae5b46e598a83",
+  "prompts": {},
+  "humans": {
+    "h_a86a5c27becfe4": {
+      "author": "Joel Johnson <joel.johnson@langchain.dev>"
+    }
+  }
+}

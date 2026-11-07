@@ -1,0 +1,18 @@
+LICENSE
+  h_fe5ed23bcee8dc 1-21
+package.json
+  h_fe5ed23bcee8dc 4
+pyproject.toml
+  h_fe5ed23bcee8dc 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d2fd46b3231c1ff104a49bb1e7658d157e7ded7e",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

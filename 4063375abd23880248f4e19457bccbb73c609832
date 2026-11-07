@@ -1,0 +1,41 @@
+.claude-plugin/marketplace.json
+  s_f52806ea1f0d5c::t_64692dd2ebbd6d 8,14
+.claude-plugin/plugin.json
+  s_f52806ea1f0d5c::t_1537765bf7775b 4
+.codex-plugin/plugin.json
+  s_f52806ea1f0d5c::t_1f44d8af97b1de 4,17-18
+README.md
+  s_f52806ea1f0d5c::t_459d2032cb69a4 5-8,10-11,15-17,23-24,40-44,51-72,94-96,102-103,133-140,142-143,163,166,168-171,177-181
+SKILLS_PHILOSOPHY.md
+  s_f52806ea1f0d5c::t_48a842f00059f5 6-7,11-15,33-52,57-61
+config/AGENTS.md
+  s_f52806ea1f0d5c::t_a3adc62630b83d 1,12,14-18,20,22-24
+plugin.json
+  s_f52806ea1f0d5c::t_69d4c649104cea 5
+pyproject.toml
+  s_f52806ea1f0d5c::t_eb145365bfce17 4
+skills/langchain-build-agent/SKILL.md
+  s_f52806ea1f0d5c::t_80bbc5f65646c3 119,123-130,132-149
+skills/langchain-eval-engineering/references/discovery.md
+  s_f52806ea1f0d5c::t_8354c408af6f18 29-31,107-115
+skills/langsmith-agent-ia/SKILL.md
+  s_f52806ea1f0d5c::t_8fd6e8f40ff62a 17-20,22-25,44-48,199-217
+skills/langsmith-online-evaluation/SKILL.md
+  s_f52806ea1f0d5c::t_0c4b6413ec0877 1-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4063375abd23880248f4e19457bccbb73c609832",
+  "prompts": {},
+  "sessions": {
+    "s_f52806ea1f0d5c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b249-981b-7120-b59b-1c189a78ecfa",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
