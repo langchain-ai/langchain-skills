@@ -58,6 +58,9 @@ judge reading only the last turn can disagree for the wrong reason. Accepting
 some first-pass false positives can increase coverage while limiting expensive
 judging to a smaller slice.
 
+To create the decision model, the gated judge, and an Insights job on confirmed
+cases with the CLI, follow [Chained eval CLI setup](references/chained-eval-cli-setup.md).
+
 Treat judge verdicts as fallible estimates, not ground truth. Spot-check flagged
 cases with human review and sample below-threshold traffic to find misses. When
 chaining, use the judge's confirmed verdict for downstream triage or alerts;
