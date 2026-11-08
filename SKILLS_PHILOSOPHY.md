@@ -43,22 +43,27 @@ detailed workflow resources are an example of a justified reference set.
   specific guide or useful search terms when that prevents guesswork. If MCP
   is unavailable, use official web docs and installed source or types.
 - For general LangSmith questions about features and behavior, use the two
-  bundled documentation MCPs. For actions in a LangSmith workspace, prefer the
-  authenticated LangSmith CLI where it supports the operation; verify the
-  target profile and workspace, current CLI help, and the result. Use the SDK
-  for application code, tracing, and evaluation runs.
-- State this tool choice where a skill's workflow needs it. The plugin makes
-  the documentation MCPs available, but does not convey when to prefer the CLI.
-  Avoid repeating server URLs, setup steps, or full tool inventories in skills.
+  bundled documentation MCPs. LangSmith skills should pair with the
+  authenticated LangSmith CLI for supported workspace actions. Name the
+  relevant CLI commands where the workflow uses them, including how to scope
+  the target workspace or project and verify the result. Check the current
+  `--help` and authenticated profile before relying on specific flags. Explain
+  when a dedicated command falls short and use `langsmith api` or the SDK as
+  needed. Use the SDK for application code, tracing, and evaluation runs.
+- The plugin makes the documentation MCPs available, but does not install the
+  CLI or convey when to use it. Avoid repeating server URLs, setup steps, or
+  full command catalogs in skills.
 - Keep the entrypoint concise. Make the name and description broad enough to
   catch the intended class of requests, yet specific enough to avoid unrelated
   invocations. Do not tune wording around one benchmark prompt.
 
-Avoid large code snippets, copied examples, API signatures, command catalogs,
-model IDs, and claims about fast-changing defaults. Include a short tool or CLI
-example when it prevents a consequential misunderstanding or makes an
-opinionated workflow usable; direct the agent to verify current syntax and
-behavior against the docs and installed versions.
+Small code snippets are welcome in other LangChain skills when they make an
+opinionated pattern concrete or prevent a consequential mistake. Keep them
+focused on the decision or integration step; do not embed a full program.
+Likewise, include a short CLI example when it makes a workflow usable. Avoid
+copied examples, API signatures, command catalogs, model IDs, and claims about
+fast-changing defaults. Direct the agent to verify current syntax and behavior
+against the docs and installed versions.
 
 ## How we maintain the repo
 
