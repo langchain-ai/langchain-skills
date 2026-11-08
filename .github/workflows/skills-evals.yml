@@ -1,6 +1,11 @@
 name: public skill evals
 
 on:
+  push:
+    branches:
+      - skill-restructure
+    paths:
+      - .github/workflows/skills-evals.yml
   schedule:
     # 9 AM America/New_York is 13:00 UTC in summer and 14:00 UTC in winter.
     - cron: "0 13 * * 0"
@@ -30,7 +35,7 @@ jobs:
           from datetime import datetime, timezone
           from zoneinfo import ZoneInfo
 
-          if os.environ["EVENT_NAME"] == "workflow_dispatch":
+          if os.environ["EVENT_NAME"] in {"workflow_dispatch", "push"}:
               selected = True
           else:
               today = datetime.now(timezone.utc).date()
