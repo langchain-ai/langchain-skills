@@ -1,0 +1,20 @@
+SKILLS_PHILOSOPHY.md
+  s_8784970402fd4d::t_6e46cc051bdcfe 46-50,53-55,60-66
+  s_8784970402fd4d::t_f251680bdaff2c 51-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0e0a98dc778120e7c586d3efa51d9fa122a8b44c",
+  "prompts": {},
+  "sessions": {
+    "s_8784970402fd4d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1bbf6-397f-7541-9fc0-48a97fce942f",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
