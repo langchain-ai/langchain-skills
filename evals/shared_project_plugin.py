@@ -29,7 +29,7 @@ class SharedProjectPlugin(LangSmithPlugin):
         self._base_url = endpoint if endpoint.endswith("/api/v1") else f"{endpoint}/api/v1"
         self._session.headers.update({"x-api-key": self.api_key})
         if self.workspace_id:
-            self._session.headers.update({"LANGSMITH-WORKSPACE-ID": self.workspace_id})
+            self._session.headers.update({"X-Tenant-Id": self.workspace_id})
 
         if not self.sync_dataset:
             raise RuntimeError("shared project requires dataset sync")

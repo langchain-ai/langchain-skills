@@ -145,3 +145,37 @@ def validate(evidence: dict, project_id: str) -> dict:
                          "job_id": matches[0][1]["id"] if matches else None},
         "evidence": evidence,
     }
+
+
+def collect_rules(data: dict, ls) -> dict:
+    """Record online rule shape on the target project without prompts, models, or secrets."""
+    project_id = str(UUID(data["target_project_id"]))
+    rules = []
+    for rule in _items(_api(ls, f"/runs/rules?session_id={project_id}")):
+        if rule.get("session_id") != project_id:
+            continue
+        evaluator_id = rule.get("evaluator_id")
+        try:
+            evaluator = _api(ls, f"/v1/platform/evaluators/{UUID(evaluator_id)}") if evaluator_id else None
+        except LangSmithNotFoundError:
+            evaluator = None
+        structured = [(e.get("structured") or {}) for e in rule.get("evaluators") or []]
+        rules.append({
+            "rule_id": rule.get("id"),
+            "display_name": rule.get("display_name"),
+            "is_enabled": rule.get("is_enabled"),
+            "evaluator_id": evaluator_id,
+            "evaluator_type": rule.get("evaluator_type"),
+            "decision_model": _decision_model_marker(rule, ls)[0],
+            "group_by": rule.get("group_by"),
+            "thread_fields": {k: v for k, v in rule.items() if ("thread" in k or "group" in k) and not isinstance(v, (dict, list))},
+            "sampling_rate": rule.get("sampling_rate"),
+            "filter": rule.get("filter") or "",
+            "trace_filter": rule.get("trace_filter") or "",
+            "variable_mapping": [s.get("variable_mapping") for s in structured],
+            "schema_keys": [sorted(((s.get("schema") or {}).get("properties") or {}).keys()) for s in structured],
+            "feedback_keys": (evaluator or {}).get("feedback_keys") or [],
+            "code_evaluators": len(rule.get("code_evaluators") or []),
+        })
+    session = _api(ls, f"/sessions/{project_id}")
+    return {"rules": rules, "project_idle_fields": {k: v for k, v in session.items() if "idle" in k}}

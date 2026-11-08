@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from time import monotonic, sleep
 from uuid import UUID, uuid4
@@ -84,20 +84,31 @@ def validate_task(path: Path) -> None:
     settings = task_settings(path)
     if settings["verifier_enabled"] and not (path / "tests" / "test.sh").is_file():
         raise FileNotFoundError("scored task requires tests/test.sh")
-    if settings["fixture_type"] != "synthetic_conversations":
+    if settings["fixture_type"] == "none":
         return
     cases = json.loads((path / "fixtures.json").read_text())
     for phase in ("seed", "held_out"):
         items = cases.get(phase)
         if not isinstance(items, list) or not items:
             raise ValueError(f"fixtures.json requires nonempty {phase}")
+        if settings["fixture_type"] == "synthetic_threads":
+            if any(
+                not isinstance(thread, dict)
+                or not isinstance(thread.get("turns"), list)
+                or not thread["turns"]
+                or (phase == "held_out" and path.name == "thread-llm-judge"
+                    and type(thread.get("expected_resolved")) is not bool)
+                for thread in items
+            ):
+                raise ValueError(f"invalid {phase} thread")
+            items = [turn for thread in items for turn in thread["turns"]]
         if any(not isinstance(x, list) or len(x) != 2 or not all(isinstance(v, str) for v in x) for x in items):
             raise ValueError(f"invalid {phase} conversation")
 
 
 def task_settings(path: Path) -> dict:
     settings = json.loads((path / "harness.json").read_text())
-    if settings.get("fixture_type") not in {"none", "synthetic_conversations"}:
+    if settings.get("fixture_type") not in {"none", "synthetic_conversations", "synthetic_threads"}:
         raise ValueError("unsupported fixture_type")
     if not isinstance(settings.get("verifier_enabled"), bool):
         raise ValueError("verifier_enabled must be a boolean")
@@ -172,6 +183,47 @@ def emit_cases(ls: Client, project_name: str, items: list[list[str]], phase: str
     return ids
 
 
+def emit_threads(ls: Client, project_name: str, threads: list[dict], phase: str, run_id: str) -> list[str]:
+    """Emit one root run per turn sharing a thread_id; return each thread's last-turn run ID."""
+    now = datetime.now(timezone.utc)
+    last_ids: list[str] = []
+    for index, thread in enumerate(threads, start=1):
+        thread_id = str(uuid4())
+        turns = thread["turns"]
+        history: list[dict] = []
+        for turn_index, (question, answer) in enumerate(turns):
+            started = now - timedelta(seconds=20 * (len(turns) - 1 - turn_index))
+            history.append({"role": "user", "content": question})
+            inputs = {"messages": list(history)}
+            history.append({"role": "assistant", "content": answer})
+            turn_run_id = uuid4()
+            ls.create_run(
+                name="support_conversation",
+                run_type="chain",
+                id=turn_run_id,
+                project_name=project_name,
+                start_time=started,
+                end_time=started + timedelta(seconds=2),
+                inputs=inputs,
+                outputs={"messages": list(history)},
+                extra={"metadata": {"thread_id": thread_id, "fixture_phase": phase, "case_index": index,
+                                    "turn_index": turn_index, "eval_run_id": run_id}},
+            )
+        last_ids.append(str(turn_run_id))
+    ls.flush()
+    return last_ids
+
+
+def emit_fixtures(ls: Client, task: str, project_name: str, phase: str, run_id: str) -> list[str]:
+    path = task_dir(task)
+    fixture_type = task_settings(path)["fixture_type"]
+    items = json.loads((path / "fixtures.json").read_text())[phase]
+    label = phase.replace("_", "-")
+    if fixture_type == "synthetic_threads":
+        return emit_threads(ls, project_name, items, label, run_id)
+    return emit_cases(ls, project_name, items, label, run_id)
+
+
 def prepare(args: argparse.Namespace) -> None:
     path = task_dir(args.task)
     validate_task(path)
@@ -211,9 +263,8 @@ def prepare(args: argparse.Namespace) -> None:
         "status": "preparing",
     }
     save_manifest(data)
-    if task_settings(path)["fixture_type"] == "synthetic_conversations":
-        fixtures = json.loads((path / "fixtures.json").read_text())
-        data["seed_run_ids"] = emit_cases(ls, target_name, fixtures["seed"], "seed", run_id)
+    if task_settings(path)["fixture_type"] != "none":
+        data["seed_run_ids"] = emit_fixtures(ls, args.task, target_name, "seed", run_id)
     data["status"] = "prepared"
     save_manifest(data)
     print(json.dumps({"run_id": run_id, "task": args.task, "profile": args.profile, "target_project_id": str(target.id)}))
@@ -333,10 +384,9 @@ def replay(args: argparse.Namespace) -> None:
     data = load_manifest(args.run_id)
     if data["status"] != "completed" or data["held_out_run_ids"]:
         raise RuntimeError("replay requires a completed run with no prior held-out emission")
-    if task_settings(task_dir(data["task"]))["fixture_type"] != "synthetic_conversations":
+    if task_settings(task_dir(data["task"]))["fixture_type"] == "none":
         raise RuntimeError("this task has no held-out synthetic conversations")
-    fixtures = json.loads((task_dir(data["task"]) / "fixtures.json").read_text())
-    data["held_out_run_ids"] = emit_cases(client(), data["target_project_name"], fixtures["held_out"], "held-out", data["run_id"])
+    data["held_out_run_ids"] = emit_fixtures(client(), data["task"], data["target_project_name"], "held_out", data["run_id"])
     data["replayed_at"] = datetime.now(timezone.utc).isoformat()
     save_manifest(data)
     print(f"emitted {len(data['held_out_run_ids'])} held-out conversations for {data['run_id']}")
@@ -476,6 +526,13 @@ def report(args: argparse.Namespace) -> None:
             from validators import collect, validate
 
             summary["validators"] = validate(collect(data, ls), data["target_project_id"])
+        if data["task"] == "thread-llm-judge":
+            from validators import collect_rules
+
+            summary["validators"] = {"evidence": collect_rules(data, ls)}
+            expected = [t["expected_resolved"] for t in json.loads((task_dir(data["task"]) / "fixtures.json").read_text())["held_out"]]
+            for case in summary["live"]["feedback_by_case"]:
+                case["expected_resolved"] = expected[case["case_index"] - 1]
         summary["inspected_at"] = datetime.now(timezone.utc).isoformat()
     report_path = manifest_path(args.run_id).with_name("report.json")
     report_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")

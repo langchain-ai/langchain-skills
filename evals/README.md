@@ -7,6 +7,10 @@ exact prompt and synthetic conversations from the November 7, 2026 exploratory
 study. It has no preset evaluator or automated score. The report describes what
 the agent built and what feedback appeared on fresh conversations, then checks
 the resulting evaluator chain and Insights job configuration.
+The `thread-llm-judge` task asks for a single thread-level LLM judge. Its seed
+and held-out fixtures contain multiple turns per thread, and its report records
+the created rule shape and feedback against held-out labels. It is exploratory
+and unscored.
 
 The `none`, `full`, and `mcp-only` profiles are the supported comparison. `full`
 copies the current `skills/` tree, so a newly added skill participates without
@@ -56,8 +60,9 @@ the cleanup command does not delete them.
 Create `evals/tasks/<task-name>/` with `Task.md`, the exact agent
 `instruction.md`, `task.toml`, `environment/Dockerfile` (or Compose), and
 `harness.json`. Use `fixture_type: "synthetic_conversations"` plus
-`fixtures.json` when the task needs seed and held-out conversations, or
-`fixture_type: "none"` otherwise. Set `verifier_enabled: true` and provide
+`fixtures.json` for single-run cases, `fixture_type: "synthetic_threads"` for
+multi-turn cases with shared `thread_id`, or `fixture_type: "none"` when no
+fixtures are needed. Set `verifier_enabled: true` and provide
 `tests/test.sh` for a scored task. Set `linux_cli_required: true` only when its
 Dockerfile copies the staged `langsmith` binary. Keep hidden truth and held-out
 fixtures outside `environment/`.
@@ -118,6 +123,13 @@ Insights job to finish. A failed check is a regression to inspect; it does not
 prevent the report from being saved. A local `langsmith` CLI must be on `PATH`
 for the Insights queries.
 
+For `thread-llm-judge`, use the same `check`, `prepare`, `run`, `replay`, and
+`report` commands with `--task thread-llm-judge`. The `full` and `mcp-only`
+profiles compare skill guidance with docs MCP alone. The live report records
+rule type, thread grouping, variable mapping, feedback keys, and held-out
+`expected_resolved` labels. Review the agent trajectory and reasoning alongside
+the scores; four cases are descriptive evidence, not a pass rate.
+
 ## Cleanup and retention
 
 The manifest records exact project and run IDs. After saving a live report for
@@ -151,7 +163,8 @@ schedule. `workflow_dispatch` also permits a manual run. The action checks out
 the current `skill-restructure` branch for the skills and the default branch
 for the harness and task definitions. Changes to a skill on `skill-restructure`
 or a task on the default branch appear in the next run without editing the
-workflow.
+workflow. The workflow currently selects `chained-eval`; `thread-llm-judge`
+is available through the harness commands above and is not scheduled.
 
 Configure these GitHub Actions secrets in the `langchain-ai/langchain-skills`
 repository: `LANGSMITH_API_KEY` for the LangChain Inc workspace,
