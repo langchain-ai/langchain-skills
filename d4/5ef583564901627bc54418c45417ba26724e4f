@@ -1,0 +1,19 @@
+.github/workflows/skills-evals.yml
+  s_21552cb4b54f73::t_2ec7427d229ca5 4-8,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d45ef583564901627bc54418c45417ba26724e4f",
+  "prompts": {},
+  "sessions": {
+    "s_21552cb4b54f73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7f0-3c00-7991-92a1-26fe7aa9c46d",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
