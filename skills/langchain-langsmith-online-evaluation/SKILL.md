@@ -1,6 +1,6 @@
 ---
 name: langchain-langsmith-online-evaluation
-description: Use when designing or improving LangSmith online evaluations for production runs or threads. Guides what to score, when to use a decision model, and when to chain a targeted LLM judge.
+description: Use when designing or improving LangSmith online evaluations for production runs or threads. Covers LLM judges, code evaluators, decision models, and targeted judge chains.
 ---
 
 # Online evaluation with LangSmith
@@ -33,6 +33,25 @@ Common production checks include:
 
 Use these as examples, not required feedback keys; choose behaviors that matter
 to the application and are observable in its traces.
+
+## Set up a basic evaluator
+
+- **Run-level LLM judge:** Check `langsmith evaluators create-llm --help` for
+  current flags. Attach it with `--project-id`; supply a prompt and schema (or a
+  Hub reference), a serialized `--model-config`, and a variable mapping to the run
+  fields the judge needs.
+- **Thread-level LLM judge:** Check whether `create-llm` supports grouping. If
+  it does not, use `langsmith api runs/rules -X POST --body @rule.json --workspace <workspace-id>`
+  with the project's `session_id`,
+  `group_by: thread_id`, and a structured LLM evaluator. Map the conversation
+  variable to `human_ai_pairs` or `all_messages`; run `output` left the judge
+  without conversation content in a thread trial. Confirm root runs share a
+  `thread_id`, then inspect feedback on the latest root run after the thread
+  goes idle. Check current docs or API schema for the payload shape.
+- **Run-level code evaluator:** Check `langsmith evaluators upload --help` and
+  upload a tested evaluator function with its file, `--function`, `--name`, and
+  `--project-id`. Use current docs or the SDK when the needed behavior exceeds
+  the CLI's options.
 
 ## Cover more traffic with a decision model
 
