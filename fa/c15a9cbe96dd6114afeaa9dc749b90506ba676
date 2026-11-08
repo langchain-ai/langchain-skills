@@ -1,0 +1,56 @@
+evals/tasks/thread-llm-judge/instruction.md
+  s_ff5f4505668244::t_51fcf11596e2f2 1-12
+evals/tasks/thread-llm-judge/harness.json
+  s_ff5f4505668244::t_00cfda3d971f3e 1-5
+evals/tasks/thread-llm-judge/task.toml
+  s_ff5f4505668244::t_50eb4aeafebbfd 1-21
+evals/tasks/thread-llm-judge/fixtures.json
+  s_ff5f4505668244::t_9772a9624e2546 1-70
+evals/harness.py
+  s_ff5f4505668244::t_3cee776f6bd6ff 87,94,111
+  s_ff5f4505668244::t_57840d9f816333 18
+  s_ff5f4505668244::t_a374c054967376 532
+  s_8784970402fd4d::t_cd3d559e8156e9 95-104
+  s_ff5f4505668244::t_d9ea34df7de936 266-267
+  s_ff5f4505668244::t_d8140fb5d5e396 387,389
+  s_ff5f4505668244::t_c3f5926f6829f9 529-531,533-535
+  s_ff5f4505668244::t_6dc1f1714d710f 186-226
+evals/README.md
+  s_8784970402fd4d::t_1eb3f2cf9d8853 10-13,63-65,126-132,166-167
+evals/validators.py
+  s_ff5f4505668244::t_a374c054967376 148-181
+evals/tasks/thread-llm-judge/environment/.dockerignore
+  s_ff5f4505668244::t_0add6613e7e5bd 1-11
+evals/tasks/thread-llm-judge/Task.md
+  s_ff5f4505668244::t_20064ad42df080 1-29
+evals/tasks/thread-llm-judge/environment/Dockerfile
+  s_ff5f4505668244::t_0add6613e7e5bd 1-11
+evals/test_thread_fixtures.py
+  s_8784970402fd4d::t_d4ccd183c96d34 1-99
+evals/shared_project_plugin.py
+  s_8784970402fd4d::t_0febc2ffe693a7 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fac15a9cbe96dd6114afeaa9dc749b90506ba676",
+  "prompts": {},
+  "sessions": {
+    "s_8784970402fd4d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1bbf6-397f-7541-9fc0-48a97fce942f",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_ff5f4505668244": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee72519c-39d5-4d0d-b08f-33b8e39d4c7e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
