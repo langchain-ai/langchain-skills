@@ -1,0 +1,21 @@
+skills/langchain-langsmith-online-evaluation/SKILL.md
+  s_8784970402fd4d::t_cd38a6437c824a 41,44-45
+  s_8784970402fd4d::t_bb87794b8d43f3 3,37-40,42-43,46-54
+  s_8784970402fd4d::t_e6538c49c07798 55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5ce40bfcddfd07c29746bfbd5c303733b1cf10d8",
+  "prompts": {},
+  "sessions": {
+    "s_8784970402fd4d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1bbf6-397f-7541-9fc0-48a97fce942f",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
