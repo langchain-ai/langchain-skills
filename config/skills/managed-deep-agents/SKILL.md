@@ -111,7 +111,7 @@ Have the user send a message in Studio (or `mda chat` in the terminal) and confi
 
 | Limit | Consequence |
 | --- | --- |
-| LangSmith Cloud and BYOC only | No self-hosted or hybrid MDA. The default Serverless deployment type needs GCP SaaS; elsewhere use `--deployment-type dedicated`. |
+| LangSmith Cloud and BYOC only | No self-hosted or hybrid MDA. The default Serverless deployment type needs GCP SaaS; use `--deployment-type dedicated` elsewhere. BYOC has no Serverless and deploys an image with `mda deploy --push-to <image-repository>` (see `deploy`). |
 | No public management API | Create and update agents with `mda`. Do not invent a REST create/update flow. |
 | Channels are Slack and HTTP | One Slack channel per deployment. Other services go through an HTTP channel adapter. GitHub and Linear channels are experimental. |
 | Agent memory is deployment-shared | Every caller can read and write `/memories/agent/`. Per-person memory is the user layer and needs person identity. |
@@ -178,7 +178,7 @@ Each row: what the feature is for, where it lives, and the `<page>` to fetch.
 | follows a procedure only for some tasks | Skills | `skills/<name>/` | `skills` |
 | calls your API, database, or service | Custom tools | `tools/` | `tools` |
 | uses tools from a remote MCP server | MCP | `tools/mcp.*` | `mcp-connectors` |
-| needs web search with no extra API key | Parallel search | `tools/mcp.*` | `search` |
+| needs web search with no extra API key (GCP US only) | Web search | `tools/mcp.*` | `search` |
 | needs an API key or acts as the user in GitHub, Notion, … | Connections | `connections.get(...)` | `connections` |
 | needs PII redaction, limits, retries, logging | Middleware | `middleware/` | `middleware` |
 | asks a human before acting | Human-in-the-loop | `interrupt_on=` | `tools` |
@@ -196,11 +196,11 @@ Each row: what the feature is for, where it lives, and the `<page>` to fetch.
 | is called as a tool from Claude Code / MCP clients | MCP endpoint | `<API URL>/mcp` | `mcp-endpoint` |
 | is tested against tasks as it changes | Evals (Harbor) | `evals/` | `evals` |
 
-Workflow pages: `quickstart`, `local-development`, `deploy` (regions, BYOC, secrets, Serverless vs Dedicated), `context-hub` (Hub edits vs project files), `cli` (every command and flag), `migrate`.
+Workflow pages: `quickstart`, `local-development`, `deploy` (regions, BYOC, secrets, Serverless vs Dedicated), `context-hub` (Hub edits vs project files), `cli` (every command and flag), `migrate`. Complete example projects: `design-agent`, `paid-media-agent`.
 
 ## CLI at a glance
 
-`mda init`, `build`, `dev`, `chat`, `deploy`, `logs`, `delete` (alias `destroy`), `connections`, `channels init`, `evals init`. Confirm flags with `mda <command> --help`; see `cli` for details.
+`mda init`, `build`, `dev`, `chat`, `deploy`, `pull` (bring Hub-edited instructions and skills back into the project), `logs`, `delete` (alias `destroy`), `connections`, `channels init`, `evals init`. Confirm flags with `mda <command> --help`; see `cli` for details.
 
 > `mda delete` removes the deployment and the LangSmith resources it created. **Confirm with the user first, and never pass `--yes` unprompted.** The same applies to `mda deploy --yes`.
 
@@ -214,7 +214,7 @@ These are the mistakes agents make most often. Check the linked page for current
 - **Model IDs need a provider prefix** (`openai:gpt-5.5`). Gateway models use `langsmith:provider/model`. Do not pass the removed `mda init --gateway`.
 - **Do not set managed fields** in the definition; use the project files instead.
 - **Memory uses layers**: `define_memory(agent=MemoryLayer())` / `defineMemory({ agent: memoryLayer() })`. String `scope="agent"` is rejected.
-- **User memory needs a signed-in person.** The default LangSmith API-key identity never mounts it.
+- **User memory needs a person.** With the default LangSmith API-key identity, a workspace service key never mounts it; a personal access token counts as a person (SDK 0.10.2+).
 - **MCP servers go in `tools/mcp.*`** with a named `mcp` export from `define_mcp(servers=...)`. The old `connectors` API was removed.
 - **Agent-owned connections belong to a deployment**: create them after the first successful deploy.
 - **Restart `mda dev` after adding a managed file** (`memory`, `identity`, `browser`, `tools/mcp`, `schedules/`, `channels/`).
