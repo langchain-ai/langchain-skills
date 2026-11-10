@@ -63,7 +63,7 @@ The common redirect: if they need custom HTTP routes, their own auth, or non-US 
 | A procedure it should follow for certain tasks | Skills | `skills/<name>/SKILL.md` |
 | Remembers things across conversations | Durable memory (read the warning) | `memory.py` |
 | Runs on a timer, no user message | Schedules | `schedules/<name>.py` |
-| Lives in Slack | Channels | `channels/slack.py` |
+| Lives in Slack, GitHub, or Linear | Channels | `channels/<provider>.py` |
 | Writes files, runs code or shell commands | Sandbox | `sandbox/__init__.py` |
 | Ask me before it does X | Human-in-the-loop | `interrupt_on=` |
 | Users must not see each other's chats | Supabase identity | `identity.py` |
@@ -125,7 +125,7 @@ Check requests against this list *before* agreeing to build them. Being straight
 | --- | --- |
 | US LangSmith Cloud only | No self-hosted, no hybrid, no EU region. Needs `langgraph deploy`. |
 | No public management API | Use `mda` or LangSmith's GitHub deployment UI to create and update agents. Do not invent a public create/update REST flow. |
-| Slack is the only channel | No Discord, Teams, email, or SMS channel. Remote MCP servers for those products are tools, not channels. |
+| Channel providers | Slack is supported. GitHub and Linear channels are experimental and may change in a minor release. Discord, Teams, email, and SMS are not MDA channel providers; use a remote MCP server for those products as a tool instead. |
 | Memory is deployment-shared | One `/memories/agent/` tree for **all** callers. There is no per-user memory. |
 | One agent entry per project | No multiple graphs in one project. Use `subagents=` for delegation. |
 | Schedules must be static literals | No env vars, function calls, or computed values in a schedule declaration. |
@@ -209,7 +209,9 @@ export const agent = defineDeepAgent({
 
 **`name` is required.** Pass a static string starting with a letter, containing only letters, numbers, underscores, or hyphens. It becomes the LangGraph assistant ID and the default deployment name; override the latter with `mda deploy --name`.
 
-**Author-set fields:** `name`, `model`, `tools`, `middleware`, `subagents`, `permissions`, `interrupt_on` / `interruptOn`, `response_format` / `responseFormat`, `context_schema` / `contextSchema`, `cache`, `debug`, `metadata`.
+**Author-set fields:** `name`, `model`, `tools`, `middleware`, `subagents`, `permissions`, `interrupt_on` / `interruptOn`, `response_format` / `responseFormat`, `context_schema` / `contextSchema`, `cache`, `debug`, `metadata`, and `routes`.
+
+`routes` mounts authored Deep Agents filesystem backends at absolute path prefixes while leaving unmatched paths on MDA's managed backend. Do not overlap `/instructions.md`, `/skills/`, or `/memories/`; routes apply to file tools, not shell commands in a sandbox.
 
 **Managed fields — do not set:** `backend`, `store`, `checkpointer`, `memory`, `skills`, `system_prompt` / `systemPrompt`.
 
@@ -481,7 +483,7 @@ Declarations are extracted at compile time **without running your code**: use li
 
 ## Channels
 
-A channel connects the agent to an external messaging service: inbound events start runs, and responses go back to the same conversation. **Slack is the only supported provider.** One channel per file under `channels/`, each exporting a named `channel`.
+A channel connects the agent to an external service: inbound events start runs, and responses return to the same conversation. One channel per file under `channels/`, each exporting a named `channel`.
 
 ```python
 # channels/slack.py
@@ -490,13 +492,13 @@ from managed_deepagents import channels
 channel = channels.slack()
 ```
 
-The file name sets the channel name and its inbound route — `channels/slack.py` receives events at `POST /channels/slack/events`. Names must be unique; never name a file `channels/channel.py`.
+Slack is supported. GitHub and Linear are **experimental** channel providers, so tell users that their APIs may change in a minor release. Use `channels.github(...)` or `channels.linear(...)` in `channels/github.py` or `channels/linear.py` when their event-driven integration is appropriate. The file name sets the channel name and inbound route — for example, `channels/slack.py` receives events at `POST /channels/slack/events`. Names must be unique; never name a file `channels/channel.py`.
+
+`mda deploy` sets up declared Slack, GitHub, and Linear channels. It can create or connect the corresponding app and stores the app credentials in Agent Auth; do not put long-lived channel credentials in project source. Noninteractive setup may require the documented `MDA_SLACK_*`, `MDA_GITHUB_*`, or `MDA_LINEAR_*` setup variables or a human administrator, and deployment stops rather than silently leaving a declared channel unconfigured.
 
 Channel-originated runs expose `runtime.channel` to tools and middleware, carrying the normalized event and conversation address plus methods to post and update messages. Ordinary HTTP runs and scheduled runs have no originating channel, so `runtime.channel` is absent.
 
-Slack setup needs a project-root `slack-app-manifest.json` and `SLACK_SIGNING_SECRET` + `SLACK_BOT_TOKEN` in `.env`. Treat the manifest as the source of truth; files generated under `.mda/` are build artifacts and must not be committed. `runtime.channel` never exposes the bot token.
-
-A channel *receives* messages that start runs. It is not the same as giving the agent Slack *tools* for initiating operations — a project may want either or both.
+A channel *receives* messages that start runs. It is not the same as giving the agent tools for initiating operations in that service — a project may want either or both.
 
 Channel threads are owned by their source conversation, while credentials and store access remain scoped to the delivering caller. When upgrading from a version that owned channel threads by the first principal, existing Slack conversations cannot migrate; start a new conversation or thread after redeploying.
 
@@ -521,12 +523,12 @@ mda evals init -i
 | `mda logs [path]` | Tail Agent Server logs for a deployed agent. |
 | `mda delete [path]` | Delete a deployment and the LangSmith resources it created. Alias: `destroy`. |
 | `mda connections create\|list\|get\|delete\|catalog` | Manage workspace-scoped opaque secrets and OAuth registrations. Alias: `connection`. |
-| `mda channels init slack` | Add a Slack channel declaration to the current project. Alias: `channel`. |
+| `mda channels init slack\|github\|linear` | Add a channel declaration to the current project. GitHub and Linear are experimental. Alias: `channel`. |
 | `mda evals init` | Initialize the Harbor eval workspace and print the run handoff. Alias: `eval`. |
 
 Key flags:
 
-- `init`: `-i` / `--interactive`, `--model SPEC`, `--instructions TEXT`, `--instructions-file PATH`, `--memory agent|none`, `--no-sandbox`, `-c` / `--channel slack`
+- `init`: `-i` / `--interactive`, `--model SPEC`, `--instructions TEXT`, `--instructions-file PATH`, `--memory agent|none`, `--no-sandbox`, `-c` / `--channel slack|github|linear` (GitHub and Linear are experimental)
 - `build`: `--out OUT` (defaults to `<path>/.mda/build`; only a missing, empty, or prior MDA build directory is accepted)
 - `dev`: `--port`, `--hostname`, `--no-browser`, `--no-reload`, `--tunnel`
 - `deploy`: `--name`, `--deployment-type dev|prod`, `--workspace-id`, `--no-wait`, `--context-strategy`, `--wait-timeout-seconds`
