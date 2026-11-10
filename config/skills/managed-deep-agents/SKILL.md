@@ -235,6 +235,10 @@ concise answers with citations.
 
 `mda dev` embeds it locally. `mda deploy` syncs it to Context Hub, where it can be edited in the LangSmith UI without redeploying.
 
+To bring Context Hub edits back into an existing project, run `mda pull --dry-run` to review the replacement and then `mda pull` (or `mda pull --yes` for a deliberate non-interactive pull). It replaces `instructions.md` and mirrors `skills/`, including deleting local skill files absent from the remote snapshot; it is not a three-way merge. Save or commit local work first. It does not pull agent code, credentials, or memories, and it does not deploy or alter Context Hub.
+
+For GitHub-sourced deployments, Git remains authoritative for deploy-owned instructions and skills: edit those files in the repository and rebuild rather than relying on Hub-only edits.
+
 ## Skills
 
 Deploy-owned procedures under `skills/<name>/SKILL.md`, each with `name` and `description` frontmatter. At startup the agent sees only names and descriptions, and reads the full file when a task matches — so detailed procedures cost no context until they are needed. A skill directory may also hold scripts, references, and templates; reference them from `SKILL.md`.
@@ -518,6 +522,7 @@ mda evals init -i
 | `mda build [path]` | Compile into a managed LangGraph app without deploying. |
 | `mda dev [path]` | Compile and run the local dev server in LangSmith Studio. |
 | `mda deploy [path]` | Compile, sync Context Hub, upload, deploy, reconcile schedules. |
+| `mda pull [path]` | Preview or pull deploy-owned Context Hub instructions and skills into the local project; this is a replacement, not a merge. |
 | `mda logs [path]` | Tail Agent Server logs for a deployed agent. |
 | `mda delete [path]` | Delete a deployment and the LangSmith resources it created. Alias: `destroy`. |
 | `mda connections create\|list\|get\|delete\|catalog` | Manage workspace-scoped opaque secrets and OAuth registrations. Alias: `connection`. |
@@ -592,6 +597,7 @@ Respond to interrupts in Studio during `mda dev`. On a deployed agent, resume th
 - **Connections are workspace-scoped.** A connection slug is not private to one agent, and `mda connections list` lists the workspace, not only the current deployment.
 - **Restart `mda dev` after adding a managed file.** New `memory.py`, `identity.py`, `tools/mcp.py`, `schedules/`, or `channels/` declarations are discovered at compile time, not by hot reload.
 - **`--no-wait` skips schedule reconciliation** and exits before `DEPLOYED`.
+- **`mda pull` replaces rather than merges context.** Use `--dry-run` first and save local instruction/skill edits; pull does not change code, credentials, memory, or the remote context.
 - **Schedule declarations must be static literals** — the compiler extracts them without running your code.
 - **`.env` is never archived**, and `.gitignore` must keep it out of version control. Do not write live keys into it on a user's behalf. Shell-only provider keys work for local dev but are not persisted into a deployment.
 - **The installed package selects Python or TypeScript.** Do not claim `mda init` infers language from nearby manifests.
