@@ -1,0 +1,62 @@
+# Checks changed skills against the LangChain docs before they merge.
+#
+# A deployed agent extracts the facts each changed skill states (imports, parameters, defaults,
+# behaviors), cites the docs lines that support them, and fails this check when the docs say
+# something different. It comments on the PR once per skill with what to fix.
+#
+# pull_request_target runs this file as it is on main, with this repo's secrets, so PRs from forks
+# are checked too. It never checks out or runs PR code: it sends commit ids to the deployment,
+# which reads the public repos itself, and posts the comment text it returns.
+#
+# Repo settings: variable SKILL_CLAIMS_URL and secret SKILL_CLAIMS_API_KEY. Until the variable is
+# set, the check passes with a notice. Make `skill-claims` a required check once it is.
+name: skill-claims
+on:
+  pull_request_target:
+    paths: ["config/skills/**"]
+permissions:
+  contents: read
+  pull-requests: write # one comment per changed skill
+jobs:
+  skill-claims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check skill claims against the docs
+        env:
+          URL: ${{ vars.SKILL_CLAIMS_URL }}
+          KEY: ${{ secrets.SKILL_CLAIMS_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "::notice::SKILL_CLAIMS_URL is not set; skipping the skill claims check."
+            exit 0
+          fi
+          # Compare against the merge base, so skills changed on main after the PR branched don't count.
+          merge_base=$(gh api "repos/$REPO/compare/$BASE...$HEAD" --jq .merge_base_commit.sha)
+          body=$(jq -n --arg h "$HEAD" --arg b "$merge_base" --argjson pr "$PR" \
+            '{assistant_id: "pr_check", input: {head_sha: $h, base_sha: $b, pr: $pr}}')
+          out=$(curl -sS --fail-with-body --max-time 2400 -X POST "$URL/runs/wait" \
+            -H "Content-Type: application/json" -H "x-api-key: $KEY" -d "$body")
+          echo "$out" | jq -r '.summary // "The check returned no summary."' | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # One comment per skill, edited in place on every push. A new one is posted only when there
+          # is a problem; an existing one is edited even when the problems are fixed, to say so.
+          ours=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- skill-claims:"))) | {id, body}]' \
+            | jq -s 'add // []')
+          echo "$out" | jq -c '.comments // [] | .[]' | while read -r comment; do
+            skill=$(jq -r .skill <<<"$comment")
+            id=$(jq -r --arg m "<!-- skill-claims:$skill -->" 'map(select(.body | startswith($m))) | .[0].id // empty' <<<"$ours")
+            if [ -n "$id" ]; then
+              jq '{body}' <<<"$comment" | gh api -X PATCH "repos/$REPO/issues/comments/$id" --input - >/dev/null
+            elif [ "$(jq -r .post <<<"$comment")" = true ]; then
+              jq '{body}' <<<"$comment" | gh api "repos/$REPO/issues/$PR/comments" --input - >/dev/null
+            fi
+          done
+
+          test "$(echo "$out" | jq -r .status)" = pass
