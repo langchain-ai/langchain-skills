@@ -1,0 +1,49 @@
+# Code owners for langchain-skills.
+# Later rules take precedence over earlier ones.
+# Owners were derived from commit history; update this file as ownership changes.
+
+# Fallback for anything not matched below (README, LICENSE, config/AGENTS.md, install.sh, ...)
+*                                                   @xuro-langchain @jacobkleiman-LC
+
+# LangChain / Deep Agents core skills
+/config/skills/deep-agents-core/                    @xuro-langchain
+/config/skills/deep-agents-memory/                  @xuro-langchain
+/config/skills/deep-agents-orchestration/           @xuro-langchain
+/config/skills/langchain-dependencies/              @xuro-langchain
+/config/skills/langchain-fundamentals/              @xuro-langchain
+/config/skills/langchain-middleware/                @xuro-langchain
+/config/skills/langchain-rag/                       @xuro-langchain
+
+# LangGraph skills
+/config/skills/langgraph-fundamentals/              @xuro-langchain @sydney-runkle
+/config/skills/langgraph-persistence/               @xuro-langchain @sydney-runkle
+/config/skills/langgraph-human-in-the-loop/         @sydney-runkle
+/config/skills/langgraph-decision-models/           @sydney-runkle
+/config/skills/langgraph-cli/                       @jacobkleiman-LC
+
+# Quickstarts
+/config/skills/deepagents-python-quickstart/        @sydney-runkle
+/config/skills/langchain-python-quickstart/         @sydney-runkle
+/config/skills/langgraph-python-quickstart/         @sydney-runkle
+/config/skills/deepagents-typescript-quickstart/    @sydney-runkle
+/config/skills/langchain-typescript-quickstart/     @sydney-runkle
+/config/skills/langgraph-typescript-quickstart/     @sydney-runkle
+
+# Other skills
+/config/skills/ecosystem-primer/                    @jacobkleiman-LC @sydney-runkle
+/config/skills/eval-engineering/                    @vtrivedy
+/config/skills/managed-deep-agents/                 @victorm-lc
+/config/skills/swarm/                               @colifran
+
+# TypeScript tooling and swarm tests
+/package.json                                       @colifran
+/pnpm-lock.yaml                                     @colifran
+/tsconfig.json                                      @colifran
+/vitest.config.ts                                   @colifran
+/tests/swarm/                                       @colifran
+
+# CI and lint tooling
+/.github/                                           @jacobkleiman-LC
+/.github/workflows/ci.yml                           @colifran @jacobkleiman-LC
+/scripts/                                           @jacobkleiman-LC
+/tests/skills_lint/                                 @jacobkleiman-LC
