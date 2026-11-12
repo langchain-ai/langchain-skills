@@ -34,7 +34,7 @@ LangGraph's persistence layer enables durable execution by checkpointing graph s
 Set up a basic graph with in-memory checkpointing and thread-based state persistence.
 
 ```python
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.memory import MemoryCheckpointer
 from langgraph.graph import StateGraph, START, END
 from typing_extensions import TypedDict, Annotated
 import operator
@@ -45,14 +45,14 @@ class State(TypedDict):
 def add_message(state: State) -> dict:
     return {"messages": ["Bot response"]}
 
-checkpointer = InMemorySaver()
+checkpointer = MemoryCheckpointer()
 
 graph = (
     StateGraph(State)
     .add_node("respond", add_message)
     .add_edge(START, "respond")
     .add_edge("respond", END)
-    .compile(checkpointer=checkpointer)  # Pass at compile time
+    .compile(checkpointer=checkpointer, persist=True)  # Pass it at compile time
 )
 
 # ALWAYS provide thread_id
