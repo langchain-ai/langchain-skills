@@ -22,12 +22,12 @@
 /config/skills/langgraph-cli/                       @jacobkleiman-LC
 
 # Quickstarts
-/config/skills/deepagents-python-quickstart/        @sydney-runkle @langchain-ai/langchain-oss-python
-/config/skills/langchain-python-quickstart/         @sydney-runkle @langchain-ai/langchain-oss-python
-/config/skills/langgraph-python-quickstart/         @sydney-runkle @langchain-ai/langchain-oss-python
-/config/skills/deepagents-typescript-quickstart/    @sydney-runkle @langchain-ai/oss-js
-/config/skills/langchain-typescript-quickstart/     @sydney-runkle @langchain-ai/oss-js
-/config/skills/langgraph-typescript-quickstart/     @sydney-runkle @langchain-ai/oss-js
+/config/skills/deepagents-python-quickstart/        @sydney-runkle
+/config/skills/langchain-python-quickstart/         @sydney-runkle
+/config/skills/langgraph-python-quickstart/         @sydney-runkle
+/config/skills/deepagents-typescript-quickstart/    @sydney-runkle
+/config/skills/langchain-typescript-quickstart/     @sydney-runkle
+/config/skills/langgraph-typescript-quickstart/     @sydney-runkle
 
 # Other skills
 /config/skills/ecosystem-primer/                    @jacobkleiman-LC @sydney-runkle
