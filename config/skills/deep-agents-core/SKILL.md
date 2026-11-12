@@ -426,6 +426,7 @@ description: Python testing best practices with pytest fixtures, mocking, and as
 <python>
 Skills are not inherited by subagents - provide them explicitly.
 
+<!-- sample-check: skip (pseudo-code: `...` stands for the rest of the subagent) -->
 ```python
 # WRONG: Custom subagents don't inherit skills
 agent = create_deep_agent(

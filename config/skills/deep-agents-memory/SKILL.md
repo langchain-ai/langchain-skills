@@ -283,6 +283,7 @@ await agent.invoke(...);  // /memories/prefs.txt -> persistent (matches route)
 <python>
 Use PostgresStore for production (InMemoryStore lost on restart).
 
+<!-- sample-check: skip (side-by-side comparison, not a program) -->
 ```python
 # WRONG                              # CORRECT
 store = InMemoryStore()              store = PostgresStore(connection_string="postgresql://...")

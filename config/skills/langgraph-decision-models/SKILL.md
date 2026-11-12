@@ -113,6 +113,7 @@ These cause silent misrouting, not exceptions.
 
 **1. `Score.score` is an expected value, not a level.** It is a probability-weighted average over the rubric and is routinely fractional. `score == 0` almost never fires — a "not responsive" item lands at `0.07`, not `0`. Always compare against a band.
 
+<!-- sample-check: skip (two alternative conditions, not a program) -->
 ```python
 if a.scores["relevant"].score < 0.5:   # correct
 if a.scores["relevant"].score == 0:    # WRONG -- nearly never true

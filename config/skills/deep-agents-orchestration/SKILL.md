@@ -144,6 +144,7 @@ Subagents are stateless - provide complete instructions in a single call.
 <python>
 Custom subagents don't inherit skills from the main agent.
 
+<!-- sample-check: skip (pseudo-code: `...` stands for the rest of the subagent) -->
 ```python
 # WRONG: Custom subagent won't have main agent's skills
 agent = create_deep_agent(

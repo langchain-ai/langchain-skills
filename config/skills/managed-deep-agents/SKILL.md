@@ -181,6 +181,7 @@ Only the agent entry is required. `tools/` and `middleware/` are plain conventio
 
 The agent entry returns a pre-runtime spec, not a compiled graph.
 
+<!-- sample-check: skip (imports the project's own tools module) -->
 ```python
 # agent.py
 from managed_deepagents import define_deep_agent

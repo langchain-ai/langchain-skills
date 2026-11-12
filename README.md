@@ -147,3 +147,24 @@ Thin wrappers around the official Mintlify quickstarts — ask for provider/mode
 
 ### Utilities
 - **swarm** - Dispatch independent work items in parallel and aggregate the results
+
+## Code Sample Checks
+
+The `code-samples` workflow runs every Python code block in `config/skills` against the latest LangChain, LangGraph and Deep Agents releases, on every PR and weekly. Chat models and embeddings are replaced with fakes and the network is off, so it needs no API keys.
+
+- Self-contained blocks run for real.
+- Fragments (blocks that use names they don't define, or `...` placeholders) only have their imports run.
+- Example scripts under `config/skills` are compiled, and their `--help` is run.
+
+Run it locally:
+
+```bash
+uv run --no-project --refresh --with-requirements scripts/samples/requirements.txt scripts/check_samples.py
+```
+
+Failures are reported as `file:line`. Pass `-k deep-agents-core` to check one skill and `-v` for full tracebacks. If a block can't run (pseudo-code, needs a local file or a server), mark it on the line before its fence, with a reason:
+
+```markdown
+<!-- sample-check: imports (needs a Postgres server) -->
+<!-- sample-check: skip (pseudo-code) -->
+```
