@@ -263,7 +263,7 @@ store.put(
 )
 
 agent = create_deep_agent(
-    backend=lambda rt: StoreBackend(rt),
+    backend=StoreBackend(namespace=lambda rt: ("filesystem",)),
     store=store,
     skills=["/skills/"]
 )
@@ -320,10 +320,10 @@ StoreBackend requires a Store instance for persistent memory across threads.
 
 ```python
 # WRONG
-agent = create_deep_agent(backend=lambda rt: StoreBackend(rt))
+agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem",)))
 
 # CORRECT
-agent = create_deep_agent(backend=lambda rt: StoreBackend(rt), store=InMemoryStore())
+agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem",)), store=InMemoryStore())
 ```
 </python>
 <typescript>

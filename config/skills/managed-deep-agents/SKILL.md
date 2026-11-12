@@ -252,14 +252,14 @@ Durable memory is **opt-in and off by default**. Declare it at the project root:
 # memory.py
 from managed_deepagents import define_memory
 
-memory = define_memory(scope="agent")
+memory = define_memory(scope=[{"type": "agent"}])
 ```
 
 ```ts
 // memory.ts
 import { defineMemory } from "managed-deepagents";
 
-export const memory = defineMemory({ scope: "agent" });
+export const memory = defineMemory({ scope: [{ type: "agent" }] });
 ```
 
 Delete the file to turn memory off. Enabling it mounts one Context Hub tree at `/memories/agent/`:

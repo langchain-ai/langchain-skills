@@ -64,9 +64,9 @@ from langgraph.store.memory import InMemoryStore
 
 store = InMemoryStore()
 
-composite_backend = lambda rt: CompositeBackend(
-    default=StateBackend(rt),
-    routes={"/memories/": StoreBackend(rt)}
+composite_backend = CompositeBackend(
+    default=StateBackend(),
+    routes={"/memories/": StoreBackend(namespace=lambda rt: ("filesystem",))},
 )
 
 agent = create_deep_agent(backend=composite_backend, store=store)
@@ -218,10 +218,10 @@ StoreBackend requires a store instance.
 
 ```python
 # WRONG
-agent = create_deep_agent(backend=lambda rt: StoreBackend(rt))
+agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem",)))
 
 # CORRECT
-agent = create_deep_agent(backend=lambda rt: StoreBackend(rt), store=InMemoryStore())
+agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem",)), store=InMemoryStore())
 ```
 </python>
 <typescript>
@@ -263,7 +263,7 @@ await agent.invoke({ messages: [...] }, { configurable: { thread_id: "thread-2" 
 Path must match CompositeBackend route prefix for persistence.
 
 ```python
-# With routes={"/memories/": StoreBackend(rt)}:
+# With routes={"/memories/": StoreBackend(...)}:
 agent.invoke(...)  # /prefs.txt -> ephemeral (no match)
 agent.invoke(...)  # /memories/prefs.txt -> persistent (matches route)
 ```
@@ -314,7 +314,7 @@ backend = FilesystemBackend(root_dir="/project", virtual_mode=True)  # Secure
 CompositeBackend matches longest prefix first.
 
 ```python
-routes = {"/mem/": StoreBackend(rt), "/mem/temp/": StateBackend(rt)}
+routes = {"/mem/": StoreBackend(namespace=lambda rt: ("filesystem",)), "/mem/temp/": StateBackend()}
 # /mem/file.txt -> StoreBackend, /mem/temp/file.txt -> StateBackend (longer match)
 ```
 </python>
