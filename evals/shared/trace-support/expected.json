@@ -1,0 +1,6 @@
+{
+  "agent_environment": "DEVELOPMENT",
+  "threads": 3,
+  "turns": 7,
+  "service_turns": 6
+}

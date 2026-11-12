@@ -1,0 +1,24 @@
+[
+  {
+    "id": "conv-1001",
+    "turns": [
+      "How do I rotate an API key?",
+      "Does the old key stop working right away?",
+      "Great, that's all."
+    ]
+  },
+  {
+    "id": "conv-1002",
+    "turns": [
+      "My dashboard shows no traces since this morning.",
+      "I checked those steps and it still fails. Please open a ticket."
+    ]
+  },
+  {
+    "id": "conv-1003",
+    "turns": [
+      "What regions do you support?",
+      "Can I move my workspace to the EU region?"
+    ]
+  }
+]
