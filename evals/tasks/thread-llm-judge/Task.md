@@ -4,7 +4,7 @@ Status: Draft (exploratory, unscored)
 
 ## Purpose
 
-Find out what CLI guidance the online-evaluation skill must carry beyond the
+Find out what CLI guidance the agent-monitoring skill must carry beyond the
 LangSmith CLI's own help and the documentation MCPs. The agent must create a
 thread-level LLM-as-judge online evaluator for a multi-turn support assistant.
 The instruction names the behavior and the thread scope but not the tool, so

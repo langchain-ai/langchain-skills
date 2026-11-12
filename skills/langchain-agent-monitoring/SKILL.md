@@ -1,13 +1,16 @@
 ---
-name: langchain-langsmith-online-evaluation
-description: Use when designing or improving LangSmith online evaluations for production runs or threads. Covers LLM judges, code evaluators, decision models, and targeted judge chains.
+name: langchain-agent-monitoring
+description: Use when monitoring an agent or LLM application in production, including choosing quality signals, scoring live runs or threads with online evaluators in LangSmith, and turning the resulting feedback into alerts, review queues, or failure analysis. Covers LLM judges, code evaluators, decision models, and targeted judge chains.
 ---
 
-# Online evaluation with LangSmith
+# Monitor agents in production
 
-Online evaluations score production runs or threads and produce feedback for
-review, monitoring, and follow-up workflows. Choose the behavior and traffic
-scope before configuring evaluator rules.
+Monitoring an agent means deciding which behaviors matter in live traffic,
+scoring them continuously, and acting on what the scores reveal. In LangSmith,
+online evaluators score production runs or threads and write feedback; that
+feedback then drives charts and alerts, human review, and failure analysis.
+Choose the behavior and traffic scope before configuring evaluator rules, and
+choose how the feedback will be used before building downstream workflows.
 
 ## Choose the signal and scope
 
