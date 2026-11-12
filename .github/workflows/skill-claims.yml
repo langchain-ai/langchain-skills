@@ -59,4 +59,20 @@ jobs:
             fi
           done
 
+          # A skill this PR no longer changes (for example, reverted to match main) gets no new
+          # comment above, so say so on the one it already has instead of leaving it stale.
+          if echo "$out" | jq -e 'has("comments")' >/dev/null; then
+            checked=$(echo "$out" | jq -c '[.comments[].skill]')
+            jq -c --argjson checked "$checked" '.[]
+              | select(.body | contains("is no longer changed in this PR") | not)
+              | (.body | capture("^<!-- skill-claims:(?<s>[A-Za-z0-9._-]+) -->").s) as $s
+              | select(($checked | index($s)) == null) | {id, skill: $s}' <<<"$ours" \
+            | while read -r stale; do
+              skill=$(jq -r .skill <<<"$stale")
+              jq -n --arg s "$skill" '{body: ("<!-- skill-claims:" + $s + " -->\n### Skill claims: `" + $s
+                + "` is no longer changed in this PR\n\nThis PR no longer changes this skill, so there is nothing to check.")}' \
+                | gh api -X PATCH "repos/$REPO/issues/comments/$(jq -r .id <<<"$stale")" --input - >/dev/null
+            done
+          fi
+
           test "$(echo "$out" | jq -r .status)" = pass
