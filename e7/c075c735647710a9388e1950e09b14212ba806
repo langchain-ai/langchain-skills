@@ -1,0 +1,21 @@
+skills/langchain-agent-tracing/SKILL.md
+  s_558b07242c82da::t_b6cbaa9b0958d0 180-181
+  s_558b07242c82da::t_b8e6bc80aa0390 191-193
+  s_558b07242c82da::t_51fa36b0b4c458 43-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7c075c735647710a9388e1950e09b14212ba806",
+  "prompts": {},
+  "sessions": {
+    "s_558b07242c82da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4888091d-3c83-4676-8411-38267d0814dc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
