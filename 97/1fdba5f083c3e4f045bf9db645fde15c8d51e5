@@ -1,0 +1,69 @@
+evals/tasks/trace-strands/Task.md
+  s_558b07242c82da::t_f615b8f05b8f90 1,7-11,14-15,19-29,33-37
+  s_558b07242c82da::t_8dde68556aa8d8 2-6,12-13,16-18,30-32
+evals/tasks/trace-otel/Task.md
+  s_558b07242c82da::t_f120d17ec79203 1,7-12,15-16,20-30,35-40
+  s_558b07242c82da::t_cc46cb730a4c85 2-6,13-14,17-19,31-34
+evals/tasks/trace-strands/harness.json
+  s_558b07242c82da::t_8dde68556aa8d8 1-7
+evals/tasks/trace-strands/environment/Dockerfile
+  s_558b07242c82da::t_8dde68556aa8d8 1-14
+evals/tasks/trace-sdk/Task.md
+  s_558b07242c82da::t_e88fb13c5cd2fb 1-46
+evals/tasks/trace-otel/instruction.md
+  s_558b07242c82da::t_cc46cb730a4c85 1-5,9-15
+  s_558b07242c82da::t_e908c8072b0c8a 6-8
+evals/tasks/trace-strands/instruction.md
+  s_558b07242c82da::t_8dde68556aa8d8 6-15
+  s_558b07242c82da::t_d5235e3c85254f 1-5
+evals/tasks/trace-strands/task.toml
+  s_558b07242c82da::t_8dde68556aa8d8 1-21
+evals/tasks/trace-strands/environment/app/assistant.py
+  s_558b07242c82da::t_3605661a268e2e 1-116
+evals/tasks/trace-otel/harness.json
+  s_558b07242c82da::t_cc46cb730a4c85 1-7
+evals/tasks/trace-otel/task.toml
+  s_558b07242c82da::t_cc46cb730a4c85 1-21
+evals/tasks/trace-otel/environment/Dockerfile
+  s_558b07242c82da::t_cc46cb730a4c85 1-14
+evals/tasks/trace-sdk/harness.json
+  s_558b07242c82da::t_b777dc3ccb7d92 5-6
+  s_558b07242c82da::t_fe4c48a8608e1b 2-4
+  s_558b07242c82da::t_7a4f1c7f3b70ea 7
+  s_558b07242c82da::t_27fe1fc9101375 1
+evals/shared/trace-support/expected.json
+  s_558b07242c82da::t_1616a6f7902729 5
+  s_558b07242c82da::t_48219927e9ed39 2-4
+  s_558b07242c82da::t_c2271ee34f7eb5 6
+  s_558b07242c82da::t_470e9d8a3ae781 1
+evals/tasks/trace-sdk/environment/Dockerfile
+  s_558b07242c82da::t_a15789f4f95c6b 1-14
+evals/tasks/trace-sdk/task.toml
+  s_558b07242c82da::t_cc06c7cd26b2f4 1-21
+evals/shared/trace-support/app/assistant.py
+  s_558b07242c82da::t_5df52022dc4a82 1-63
+evals/shared/trace-support/app/conversations.json
+  s_558b07242c82da::t_2e88b75d793055 1-24
+evals/shared/trace-support/app/run_conversations.py
+  s_558b07242c82da::t_73becb7ea411d7 1-55
+evals/shared/trace-support/app/tools_service.py
+  s_558b07242c82da::t_4c2bea9b3320b2 1-83
+evals/tasks/trace-sdk/instruction.md
+  s_558b07242c82da::t_dc8d557ae48227 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "971fdba5f083c3e4f045bf9db645fde15c8d51e5",
+  "prompts": {},
+  "sessions": {
+    "s_558b07242c82da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4888091d-3c83-4676-8411-38267d0814dc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
