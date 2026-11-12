@@ -40,8 +40,35 @@ In an agent-based workspace:
 
 In a project-based workspace, set `LANGSMITH_PROJECT` to the tracing project.
 
-Set `LANGSMITH_ENDPOINT` when the account is outside the default US region or
-on a self-hosted instance; otherwise the API key will not authenticate.
+### Confirm the region, workspace, and credentials
+
+The application's endpoint and API key determine which organization and
+workspace receive traces before the agent or project is applied. Check them in
+every runtime that sends traces: local shell, `.env` files, CI, and deployment
+secrets often differ.
+
+- **Region or instance:** `LANGSMITH_ENDPOINT` must be the API URL for the
+  organization's region or self-hosted instance. Without it, the SDK uses the
+  default US URL, and a key from another region (EU, for example) will not
+  authenticate. Look up the region's URL in the docs instead of guessing it.
+  OpenTelemetry exporters use the same base URL with the OTLP path.
+- **Workspace:** when the API key can access more than one workspace, set
+  `LANGSMITH_WORKSPACE_ID` to the target workspace. Otherwise traces go to the
+  key's default workspace. Direct API calls and OpenTelemetry exports carry the
+  workspace in the `X-Tenant-Id` header. Agent IDs and project names are
+  resolved within that workspace, so the same ID in another workspace is a
+  different agent or none.
+- **Key:** use a key from the target organization with permission to write
+  traces there. Never print or log its value.
+- **Legacy names:** `LANGCHAIN_*` equivalents of these variables are still
+  read. Remove stale ones so they cannot point traces at another endpoint,
+  workspace, or project.
+
+Compare the application's settings with what the CLI will query:
+`langsmith auth info --format json` reports the CLI's `api_url` and
+`workspace_id`. If they differ from the application's endpoint or workspace,
+pass `--api-url` and `--workspace` explicitly; otherwise verification searches
+the wrong place and a correctly sent trace looks missing.
 
 ## Choose the instrumentation layer
 
@@ -150,7 +177,8 @@ child runs carry the thread. Check grouping with `langsmith threads list` and
 Exercise the real application path with a realistic request, then use the
 commands above to confirm:
 
-- The trace is in the intended agent environment or project, and nowhere else.
+- The trace is in the intended region, workspace, and agent environment or
+  project, and nowhere else.
 - The run tree has the expected structure, with no duplicate or orphaned runs.
 - `thread_id` and the chosen metadata appear on child runs, not only the root.
 - Inputs, outputs, and metadata contain no secrets or data that should have
@@ -160,9 +188,9 @@ commands above to confirm:
 Tracing exports in the background. Scripts, tests, serverless functions, and
 workers must flush or shut down the tracer before exiting, or the last traces
 are lost; look up the flush call for the SDK and language in use. If no trace
-appears, check the API key, endpoint region, workspace, agent ID and
-environment, and whether a sampling rate or tracing context disabled it before
-changing code.
+appears, check that the CLI is querying the same endpoint and workspace as the
+application, then the API key, agent ID and environment, and whether a sampling
+rate or tracing context disabled it, before changing code.
 
 ## Use current tools
 
