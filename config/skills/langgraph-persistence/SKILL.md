@@ -34,7 +34,7 @@ LangGraph's persistence layer enables durable execution by checkpointing graph s
 Set up a basic graph with in-memory checkpointing and thread-based state persistence.
 
 ```python
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 from typing_extensions import TypedDict, Annotated
 import operator
@@ -52,7 +52,7 @@ graph = (
     .add_node("respond", add_message)
     .add_edge(START, "respond")
     .add_edge("respond", END)
-    .compile(checkpointer=checkpointer)  # Pass at compile time
+    .compile(saver=checkpointer)  # Pass at compile time
 )
 
 # ALWAYS provide thread_id
@@ -104,7 +104,7 @@ Configure PostgreSQL-backed checkpointing for production deployments.
 
 ```python
 import os
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.postgresql import PostgresSaver
 
 # Run once during deployment (not at application startup):
 #   PostgresSaver.from_conn_string(os.environ["DATABASE_URL"]).setup()
