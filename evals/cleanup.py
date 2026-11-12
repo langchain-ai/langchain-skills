@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Delete only recorded temporary task projects from Harbor eval runs."""
+"""Delete only recorded temporary task projects and agents from Harbor eval runs."""
 
 from __future__ import annotations
 
@@ -10,7 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
-from harness import JOBS, client, load_manifest, manifest_path, save_manifest
+from langsmith.utils import LangSmithNotFoundError
+
+from harness import JOBS, client, load_manifest, manifest_path, save_manifest, target_agent_id
 
 
 def canonical_uuid(value: str) -> str:
@@ -40,6 +42,19 @@ def validate_manifest(run_id: str, data: dict) -> None:
         raise ValueError(f"{run_id}: target project name does not match run identity")
     if data["status"] == "running":
         raise ValueError(f"{run_id}: trial is still running")
+    if data.get("target_agent_id") is not None:
+        if data["target_agent_id"] != target_agent_id(data["task"], data["profile"], run_id):
+            raise ValueError(f"{run_id}: target agent ID does not match run identity")
+        canonical_uuid(data["target_agent_uuid"])
+        if data["status"] == "completed":
+            report_path = manifest_path(run_id).with_name("report.json")
+            report = json.loads(report_path.read_text()) if report_path.is_file() else {}
+            if (
+                report.get("run_id") != run_id
+                or not report.get("inspected_at")
+                or not isinstance(report.get("validators", {}).get("evidence"), dict)
+            ):
+                raise ValueError(f"{run_id}: a live report with trace evidence is required before cleanup")
     if data.get("held_out_run_ids"):
         report_path = manifest_path(run_id).with_name("report.json")
         report = json.loads(report_path.read_text())
@@ -64,32 +79,53 @@ def cleanup_runs(run_ids: list[str], all_runs: bool = False, execute: bool = Fal
     for run_id in selected:
         data = load_manifest(run_id)
         validate_manifest(run_id, data)
-        if not data.get("target_project_deleted"):
+        agent_pending = data.get("target_agent_id") is not None and not data.get("target_agent_deleted")
+        if not data.get("target_project_deleted") or agent_pending:
             pending.append(data)
     if not pending:
-        print("no temporary target projects to delete")
+        print("no temporary target projects or agents to delete")
         return
     for data in pending:
-        print(f"{data['run_id']}: {data['target_project_name']} ({data['target_project_id']})")
+        agent = f"; agent {data['target_agent_id']}" if data.get("target_agent_id") else ""
+        print(f"{data['run_id']}: {data['target_project_name']} ({data['target_project_id']}){agent}")
     if not execute:
-        print("dry run; pass --execute to delete these exact target projects")
+        print("dry run; pass --execute to delete these exact targets")
         return
     ls = client()
     for data in pending:
         run_id = data["run_id"]
         if data["workspace_id"] != str(UUID(ls.workspace_id)):
             raise RuntimeError(f"{run_id}: workspace does not match manifest")
-        project = ls.read_project(project_id=data["target_project_id"])
-        if (
-            str(project.id) != data["target_project_id"]
-            or project.name != data["target_project_name"]
-            or project.description != f"Isolated Harbor task target for {run_id}"
-        ):
-            raise RuntimeError(f"{run_id}: live target project identity mismatch")
-        ls.delete_project(project_id=data["target_project_id"])
-        data["target_project_deleted"] = True
-        save_manifest(data)
-        print(f"{run_id}: deleted target project; shared traces and local artifacts preserved")
+        if not data.get("target_project_deleted"):
+            project = ls.read_project(project_id=data["target_project_id"])
+            if (
+                str(project.id) != data["target_project_id"]
+                or project.name != data["target_project_name"]
+                or project.description != f"Isolated Harbor task target for {run_id}"
+            ):
+                raise RuntimeError(f"{run_id}: live target project identity mismatch")
+            ls.delete_project(project_id=data["target_project_id"])
+            data["target_project_deleted"] = True
+            save_manifest(data)
+            print(f"{run_id}: deleted target project; shared traces and local artifacts preserved")
+        if data.get("target_agent_id") is not None and not data.get("target_agent_deleted"):
+            delete_target_agent(ls, data)
+            print(f"{run_id}: deleted target agent {data['target_agent_id']} and its environments")
+
+
+def delete_target_agent(ls, data: dict) -> None:
+    run_id, agent_id = data["run_id"], data["target_agent_id"]
+    try:
+        live = ls.request_with_retries("GET", f"/api/v1/agents/{agent_id}").json()
+    except LangSmithNotFoundError:
+        live = None
+    if live is not None:
+        live_uuid = str(UUID(live["agent_uuid"])) if live.get("agent_uuid") else None
+        if live.get("id") != agent_id or live_uuid != data["target_agent_uuid"]:
+            raise RuntimeError(f"{run_id}: live target agent identity mismatch")
+        ls.request_with_retries("DELETE", f"/api/v1/agents/{agent_id}")
+    data["target_agent_deleted"] = True
+    save_manifest(data)
 
 
 def main() -> None:

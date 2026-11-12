@@ -41,10 +41,11 @@ def _summarize_report(report: dict) -> dict:
     local = report.get("local") or {}
     live = report.get("live") or {}
     validators = report.get("validators") or {}
-    checks = {
-        name: bool((validators.get(name) or {}).get("passed"))
-        for name in ("evaluator_pair", "chain_configuration", "insights_job")
-    }
+    if report.get("task", "chained-eval") == "chained-eval":
+        names = ("evaluator_pair", "chain_configuration", "insights_job")
+    else:
+        names = [name for name, result in validators.items() if isinstance(result, dict) and "passed" in result]
+    checks = {name: bool((validators.get(name) or {}).get("passed")) for name in names}
     traces = live.get("traces") or []
     feedback = live.get("feedback_by_case") or []
     source_sha = report.get("source_sha")

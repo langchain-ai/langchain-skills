@@ -1,11 +1,14 @@
-"""Read-only configuration checks for the chained online evaluation task."""
+"""Read-only checks for the online evaluation and tracing tasks."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
 import subprocess
+from collections import Counter
+from datetime import datetime
 from uuid import UUID
 
 from langsmith.utils import LangSmithNotFoundError
@@ -179,3 +182,105 @@ def collect_rules(data: dict, ls) -> dict:
         })
     session = _api(ls, f"/sessions/{project_id}")
     return {"rules": rules, "project_idle_fields": {k: v for k, v in session.items() if "idle" in k}}
+
+
+EXECUTION_GAP_SECONDS = 10
+
+
+def _digest(value) -> str | None:
+    if value in (None, ""):
+        return None
+    return hashlib.sha256(str(value).encode()).hexdigest()[:12]
+
+
+def _run_record(run) -> dict:
+    metadata = (run.extra or {}).get("metadata") or {}
+    return {
+        "id": str(run.id),
+        "trace_id": str(run.trace_id),
+        "parent_run_id": str(run.parent_run_id) if run.parent_run_id else None,
+        "name": run.name,
+        "run_type": run.run_type,
+        "start_time": run.start_time.isoformat() if run.start_time else None,
+        "thread": _digest(metadata.get("thread_id", metadata.get("session_id"))),
+        "process": _digest(metadata.get("otel.resource.service.instance.id")),
+    }
+
+
+def collect_traces(data: dict, ls) -> dict:
+    """Record run structure in the target agent's environments; never inputs, outputs, or raw metadata values."""
+    agent_id = data["target_agent_id"]
+    agent = _api(ls, f"/api/v1/agents/{agent_id}")
+    if agent.get("id") != agent_id or str(UUID(agent["agent_uuid"])) != data["target_agent_uuid"]:
+        raise RuntimeError("target agent identity does not match the manifest")
+    environments, runs = {}, {}
+    for environment in agent.get("environments") or []:
+        name = environment["environment"]
+        records = [_run_record(run) for run in ls.list_runs(project_id=str(UUID(environment["tracer_session_id"])))]
+        runs[name] = records
+        environments[name] = {"runs": len(records), "roots": sum(r["parent_run_id"] is None for r in records)}
+    target_runs = sum(1 for _ in ls.list_runs(project_id=str(UUID(data["target_project_id"])), limit=100))
+    return {"agent_id": agent_id, "environments": environments, "target_project_runs": target_runs, "runs": runs}
+
+
+def _executions(roots: list[dict]) -> list[list[dict]]:
+    ordered = sorted(roots, key=lambda r: r["start_time"] or "")
+    groups: list[list[dict]] = []
+    previous = None
+    for root in ordered:
+        started = datetime.fromisoformat(root["start_time"]) if root["start_time"] else None
+        if not groups or started is None or previous is None or (started - previous).total_seconds() > EXECUTION_GAP_SECONDS:
+            groups.append([])
+        groups[-1].append(root)
+        previous = started
+    return groups
+
+
+def validate_traces(evidence: dict, expected: dict, rule: dict) -> dict:
+    environment = expected["agent_environment"]
+    runs = evidence["runs"].get(environment, [])
+    others = {name: env["runs"] for name, env in evidence["environments"].items() if name != environment}
+    destination = bool(runs) and not any(others.values()) and evidence["target_project_runs"] == 0
+
+    run_ids = {r["id"] for r in runs}
+    orphans = [r for r in runs if r["parent_run_id"] and r["parent_run_id"] not in run_ids]
+    executions = _executions([r for r in runs if r["parent_run_id"] is None])
+    latest = executions[-1] if executions else []
+    assistant = Counter(r["process"] for r in latest).most_common(1)[0][0] if latest else None
+
+    def from_service(run: dict) -> bool:
+        if rule["rule"] == "names":
+            return run["name"] in rule["names"]
+        return run["process"] is not None and assistant is not None and run["process"] != assistant
+
+    turn_roots = [r for r in latest if not from_service(r)]
+    service_roots = [r for r in latest if from_service(r)]
+    traces = {r["trace_id"] for r in turn_roots}
+    children = [r for r in runs if r["trace_id"] in traces and r["parent_run_id"] is not None]
+    service_children = [r for r in children if from_service(r)]
+    linked_traces = {r["trace_id"] for r in service_children}
+
+    per_thread = Counter(r["thread"] for r in turn_roots)
+    threads = (
+        all(r["thread"] for r in turn_roots)
+        and sorted(per_thread.values()) == sorted(expected["turns_per_thread"])
+    )
+
+    def coverage(items: list[dict]) -> float | None:
+        return round(sum(bool(r["thread"]) for r in items) / len(items), 3) if items else None
+
+    return {
+        "destination": {"passed": destination, "environment_runs": len(runs), "other_environment_runs": others,
+                        "target_project_runs": evidence["target_project_runs"]},
+        "turns_arrived": {"passed": len(turn_roots) == expected["turns"], "turn_roots": len(turn_roots),
+                          "expected": expected["turns"], "executions_observed": len(executions)},
+        "threads": {"passed": threads, "distinct_threads": len(per_thread), "turns_per_thread": sorted(per_thread.values()),
+                    "child_coverage": coverage([r for r in children if not from_service(r)]),
+                    "service_coverage": coverage(service_children)},
+        "distributed_tracing": {"passed": len(linked_traces) == expected["service_turns"] and not service_roots and not orphans,
+                                "linked_traces": len(linked_traces), "expected": expected["service_turns"],
+                                "service_roots": len(service_roots), "orphan_runs": len(orphans),
+                                "rule": rule["rule"]},
+        "run_names": sorted({r["name"] for r in runs}),
+        "evidence": evidence,
+    }

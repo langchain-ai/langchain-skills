@@ -35,6 +35,6 @@ The model is scripted, so no provider credentials are needed and every trial
 plays the same turns. `expected.json` stays outside the task environment. The
 OTLP endpoint accepts spans asynchronously, so a span whose parent never
 arrives is dropped without an error; the report counts what LangSmith stored,
-not what the app attempted to send. The rule for recognizing tools-service runs
-is still to be fixed from observed traces. One trial per profile is an
-anecdote, not a rate.
+not what the app attempted to send. Tools-service spans are recognized by an
+OpenTelemetry `service.instance.id` that differs from the turn root's, so span
+names do not matter. One trial per profile is an anecdote, not a rate.

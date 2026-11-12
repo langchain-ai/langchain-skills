@@ -3,5 +3,12 @@
   "linux_cli_required": true,
   "verifier_enabled": false,
   "target": "agent",
-  "shared": "trace-support"
+  "shared": "trace-support",
+  "service_runs": {
+    "rule": "names",
+    "names": [
+      "handle_search_request",
+      "handle_ticket_request"
+    ]
+  }
 }

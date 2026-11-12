@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,7 @@ REPO = EVALS.parent
 TASKS = EVALS / "tasks"
 JOBS = EVALS / "jobs"
 STAGE = EVALS / ".stage"
+SHARED = EVALS / "shared"
 MCP_SERVERS = [
     {"name": "langchain-docs", "transport": "streamable-http", "url": "https://docs.langchain.com/mcp"},
     {"name": "langchain-reference", "transport": "streamable-http", "url": "https://reference.langchain.com/mcp"},
@@ -84,6 +86,7 @@ def validate_task(path: Path) -> None:
     settings = task_settings(path)
     if settings["verifier_enabled"] and not (path / "tests" / "test.sh").is_file():
         raise FileNotFoundError("scored task requires tests/test.sh")
+    shared_dir(path)
     if settings["fixture_type"] == "none":
         return
     cases = json.loads((path / "fixtures.json").read_text())
@@ -114,7 +117,51 @@ def task_settings(path: Path) -> dict:
         raise ValueError("verifier_enabled must be a boolean")
     if not isinstance(settings.get("linux_cli_required"), bool):
         raise ValueError("linux_cli_required must be a boolean")
+    settings.setdefault("target", "project")
+    if settings["target"] not in {"project", "agent"}:
+        raise ValueError("target must be project or agent")
+    shared = settings.get("shared")
+    if shared is not None and (not isinstance(shared, str) or not shared or shared in {".", ".."}
+                               or "/" in shared or "\\" in shared):
+        raise ValueError("shared must be a single directory name")
+    rule = settings.get("service_runs")
+    if rule is not None and not valid_service_rule(rule):
+        raise ValueError("service_runs must be {rule: process} or {rule: names, names: [...]}")
+    if settings["target"] == "agent" and (shared is None or rule is None):
+        raise ValueError("agent-target tasks require shared and service_runs")
     return settings
+
+
+def valid_service_rule(rule: object) -> bool:
+    if rule == {"rule": "process"}:
+        return True
+    return (
+        isinstance(rule, dict) and set(rule) == {"rule", "names"} and rule["rule"] == "names"
+        and isinstance(rule["names"], list) and bool(rule["names"])
+        and all(isinstance(name, str) and name for name in rule["names"])
+    )
+
+
+def shared_dir(path: Path) -> Path | None:
+    name = task_settings(path).get("shared")
+    if name is None:
+        return None
+    shared = SHARED / name
+    if not (shared / "app").is_dir() or not (shared / "expected.json").is_file():
+        raise FileNotFoundError(f"shared task assets missing: {shared}")
+    return shared
+
+
+def digest_paths(path: Path) -> list[Path]:
+    shared = shared_dir(path)
+    return [REPO / "skills", path] + ([shared] if shared else [])
+
+
+def target_agent_id(task: str, profile: str, run_id: str) -> str:
+    agent_id = f"lcskills-eval-{task}-{profile}-{run_id[:8]}"
+    if len(agent_id) > 63 or not re.fullmatch(r"[a-z]([a-z0-9-]*[a-z0-9])?", agent_id):
+        raise ValueError(f"invalid target agent id: {agent_id}")
+    return agent_id
 
 
 def client() -> Client:
@@ -224,6 +271,18 @@ def emit_fixtures(ls: Client, task: str, project_name: str, phase: str, run_id: 
     return emit_cases(ls, project_name, items, label, run_id)
 
 
+def create_target_agent(ls: Client, agent_id: str) -> dict:
+    body = {"id": agent_id, "name": agent_id, "source_type": "EXTERNAL"}
+    agent = ls.request_with_retries("POST", "/api/v1/agents", request_kwargs={"json": body}).json()
+    if agent.get("id") != agent_id or not agent.get("agent_uuid"):
+        raise RuntimeError("agent creation returned an unexpected identity")
+    return {
+        "target_agent_id": agent_id,
+        "target_agent_uuid": str(UUID(agent["agent_uuid"])),
+        "target_agent_environments": {e["environment"]: str(UUID(e["tracer_session_id"])) for e in agent["environments"]},
+    }
+
+
 def prepare(args: argparse.Namespace) -> None:
     path = task_dir(args.task)
     validate_task(path)
@@ -248,7 +307,7 @@ def prepare(args: argparse.Namespace) -> None:
         "profile": args.profile,
         "profile_config": profile_config(args.profile),
         "source_sha": git_sha(),
-        "content_digest": content_digest([REPO / "skills", path]),
+        "content_digest": content_digest(digest_paths(path)),
         "trace_project_id": shared_project_id,
         "trace_project_name": shared.name,
         "dataset_id": str(shared.reference_dataset_id),
@@ -263,11 +322,32 @@ def prepare(args: argparse.Namespace) -> None:
         "status": "preparing",
     }
     save_manifest(data)
+    if task_settings(path)["target"] == "agent":
+        data.update(create_target_agent(ls, target_agent_id(args.task, args.profile, run_id)))
+        save_manifest(data)
     if task_settings(path)["fixture_type"] != "none":
         data["seed_run_ids"] = emit_fixtures(ls, args.task, target_name, "seed", run_id)
     data["status"] = "prepared"
     save_manifest(data)
     print(json.dumps({"run_id": run_id, "task": args.task, "profile": args.profile, "target_project_id": str(target.id)}))
+
+
+def stage_shared_app(source: Path, destination: Path) -> None:
+    """Copy shared app files without replacing the task's own overrides."""
+    for path in sorted(source.rglob("*")):
+        if not path.is_file() or "__pycache__" in path.parts:
+            continue
+        target = destination / path.relative_to(source)
+        if target.exists():
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+
+
+def target_env(data: dict, settings: dict) -> dict:
+    if settings["target"] == "agent":
+        return {"TARGET_AGENT_ID": data["target_agent_id"]}
+    return {"TARGET_PROJECT_ID": data["target_project_id"]}
 
 
 def stage_run(data: dict, cli_bin: Path) -> Path:
@@ -280,6 +360,9 @@ def stage_run(data: dict, cli_bin: Path) -> Path:
     root.mkdir(parents=True)
     staged_task = root / "task"
     shutil.copytree(task_dir(data["task"]), staged_task)
+    shared = shared_dir(task_dir(data["task"]))
+    if shared:
+        stage_shared_app(shared / "app", staged_task / "environment" / "app")
     if settings["linux_cli_required"]:
         shutil.copy2(cli_bin, staged_task / "environment" / "langsmith")
     profile = profile_config(data["profile"])
@@ -304,7 +387,7 @@ def stage_run(data: dict, cli_bin: Path) -> Path:
         "model_name": profile["model"],
         "extra_allowed_hosts": ["gateway.smith.langchain.com", "api.smith.langchain.com", "docs.langchain.com", "reference.langchain.com"],
         "kwargs": {"version": profile["agent_version"], "max_budget_usd": profile["max_budget_usd"]},
-        "env": {"TARGET_PROJECT_ID": data["target_project_id"], "LANGSMITH_WORKSPACE_ID": data["workspace_id"]},
+        "env": {**target_env(data, settings), "LANGSMITH_WORKSPACE_ID": data["workspace_id"]},
     }
     if selected:
         agent["skills"] = [str(root / "skills")]
@@ -331,7 +414,7 @@ def run(args: argparse.Namespace) -> None:
         raise RuntimeError(f"run status is {data['status']}; refusing duplicate Harbor run")
     if data["source_sha"] != git_sha():
         raise RuntimeError("source commit changed since prepare; create a new run")
-    if data["content_digest"] != content_digest([REPO / "skills", task_dir(data["task"])]):
+    if data["content_digest"] != content_digest(digest_paths(task_dir(data["task"]))):
         raise RuntimeError("task or skill content changed since prepare; create a new run")
     if data["profile_config"] != profile_config(data["profile"]):
         raise RuntimeError("profile changed since prepare; create a new run")
@@ -533,6 +616,13 @@ def report(args: argparse.Namespace) -> None:
             expected = [t["expected_resolved"] for t in json.loads((task_dir(data["task"]) / "fixtures.json").read_text())["held_out"]]
             for case in summary["live"]["feedback_by_case"]:
                 case["expected_resolved"] = expected[case["case_index"] - 1]
+        path = task_dir(data["task"])
+        settings = task_settings(path)
+        if settings["target"] == "agent":
+            from validators import collect_traces, validate_traces
+
+            expected = json.loads((shared_dir(path) / "expected.json").read_text())
+            summary["validators"] = validate_traces(collect_traces(data, ls), expected, settings["service_runs"])
         summary["inspected_at"] = datetime.now(timezone.utc).isoformat()
     report_path = manifest_path(args.run_id).with_name("report.json")
     report_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
@@ -560,6 +650,7 @@ def check(args: argparse.Namespace) -> None:
     data = {
         "run_id": placeholder, "task": args.task, "profile": args.profile,
         "target_project_id": placeholder, "workspace_id": placeholder,
+        "target_agent_id": target_agent_id(args.task, args.profile, placeholder),
     }
     config_path = stage_run(data, linux_cli_path(args.cli_bin))
     child_env = os.environ.copy()

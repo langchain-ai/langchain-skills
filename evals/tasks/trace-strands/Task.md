@@ -33,5 +33,6 @@ the tool call to the tools service.
 The scripted model needs no provider credentials, and every trial plays the same
 turns. `expected.json` stays outside the task environment. Strands names its
 own spans, so the report's run names reflect the framework as well as the
-agent's choices. The rule for recognizing tools-service runs is still to be
-fixed from observed traces. One trial per profile is an anecdote, not a rate.
+agent's choices. Tools-service spans are recognized by an OpenTelemetry
+`service.instance.id` that differs from the turn root's. One trial per profile
+is an anecdote, not a rate.

@@ -129,5 +129,109 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(self.ls.deleted, [])
 
 
+class FakeResponse:
+    def __init__(self, body: dict):
+        self.body = body
+
+    def json(self) -> dict:
+        return self.body
+
+
+class FakeAgentClient(FakeClient):
+    def __init__(self, workspace_id: str, project: SimpleNamespace, agent: dict | None):
+        super().__init__(workspace_id, project)
+        self.agent = agent
+        self.deleted_agents: list[str] = []
+
+    def request_with_retries(self, method: str, path: str, **kwargs) -> FakeResponse:
+        agent_id = path.rsplit("/", 1)[-1]
+        if method == "GET":
+            if self.agent is None:
+                raise cleanup.LangSmithNotFoundError("missing")
+            return FakeResponse(self.agent)
+        if method == "DELETE":
+            self.deleted_agents.append(agent_id)
+            return FakeResponse({})
+        raise AssertionError(method)
+
+
+class AgentCleanupTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.jobs = Path(self.temporary.name)
+        self.run_id = str(uuid4())
+        self.target_id = str(uuid4())
+        self.workspace_id = str(uuid4())
+        self.agent_uuid = str(uuid4())
+        self.agent_id = f"lcskills-eval-trace-sdk-full-{self.run_id[:8]}"
+        self.data = {
+            "schema_version": 1,
+            "run_id": self.run_id,
+            "task": "trace-sdk",
+            "profile": "full",
+            "status": "completed",
+            "workspace_id": self.workspace_id,
+            "target_project_id": self.target_id,
+            "target_project_name": f"lcskills-eval-trace-sdk-full-{self.run_id[:8]}",
+            "trace_project_id": str(uuid4()),
+            "held_out_run_ids": [],
+            "target_agent_id": self.agent_id,
+            "target_agent_uuid": self.agent_uuid,
+        }
+        project = SimpleNamespace(
+            id=self.target_id,
+            name=self.data["target_project_name"],
+            description=f"Isolated Harbor task target for {self.run_id}",
+        )
+        self.ls = FakeAgentClient(self.workspace_id, project, {"id": self.agent_id, "agent_uuid": self.agent_uuid})
+        self.addCleanup(patch.stopall)
+        patch.object(harness, "JOBS", self.jobs).start()
+        patch.object(cleanup, "JOBS", self.jobs).start()
+        patch.object(cleanup, "client", return_value=self.ls).start()
+        harness.save_manifest(self.data)
+
+    def write_report(self, evidence: bool = True) -> None:
+        report = {"run_id": self.run_id, "inspected_at": "2026-11-12T12:00:00+00:00",
+                  "validators": {"evidence": {"runs": {}}} if evidence else {}}
+        (self.jobs / self.run_id / "report.json").write_text(json.dumps(report))
+
+    def test_requires_trace_evidence_before_cleanup(self) -> None:
+        self.write_report(evidence=False)
+        with self.assertRaisesRegex(ValueError, "trace evidence"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual((self.ls.deleted, self.ls.deleted_agents), ([], []))
+
+    def test_deletes_project_and_matching_agent(self) -> None:
+        self.write_report()
+        cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted, [self.target_id])
+        self.assertEqual(self.ls.deleted_agents, [self.agent_id])
+        self.assertTrue(harness.load_manifest(self.run_id)["target_agent_deleted"])
+
+    def test_refuses_agent_with_different_uuid(self) -> None:
+        self.write_report()
+        self.ls.agent = {"id": self.agent_id, "agent_uuid": str(uuid4())}
+        with self.assertRaisesRegex(RuntimeError, "agent identity mismatch"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_agents, [])
+        self.assertFalse(harness.load_manifest(self.run_id).get("target_agent_deleted"))
+
+    def test_rejects_agent_id_outside_run_identity(self) -> None:
+        self.data["target_agent_id"] = "production-support-agent"
+        harness.save_manifest(self.data)
+        self.write_report()
+        with self.assertRaisesRegex(ValueError, "agent ID does not match"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual((self.ls.deleted, self.ls.deleted_agents), ([], []))
+
+    def test_already_deleted_agent_is_marked_done(self) -> None:
+        self.write_report()
+        self.ls.agent = None
+        cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_agents, [])
+        self.assertTrue(harness.load_manifest(self.run_id)["target_agent_deleted"])
+
+
 if __name__ == "__main__":
     unittest.main()

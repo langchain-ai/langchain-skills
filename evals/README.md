@@ -11,6 +11,10 @@ The `thread-llm-judge` task asks for a single thread-level LLM judge. Its seed
 and held-out fixtures contain multiple turns per thread, and its report records
 the created rule shape and feedback against held-out labels. It is exploratory
 and unscored.
+The `trace-sdk`, `trace-otel`, and `trace-strands` tasks ask the agent to add
+LangSmith tracing to the same two-service support app, using the SDK,
+OpenTelemetry, or Strands Agents. They target a temporary LangSmith agent
+instead of a tracing project; see [Tracing tasks](#tracing-tasks).
 
 The `none`, `full`, and `mcp-only` profiles are the supported comparison. `full`
 copies the current `skills/` tree, so a newly added skill participates without
@@ -66,6 +70,16 @@ fixtures are needed. Set `verifier_enabled: true` and provide
 `tests/test.sh` for a scored task. Set `linux_cli_required: true` only when its
 Dockerfile copies the staged `langsmith` binary. Keep hidden truth and held-out
 fixtures outside `environment/`.
+
+Three optional `harness.json` keys support agent-targeted tasks. `target`
+is `project` (default) or `agent`. `shared` names a directory under
+`evals/shared/` whose `app/` is copied into the staged `environment/app/`
+without replacing files the task supplies, and whose `expected.json` holds the
+reference values. `service_runs` tells the trace validators how to recognize
+tools-service runs: `{"rule": "process"}` compares each run's OpenTelemetry
+`service.instance.id` with its trace root's, and
+`{"rule": "names", "names": [...]}` matches run names. Agent targets require
+both `shared` and `service_runs`.
 
 ## Check and run a profile
 
@@ -129,6 +143,48 @@ profiles compare skill guidance with docs MCP alone. The live report records
 rule type, thread grouping, variable mapping, feedback keys, and held-out
 `expected_resolved` labels. Review the agent trajectory and reasoning alongside
 the scores; four cases are descriptive evidence, not a pass rate.
+
+## Tracing tasks
+
+`trace-sdk`, `trace-otel`, and `trace-strands` share the deterministic app in
+`evals/shared/trace-support/`: a scripted assistant that calls a separate tools
+service over HTTP, and a runner that plays three conversations (seven turns,
+six of which call the service). `trace-strands` replaces `assistant.py` with a
+Strands agent driven by a scripted `Model`, so no provider credentials are
+needed. The sandbox cannot reach a package index, so each image preinstalls
+the packages its task needs.
+
+For these tasks, `prepare` also registers a temporary agent named
+`lcskills-eval-<task>-<profile>-<run8>` in the workspace and records its ID,
+`agent_uuid`, and environment trace-storage IDs in the manifest. The agent
+receives `TARGET_AGENT_ID` instead of `TARGET_PROJECT_ID`. Run them with the
+same commands as the other tasks; there are no held-out cases, so skip
+`replay`. OpenTelemetry spans are ingested asynchronously, so give `report` a
+short wait:
+
+```bash
+$HARBOR_PY evals/harness.py report <run-id> --live --wait-seconds 120
+```
+
+The live report reads only run names, types, parent links, start times, and
+hashes of each run's `thread_id` and OpenTelemetry `service.instance.id`; it
+never stores inputs, outputs, or raw metadata values. If the agent ran the app
+more than once, the checks use the latest run, identified by a gap of more than
+ten seconds between root traces, and report how many runs were observed. Four
+checks compare that run with `expected.json`:
+
+- `destination`: runs are in the `development` environment and nowhere else in
+  the agent or the trial's target project.
+- `turns_arrived`: seven turn traces arrived, so both processes flushed.
+- `threads`: every turn root carries a `thread_id`, split 3/2/2 across the
+  three conversations. Coverage on child and tools-service runs is reported
+  but does not affect the result.
+- `distributed_tracing`: each of the six service calls appears inside its
+  turn's trace, with no tools-service root traces and no orphaned runs.
+
+Cleanup deletes the temporary agent, including its environments, only after
+re-reading it and matching both its ID and `agent_uuid` to the manifest. A
+completed run needs a saved live report with trace evidence before cleanup.
 
 ## Cleanup and retention
 
