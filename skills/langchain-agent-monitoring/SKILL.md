@@ -21,7 +21,8 @@ Inspect representative production runs or threads before writing an evaluator.
 Define a score for an observable behavior and decide how its feedback will be
 used: review, monitoring, alerts, or investigating recurring failures. Use run
 scope for a single interaction and thread scope when the behavior depends on a
-conversation. Map evaluator variables to the exact evidence being judged and
+conversation. If runs lack the `thread_id` or metadata the evaluator needs, fix
+the instrumentation first with `langchain-agent-tracing`. Map evaluator variables to the exact evidence being judged and
 check that mapping against real traces. Keep feedback keys and score direction
 stable and interpretable.
 

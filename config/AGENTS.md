@@ -9,6 +9,7 @@ installed package versions.
 - **langchain-build-agent** - Invoke when building or modifying applications with Deep Agents, LangGraph, or LangChain, including architecture selection, middleware, memory, human review, composition, and retrieval. Follow its documentation lookup and fallback guidance.
 - **langchain-eval-engineering** - Invoke to design or audit Harbor evaluation tasks.
 - **langchain-agent-monitoring** - Invoke when monitoring an agent in production: choosing quality signals, designing or improving LangSmith online evaluations for runs or threads, and acting on the feedback.
+- **langchain-agent-tracing** - Invoke when adding, fixing, or reviewing LangSmith tracing: instrumentation, agent environment or project destination, threads and metadata, sampling, redaction, distributed tracing, and finding traces after they land.
 
 For LangSmith workspace operations, use an authenticated CLI profile when
 the CLI supports the task; use the SDK for application tracing and evaluation
