@@ -52,7 +52,7 @@ graph = (
     .add_node("respond", add_message)
     .add_edge(START, "respond")
     .add_edge("respond", END)
-    .compile(checkpointer=checkpointer, persist=True)  # Pass at compile time
+    .compile(checkpointer=checkpointer, persist=True)  # Pass it at compile time
 )
 
 # ALWAYS provide thread_id
