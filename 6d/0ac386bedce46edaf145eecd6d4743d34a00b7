@@ -1,0 +1,66 @@
+evals/tasks/trace-sdk/harness.json
+  s_558b07242c82da::t_cd89b6e7f372cd 6-13
+evals/tasks/trace-otel/Task.md
+  s_558b07242c82da::t_ede7b0145991e1 38-40
+evals/cleanup.py
+  s_558b07242c82da::t_409b04608bf08f 82-83,86,89-90,92,99-128
+  s_558b07242c82da::t_19ce8d51731974 45-57
+  s_558b07242c82da::t_037a544d501b30 2,13-15
+evals/tasks/trace-strands/Task.md
+  s_558b07242c82da::t_1063dd224fabc2 36
+  s_558b07242c82da::t_d2bfedac1f275d 37-38
+evals/tasks/trace-strands/harness.json
+  s_558b07242c82da::t_cd89b6e7f372cd 6-9
+evals/test_cleanup.py
+  s_558b07242c82da::t_459d30c2214378 132-235
+evals/validators.py
+  s_558b07242c82da::t_7806da2f6309bb 1,5,10-11,185-286
+evals/ci_runner.py
+  s_558b07242c82da::t_476dfb2f7872d9 44-48
+evals/shared/trace-support/expected.json
+  s_558b07242c82da::t_cd89b6e7f372cd 5-10
+evals/tasks/trace-otel/harness.json
+  s_558b07242c82da::t_cd89b6e7f372cd 6-9
+evals/tasks/trace-sdk/Task.md
+  s_558b07242c82da::t_26441de51425a4 44-45,47
+  s_558b07242c82da::t_1063dd224fabc2 46
+evals/test_trace_validators.py
+  s_558b07242c82da::t_418acb56cacdb1 1-170
+evals/harness.py
+  s_558b07242c82da::t_4f8666f6e03b7d 120-127,129-131,145-164
+  s_558b07242c82da::t_b1f87b458901c3 89
+  s_558b07242c82da::t_b55149738abe72 619-625
+  s_558b07242c82da::t_979676283d44bb 14
+  s_558b07242c82da::t_28adc6e56211a0 32
+  s_558b07242c82da::t_488f437c0561dc 363-365
+  s_558b07242c82da::t_3ff2b057b2ad87 128
+  s_558b07242c82da::t_fe75e5c77e457a 335-352
+  s_558b07242c82da::t_592442ef6a7fe0 135-144
+  s_558b07242c82da::t_89e2913438c8d8 325-327
+  s_558b07242c82da::t_c950166282dbf5 390
+  s_558b07242c82da::t_c9233cf1932621 653
+  s_558b07242c82da::t_c0cfe62206f887 310
+  s_558b07242c82da::t_67e639dbdaf387 274-285
+  s_558b07242c82da::t_86980139c3e58c 417
+  s_558b07242c82da::t_b2eebc25f0b9bc 165-166
+evals/README.md
+  s_558b07242c82da::t_9207ca34361f48 74-83
+  s_558b07242c82da::t_31837fca760abf 14-17
+  s_558b07242c82da::t_0d651d9ae4bcf6 147-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6d0ac386bedce46edaf145eecd6d4743d34a00b7",
+  "prompts": {},
+  "sessions": {
+    "s_558b07242c82da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4888091d-3c83-4676-8411-38267d0814dc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
