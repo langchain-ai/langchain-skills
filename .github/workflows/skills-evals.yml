@@ -15,9 +15,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  chained-eval:
+  harbor-eval:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [chained-eval, trace-sdk, trace-otel, trace-strands]
     steps:
       - name: Select Sunday 9 AM in New York
         id: slot
@@ -120,6 +124,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.LANGSMITH_GATEWAY_API_KEY }}
           ANTHROPIC_BASE_URL: https://gateway.smith.langchain.com/anthropic
           EVAL_TRACE_PROJECT_ID: ${{ vars.PUBLIC_SKILL_EVALS_PROJECT_ID }}
+          EVAL_TASK: ${{ matrix.task }}
         run: |
           for name in LANGSMITH_API_KEY WORKSPACE_ID ANTHROPIC_API_KEY EVAL_TRACE_PROJECT_ID; do
             if [ -z "${!name}" ]; then
@@ -129,7 +134,7 @@ jobs:
           done
           harbor_python="$(uv tool dir)/harbor/bin/python"
           "$harbor_python" target-source/evals/ci_runner.py \
-            --task chained-eval \
+            --task "$EVAL_TASK" \
             --profiles none full mcp-only \
             --trace-project-id "$EVAL_TRACE_PROJECT_ID" \
             --cli-bin "$RUNNER_TEMP/skill-eval-bin/langsmith" \

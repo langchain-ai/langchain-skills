@@ -70,6 +70,13 @@ def _summarize_report(report: dict) -> dict:
     }
 
 
+def _has_held_out_fixtures(task: str) -> bool:
+    if not task or task in {".", ".."} or "/" in task or "\\" in task:
+        raise ValueError("task must be a single directory name")
+    settings = json.loads((EVALS / "tasks" / task / "harness.json").read_text())
+    return settings.get("fixture_type") != "none"
+
+
 def _write_summary(path: Path, task: str, results: list[dict]) -> None:
     document = {
         "schema_version": 1,
@@ -95,6 +102,7 @@ def main() -> int:
     args = parser.parse_args()
 
     log_dir = Path(tempfile.mkdtemp(prefix="harbor-skill-evals-", dir=os.environ.get("RUNNER_TEMP")))
+    replay_needed = _has_held_out_fixtures(args.task)
     results: list[dict] = []
     failed = False
     required_checks = ("evaluator_pair", "chain_configuration", "insights_job")
@@ -139,8 +147,9 @@ def main() -> int:
             failed = True
             _write_summary(args.summary_path, args.task, results)
             continue
-        print(f"{profile}: replaying held-out cases")
-        if _run(log_dir / f"{profile}-replay.log", HARNESS, "replay", run_id):
+        if replay_needed:
+            print(f"{profile}: replaying held-out cases")
+        if replay_needed and _run(log_dir / f"{profile}-replay.log", HARNESS, "replay", run_id):
             item["status"] = "replay_failed"
             failed = True
             _write_summary(args.summary_path, args.task, results)

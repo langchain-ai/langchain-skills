@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from uuid import uuid4
 
-from ci_runner import _summarize_report
+from ci_runner import _has_held_out_fixtures, _summarize_report
 
 
 class SummaryTests(unittest.TestCase):
@@ -59,6 +59,16 @@ class SummaryTests(unittest.TestCase):
         self.assertIsNone(summary["agent_cost_usd"])
         self.assertEqual(summary["tool_call_count"], 0)
         self.assertNotIn("private", str(summary))
+
+
+class ReplayTests(unittest.TestCase):
+    def test_replay_runs_only_for_tasks_with_held_out_fixtures(self) -> None:
+        self.assertTrue(_has_held_out_fixtures("chained-eval"))
+        for task in ("trace-sdk", "trace-otel", "trace-strands"):
+            self.assertFalse(_has_held_out_fixtures(task))
+        for task in ("../skills", "a/b", ".."):
+            with self.assertRaises(ValueError):
+                _has_held_out_fixtures(task)
 
 
 if __name__ == "__main__":
