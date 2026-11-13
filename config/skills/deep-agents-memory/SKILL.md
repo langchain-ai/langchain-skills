@@ -6,7 +6,7 @@ description: "INVOKE THIS SKILL when your Deep Agent needs memory, persistence, 
 <overview>
 Deep Agents use pluggable backends for file operations and memory:
 
-**Short-term (StateBackend)**: Persists within a single thread, lost when thread ends
+**Short-term (StateBackend)**: Persists across turns of one thread (through checkpoints), not shared with other threads
 **Long-term (StoreBackend)**: Persists across threads and sessions
 **Hybrid (CompositeBackend)**: Route different paths to different backends
 
@@ -35,7 +35,7 @@ agent = create_deep_agent()  # Default: StateBackend
 result = agent.invoke({
     "messages": [{"role": "user", "content": "Write notes to /draft.txt"}]
 }, config={"configurable": {"thread_id": "thread-1"}})
-# /draft.txt is lost when thread ends
+# /draft.txt is visible in thread-1 only, not in other threads
 ```
 </python>
 <typescript>
@@ -44,11 +44,11 @@ Default StateBackend stores files ephemerally within a thread.
 ```typescript
 import { createDeepAgent } from "deepagents";
 
-const agent = await createDeepAgent();  // Default: StateBackend
+const agent = createDeepAgent();  // Default: StateBackend
 const result = await agent.invoke({
   messages: [{ role: "user", content: "Write notes to /draft.txt" }]
 }, { configurable: { thread_id: "thread-1" } });
-// /draft.txt is lost when thread ends
+// /draft.txt is visible in thread-1 only, not in other threads
 ```
 </typescript>
 </ex-default-state-backend>
@@ -84,10 +84,10 @@ import { InMemoryStore } from "@langchain/langgraph";
 
 const store = new InMemoryStore();
 
-const agent = await createDeepAgent({
-  backend: (config) => new CompositeBackend(
-    new StateBackend(config),
-    { "/memories/": new StoreBackend(config) }
+const agent = createDeepAgent({
+  backend: new CompositeBackend(
+    new StateBackend(),
+    { "/memories/": new StoreBackend() }
   ),
   store
 });
@@ -152,7 +152,7 @@ Use FilesystemBackend for local development with real disk access and human-in-t
 import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
 
-const agent = await createDeepAgent({
+const agent = createDeepAgent({
   backend: new FilesystemBackend({ rootDir: ".", virtualMode: true }),
   interruptOn: { write_file: true, edit_file: true },
   checkpointer: new MemorySaver()
@@ -207,14 +207,14 @@ agent = create_agent(
 
 ### What Agents CANNOT Configure
 
-- Tool names (ls, read_file, write_file, edit_file, glob, grep)
+- Rename the built-in filesystem tools (ls, read_file, write_file, edit_file, glob, grep); a `tools` allowlist on FilesystemMiddleware can limit which ones are exposed
 - Access files outside virtual_mode restrictions
 - Cross-thread file access without proper backend setup
 </boundaries>
 
 <fix-storebackend-requires-store>
 <python>
-StoreBackend requires a store instance.
+For persistent memory across threads, StoreBackend needs a store: pass one to the agent (or deploy where the platform provisions it).
 
 ```python
 # WRONG
@@ -225,14 +225,14 @@ agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem
 ```
 </python>
 <typescript>
-StoreBackend requires a store instance.
+For persistent memory across threads, StoreBackend needs a store: pass one to the agent (or deploy where the platform provisions it).
 
 ```typescript
 // WRONG
-const agent = await createDeepAgent({ backend: (c) => new StoreBackend(c) });
+const agent = createDeepAgent({ backend: new StoreBackend() });
 
 // CORRECT
-const agent = await createDeepAgent({ backend: (c) => new StoreBackend(c), store: new InMemoryStore() });
+const agent = createDeepAgent({ backend: new StoreBackend(), store: new InMemoryStore() });
 ```
 </typescript>
 </fix-storebackend-requires-store>
@@ -286,7 +286,7 @@ Use PostgresStore for production (InMemoryStore lost on restart).
 <!-- sample-check: skip (side-by-side comparison, not a program) -->
 ```python
 # WRONG                              # CORRECT
-store = InMemoryStore()              store = PostgresStore(connection_string="postgresql://...")
+store = InMemoryStore()              with PostgresStore.from_conn_string(DB_URI) as store: ...
 ```
 </python>
 <typescript>
@@ -294,7 +294,7 @@ Use PostgresStore for production (InMemoryStore lost on restart).
 
 ```typescript
 // WRONG                                    // CORRECT
-const store = new InMemoryStore();          const store = new PostgresStore({ connectionString: "..." });
+const store = new InMemoryStore();          const store = PostgresStore.fromConnString(DB_URI);
 ```
 </typescript>
 </fix-production-store>

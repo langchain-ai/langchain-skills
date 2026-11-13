@@ -6,7 +6,7 @@ description: "INVOKE THIS SKILL when building ANY Deep Agents application. Cover
 <overview>
 Deep Agents are an opinionated agent framework built on LangChain/LangGraph with built-in middleware:
 
-- **Task Planning**: TodoListMiddleware for breaking down complex tasks
+- **Task Planning**: TodoListMiddleware for breaking down complex tasks (opt-in since v0.7)
 - **Context Management**: Filesystem tools with pluggable backends
 - **Task Delegation**: SubAgent middleware for spawning specialized agents
 - **Long-term Memory**: Persistent storage across threads via Store
@@ -31,12 +31,12 @@ The agent harness provides these capabilities automatically - you configure, not
 
 | If you need to... | Middleware | Notes |
 |------------------|------------|-------|
-| Track complex tasks | TodoListMiddleware | Default enabled |
+| Track complex tasks | TodoListMiddleware | Opt-in since v0.7: pass it in `middleware` |
 | Manage file context | FilesystemMiddleware | Configure backend |
 | Delegate work | SubAgentMiddleware | Add custom subagents |
 | Add human approval | HumanInTheLoopMiddleware | Requires checkpointer |
 | Load skills | SkillsMiddleware | Provide skill directories |
-| Access memory | MemoryMiddleware | Requires Store instance |
+| Access memory | MemoryMiddleware | Needs a backend and memory sources |
 
 </middleware-selection>
 
@@ -140,11 +140,12 @@ const agent = await createDeepAgent({
 </ex-full-configuration>
 
 <built-in-tools>
-Every deep agent has access to:
+By default, a deep agent has:
 
-1. **Planning**: `write_todos` - Track multi-step tasks
-2. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`
-3. **Delegation**: `task` - Spawn specialized subagents
+1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep` (hide them with a harness profile's `excluded_tools`, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
+2. **Delegation**: `task` - Spawn specialized subagents (absent when the general-purpose subagent is disabled and no synchronous subagents are configured)
+
+Planning (`write_todos`) is opt-in since v0.7: add TodoListMiddleware to `middleware`.
 </built-in-tools>
 
 ---
@@ -192,7 +193,7 @@ Step-by-step guidance for the agent.
 | On-demand loading | Always loaded at startup |
 | Task-specific instructions | General preferences |
 | Large documentation | Compact context |
-| SKILL.md in directories | Single AGENTS.md file |
+| SKILL.md in directories | AGENTS.md files (global and project), appended to the system prompt |
 
 </skills-vs-memory>
 
@@ -284,8 +285,8 @@ agent = create_deep_agent(
 
 ### What Agents CANNOT Configure
 
-- Core middleware removal (TodoList, Filesystem, SubAgent always present)
-- The write_todos, task, or filesystem tool names
+- Removing FilesystemMiddleware (it is required scaffolding; hide its tools instead)
+- Renaming the built-in tools (`write_todos`, `task`, filesystem tools); they can be hidden or allowlisted, not renamed
 - The SKILL.md frontmatter format
 </boundaries>
 
@@ -316,7 +317,7 @@ const agent = await createDeepAgent({ interruptOn: { write_file: true }, checkpo
 
 <fix-store-for-memory>
 <python>
-StoreBackend requires a Store instance for persistent memory across threads.
+For persistent memory across threads, StoreBackend needs a store: pass one to the agent (or deploy where the platform provisions it).
 
 ```python
 # WRONG
@@ -327,14 +328,14 @@ agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem
 ```
 </python>
 <typescript>
-StoreBackend requires a Store instance for persistent memory across threads.
+For persistent memory across threads, StoreBackend needs a store: pass one to the agent (or deploy where the platform provisions it).
 
 ```typescript
 // WRONG
-const agent = await createDeepAgent({ backend: (config) => new StoreBackend(config) });
+const agent = createDeepAgent({ backend: new StoreBackend() });
 
 // CORRECT
-const agent = await createDeepAgent({ backend: (config) => new StoreBackend(config), store: new InMemoryStore() });
+const agent = createDeepAgent({ backend: new StoreBackend(), store: new InMemoryStore() });
 ```
 </typescript>
 </fix-store-for-memory>
