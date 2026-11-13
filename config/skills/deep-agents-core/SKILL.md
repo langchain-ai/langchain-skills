@@ -143,7 +143,7 @@ const agent = await createDeepAgent({
 <built-in-tools>
 By default, a deep agent has:
 
-1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep` (hide them with a harness profile's `excluded_tools`, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
+1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `delete` (0.7+, hidden when the backend can't delete), `glob`, `grep`, plus `execute` with sandbox backends (hide them with a harness profile's `excluded_tools`, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
 2. **Delegation**: `task` - Spawn specialized subagents (absent when the general-purpose subagent is disabled and no synchronous subagents are configured)
 
 Planning (`write_todos`) is opt-in since v0.7: add TodoListMiddleware to `middleware`.
@@ -392,14 +392,14 @@ This is my skill...
 
 <fix-backend-for-skills>
 <python>
-Skills require a proper backend to load from the filesystem.
+To load skills from a directory on local disk, use a filesystem backend. The default StateBackend only sees skill files passed in with `invoke(files={...})`.
 
 ```python
 import os
-# WRONG: Skills won't load without proper backend
+# WRONG: ./skills/ on disk isn't visible to the default StateBackend
 agent = create_deep_agent(skills=["./skills/"])
 
-# CORRECT: Use FilesystemBackend for local skills
+# CORRECT: Use FilesystemBackend for skills on local disk
 agent = create_deep_agent(
     backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     skills=["./skills/"]
