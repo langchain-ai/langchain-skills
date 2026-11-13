@@ -168,7 +168,7 @@ Resolve the destination to an ID, then query by ID; name-based `--project`
 lookups can silently use a leftover `LANGSMITH_PROJECT`.
 
 ```bash
-langsmith sessions resolve --kind AGENT --id <agent-id> --environment LOCAL --format json
+langsmith projects resolve --kind AGENT --id <agent-id> --environment LOCAL --format json
 langsmith traces list --project-id <session-id> --last-n-minutes 30 --limit 5 --format json
 langsmith traces get <trace-id> --project-id <session-id> --full --format json
 ```

@@ -135,7 +135,7 @@ results, and check each command's `--help` for current flags.
 Sample production traffic with `langsmith runs list`, `langsmith threads list`,
 and `langsmith threads get`. In an agent-based workspace, find the agent ID with
 `langsmith agents list` if needed, then resolve the production environment with
-`langsmith sessions resolve --kind AGENT --id <agent-id> --environment PRODUCTION`.
+`langsmith projects resolve --kind AGENT --id <agent-id> --environment PRODUCTION`.
 Use its session ID for project-scoped queries; for example,
 `langsmith evaluators rule list --project-id <session-id>` inspects existing
 online rules. Avoid name-based `--project` lookups that can fall back to a legacy
