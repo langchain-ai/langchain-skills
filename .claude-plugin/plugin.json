@@ -1,15 +1,22 @@
 {
   "name": "langchain-skills",
-  "version": "0.2.0",
+  "displayName": "LangChain Skills",
+  "version": "0.2.1",
   "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
   "author": {
     "name": "LangChain",
     "url": "https://langchain.com"
   },
+  "homepage": "https://github.com/langchain-ai/langchain-skills",
   "repository": "https://github.com/langchain-ai/langchain-skills",
   "license": "MIT",
   "keywords": ["langchain", "langgraph", "deep-agents", "ai-agents", "rag"],
   "skills": "./skills/",
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://docs.langchain.com",
+  "supportUrl": "https://github.com/langchain-ai/langchain-skills/issues",
+  "privacyPolicyUrl": "https://www.langchain.com/privacy-policy",
+  "termsOfServiceUrl": "https://www.langchain.com/terms-of-service",
   "extensions": {
     "com.langchain.deepagents.code": {
       "autoUpdate": true
