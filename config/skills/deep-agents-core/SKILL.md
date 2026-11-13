@@ -54,7 +54,7 @@ def get_weather(city: str) -> str:
     return f"It is always sunny in {city}"
 
 agent = create_deep_agent(
-    model="claude-sonnet-4-5-20250929",
+    model="anthropic:claude-sonnet-4-5-20250929",
     tools=[get_weather],
     system_prompt="You are a helpful assistant"
 )
@@ -79,7 +79,7 @@ const getWeather = tool(
 );
 
 const agent = await createDeepAgent({
-  model: "claude-sonnet-4-5-20250929",
+  model: "anthropic:claude-sonnet-4-5-20250929",
   tools: [getWeather],
   systemPrompt: "You are a helpful assistant"
 });
@@ -105,7 +105,7 @@ from langgraph.store.memory import InMemoryStore
 
 agent = create_deep_agent(
     name="my-assistant",
-    model="claude-sonnet-4-5-20250929",
+    model="anthropic:claude-sonnet-4-5-20250929",
     tools=[custom_tool1, custom_tool2],
     system_prompt="Custom instructions",
     subagents=[research_agent, code_agent],
@@ -126,7 +126,7 @@ import { MemorySaver, InMemoryStore } from "@langchain/langgraph";
 
 const agent = await createDeepAgent({
   name: "my-assistant",
-  model: "claude-sonnet-4-5-20250929",
+  model: "anthropic:claude-sonnet-4-5-20250929",
   tools: [customTool1, customTool2],
   systemPrompt: "Custom instructions",
   subagents: [researchAgent, codeAgent],
