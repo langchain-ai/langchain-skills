@@ -1,0 +1,31 @@
+evals/test_ci_runner.py
+  s_77a483f9e1da2c::t_b61da51c6097bd 8
+  s_77a483f9e1da2c::t_3a4a47a5d534ef 64-71
+  s_77a483f9e1da2c::t_94870d5d071e1f 72-73
+evals/README.md
+  s_77a483f9e1da2c::t_c8e2ebee8c5d4b 234-236,238-239
+  s_77a483f9e1da2c::t_010d28cb571277 237
+evals/ci_runner.py
+  s_77a483f9e1da2c::t_b121c91f0c3af9 152
+  s_77a483f9e1da2c::t_c51eff533334d7 150-151
+  s_77a483f9e1da2c::t_3f47d331d2e52b 73-79
+  s_77a483f9e1da2c::t_1116b3b5a18956 105
+.github/workflows/skills-evals.yml
+  s_77a483f9e1da2c::t_aa6232de6b670a 18,21-24,127,137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dcb3cfbdb95c4445748d9f5b65520a8bc6a90187",
+  "prompts": {},
+  "sessions": {
+    "s_77a483f9e1da2c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6ef3ffb-cdaa-4f28-afd6-1f64b36ff7ca",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
