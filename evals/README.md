@@ -242,12 +242,17 @@ long-lived, dataset-linked `public-skill-evals` project. No local credential
 path is needed by the hosted runner. The workflow pins Harbor, the tracing
 plugin revision, the Linux LangSmith CLI checksum, and its GitHub Actions.
 
-The Action uploads only `skill-eval-summary.json`, containing aggregate cost,
-latency, tool count, feedback count, trace nesting, validator outcomes, and run
-IDs. Workflow logs, artifacts, task prompts, synthetic fixtures, and this
-repository are public; do not put confidential content in task definitions.
-Raw Claude transcripts, Harbor trajectories, and complete reports stay on the
-ephemeral runner while it runs and are **not** uploaded as Actions artifacts.
+The Action publishes no results: there is no step summary and no Actions
+artifact, and the logs print only progress lines. The runner writes
+`skill-eval-summary.json` (aggregate cost, latency, tool count, feedback count,
+trace nesting, validator outcomes, and run IDs) to the ephemeral runner only.
+Its last step posts each profile's status, checks, trace nesting, cost, and run
+ID to `#langsmith-skills` through a Slack incoming webhook stored in the
+`SKILL_EVALS_SLACK_WEBHOOK` secret; without that secret the step is skipped.
+Workflow logs, task prompts, synthetic fixtures, and this repository are
+public; do not put confidential content in task definitions. Raw Claude
+transcripts, Harbor trajectories, and complete reports also stay on the
+ephemeral runner.
 The shared LangSmith project retains granular traces with
 `eval_task`, `eval_profile`, `eval_run_id`, and `eval_skill_sha` metadata for
 private inspection. A run's temporary task project is deleted after its live

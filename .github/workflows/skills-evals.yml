@@ -136,11 +136,39 @@ jobs:
             --tracing-plugin-dir "$GITHUB_WORKSPACE/deps/skills-benchmarks/scaffold/plugins/langsmith-tracing" \
             --summary-path "$RUNNER_TEMP/skill-eval-summary.json"
 
-      - name: Upload sanitized summary only
+      - name: Post results to Slack
         if: always() && steps.slot.outputs.run == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: skill-eval-summary-${{ github.run_id }}
-          path: ${{ runner.temp }}/skill-eval-summary.json
-          if-no-files-found: ignore
-          retention-days: 30
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SKILL_EVALS_SLACK_WEBHOOK }}
+          SUMMARY_PATH: ${{ runner.temp }}/skill-eval-summary.json
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "SKILL_EVALS_SLACK_WEBHOOK is not set; skipping Slack post" >&2
+            exit 0
+          fi
+          python3 - <<'PY' > "$RUNNER_TEMP/slack-payload.json"
+          import json
+          import os
+          from pathlib import Path
+
+          summary_path = Path(os.environ["SUMMARY_PATH"])
+          run_link = f"<{os.environ['RUN_URL']}|GitHub run>"
+          if not summary_path.is_file():
+              text = f"*Harbor skill eval*: no summary was written; the run failed before any profile finished. {run_link}"
+          else:
+              summary = json.loads(summary_path.read_text())
+              lines = [f"*Harbor skill eval: {summary['task']}* ({run_link})"]
+              for result in summary["profiles"]:
+                  checks = result.get("validators") or {}
+                  verdict = ", ".join(f"{name} {'✅' if ok else '❌'}" for name, ok in checks.items()) or "no checks"
+                  cost = result.get("agent_cost_usd")
+                  cost_text = f"${cost:.2f}" if isinstance(cost, (int, float)) else "n/a"
+                  nesting = "✅" if result.get("trace_parentage_ok") else "❌"
+                  run_id = (result.get("run_id") or "n/a")[:8]
+                  lines.append(f"• *{result['profile']}*: {result['status']} · {verdict} · nesting {nesting} · {cost_text} · run `{run_id}`")
+              text = "\n".join(lines)
+          print(json.dumps({"text": text}))
+          PY
+          curl -fsS --retry 2 -o /dev/null -H "Content-Type: application/json" \
+            --data-binary "@$RUNNER_TEMP/slack-payload.json" "$SLACK_WEBHOOK_URL"

@@ -83,29 +83,6 @@ def _write_summary(path: Path, task: str, results: list[dict]) -> None:
     temporary.replace(path)
 
 
-def _write_step_summary(task: str, results: list[dict]) -> None:
-    path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not path:
-        return
-    lines = [
-        f"## Harbor skill eval: {task}",
-        "",
-        "| Profile | Run | Validators | Trace nesting | Cost (USD) | Status |",
-        "| --- | --- | --- | --- | ---: | --- |",
-    ]
-    for result in results:
-        checks = result.get("validators") or {}
-        verdict = ", ".join(f"{name}: {'pass' if passed else 'fail'}" for name, passed in checks.items()) or "n/a"
-        cost = result.get("agent_cost_usd")
-        cost_text = f"{cost:.2f}" if isinstance(cost, (int, float)) else "n/a"
-        lines.append(
-            f"| {result['profile']} | {result.get('run_id', 'n/a')} | {verdict} | "
-            f"{'pass' if result.get('trace_parentage_ok') else 'fail'} | {cost_text} | {result['status']} |"
-        )
-    with Path(path).open("a") as stream:
-        stream.write("\n".join(lines) + "\n")
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", default="chained-eval")
@@ -202,10 +179,9 @@ def main() -> int:
             if item["status"] == "completed":
                 item["status"] = "validation_failed"
         _write_summary(args.summary_path, args.task, results)
-        print(f"{profile}: {item['status']}")
+        print(f"{profile}: finished")
 
     _write_summary(args.summary_path, args.task, results)
-    _write_step_summary(args.task, results)
     return 1 if failed else 0
 
 
