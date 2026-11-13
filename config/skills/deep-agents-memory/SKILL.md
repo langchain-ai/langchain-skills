@@ -132,12 +132,13 @@ await agent.invoke({ messages: [{ role: "user", content: "Read /memories/style.t
 Use FilesystemBackend for local development with real disk access and human-in-the-loop.
 
 ```python
+import os
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langgraph.checkpoint.memory import MemorySaver
 
 agent = create_deep_agent(
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),  # Restrict access
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),  # Restrict access
     interrupt_on={"write_file": True, "edit_file": True},
     checkpointer=MemorySaver()
 )
@@ -153,7 +154,7 @@ import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
 
 const agent = createDeepAgent({
-  backend: new FilesystemBackend({ rootDir: ".", virtualMode: true }),
+  backend: new FilesystemBackend({ rootDir: process.cwd(), virtualMode: true }),
   interruptOn: { write_file: true, edit_file: true },
   checkpointer: new MemorySaver()
 });

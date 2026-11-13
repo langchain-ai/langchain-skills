@@ -13,7 +13,7 @@ Deep Agents are an opinionated agent framework built on LangChain/LangGraph with
 - **Human-in-the-loop**: Approval workflows for sensitive operations
 - **Skills**: On-demand loading of specialized capabilities
 
-The agent harness provides these capabilities automatically - you configure, not implement.
+The agent harness provides these capabilities - you configure them, not implement them. Task planning and skills are opt-in.
 </overview>
 
 <when-to-use>
@@ -70,7 +70,7 @@ Create a basic deep agent with a custom tool and invoke it with a user message.
 
 ```typescript
 import { createDeepAgent } from "deepagents";
-import { tool } from "@langchain/core/tools";
+import { tool } from "langchain";
 import { z } from "zod";
 
 const getWeather = tool(
@@ -97,6 +97,7 @@ const result = await agent.invoke({
 Configure a deep agent with all available options including subagents, skills, and persistence.
 
 ```python
+import os
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langgraph.checkpoint.memory import MemorySaver
@@ -108,7 +109,7 @@ agent = create_deep_agent(
     tools=[custom_tool1, custom_tool2],
     system_prompt="Custom instructions",
     subagents=[research_agent, code_agent],
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     interrupt_on={"write_file": True},
     skills=["./skills/"],
     checkpointer=MemorySaver(),
@@ -129,7 +130,7 @@ const agent = await createDeepAgent({
   tools: [customTool1, customTool2],
   systemPrompt: "Custom instructions",
   subagents: [researchAgent, codeAgent],
-  backend: new FilesystemBackend({ rootDir: ".", virtualMode: true }),
+  backend: new FilesystemBackend({ rootDir: process.cwd(), virtualMode: true }),
   interruptOn: { write_file: true },
   skills: ["./skills/"],
   checkpointer: new MemorySaver(),
@@ -202,12 +203,13 @@ Step-by-step guidance for the agent.
 Set up an agent with skills directory and filesystem backend for on-demand skill loading.
 
 ```python
+import os
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langgraph.checkpoint.memory import MemorySaver
 
 agent = create_deep_agent(
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     skills=["./skills/"],
     checkpointer=MemorySaver()
 )
@@ -225,7 +227,7 @@ import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
 
 const agent = await createDeepAgent({
-  backend: new FilesystemBackend({ rootDir: ".", virtualMode: true }),
+  backend: new FilesystemBackend({ rootDir: process.cwd(), virtualMode: true }),
   skills: ["./skills/"],
   checkpointer: new MemorySaver()
 });
@@ -393,12 +395,13 @@ This is my skill...
 Skills require a proper backend to load from the filesystem.
 
 ```python
+import os
 # WRONG: Skills won't load without proper backend
 agent = create_deep_agent(skills=["./skills/"])
 
 # CORRECT: Use FilesystemBackend for local skills
 agent = create_deep_agent(
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     skills=["./skills/"]
 )
 ```
@@ -425,7 +428,7 @@ description: Python testing best practices with pytest fixtures, mocking, and as
 
 <fix-subagent-skills>
 <python>
-Skills are not inherited by subagents - provide them explicitly.
+Custom subagents do not inherit the main agent's skills (the general-purpose subagent does) - give custom subagents their skills explicitly.
 
 <!-- sample-check: skip (pseudo-code: `...` stands for the rest of the subagent) -->
 ```python
