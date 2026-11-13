@@ -1,0 +1,45 @@
+name: skills-cli-check
+
+# Checks every `langsmith ...` command in skills/ against --help of the
+# latest released CLI. The weekly run catches CLI releases that rename or
+# remove a command the skills still use.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install latest released langsmith CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/langsmith"
+          cd "$RUNNER_TEMP/langsmith"
+          gh release download --repo langchain-ai/langsmith-cli \
+            --pattern langsmith_linux_amd64.tar.gz --pattern checksums.txt
+          sha256sum --check --ignore-missing checksums.txt
+          tar xzf langsmith_linux_amd64.tar.gz langsmith
+          echo "$RUNNER_TEMP/langsmith" >> "$GITHUB_PATH"
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: false
+
+      - name: Test the checker
+        run: uv run --no-project --python 3.11 python -m unittest discover -s tests/check_cli_commands -v
+
+      - name: Check skill CLI commands
+        run: uv run --no-project --python 3.11 scripts/check_cli_commands.py
