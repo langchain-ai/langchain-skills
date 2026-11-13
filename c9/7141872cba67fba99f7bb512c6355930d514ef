@@ -1,0 +1,23 @@
+.github/workflows/skill-claims.yml
+  s_8cc46a8451c638::t_66239a973dd1cf 1-78
+LICENSE
+  s_8cc46a8451c638::t_7d432e7e9bf149 1-21
+README.md
+  s_8cc46a8451c638::t_4645860f7f2998 130,133,135-143,146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c97141872cba67fba99f7bb512c6355930d514ef",
+  "prompts": {},
+  "sessions": {
+    "s_8cc46a8451c638": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e9e34-9d88-4d6b-8ea8-e9ea95cfea3d",
+        "model": "unknown"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
