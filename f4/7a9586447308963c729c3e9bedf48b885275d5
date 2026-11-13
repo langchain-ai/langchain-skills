@@ -1,0 +1,21 @@
+install.ps1
+  s_8cc46a8451c638::t_9c46f203a0121b 3
+install.sh
+  s_8cc46a8451c638::t_68eb5ac6eb3fe9 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f47a9586447308963c729c3e9bedf48b885275d5",
+  "prompts": {},
+  "sessions": {
+    "s_8cc46a8451c638": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e9e34-9d88-4d6b-8ea8-e9ea95cfea3d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
