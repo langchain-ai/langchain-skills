@@ -213,3 +213,37 @@ local installs), or from anywhere (for global installs).
 For the current inventory, browse the [skills directory](skills/) or list the
 skills in your agent. Remove superseded skill folders from older installations
 so the agent does not keep loading outdated guidance.
+
+### Coming from langsmith-skills
+
+The LangSmith skills from
+[langsmith-skills](https://github.com/langchain-ai/langsmith-skills) now live
+here. Uninstall the `langsmith-skills` plugin, or remove its skill folders,
+after installing this one:
+
+| langsmith-skills | langchain-skills |
+|------|-------------|
+| `langsmith-trace` | `langchain-agent-tracing` |
+| `langsmith-online-eval-engineering` | `langchain-agent-monitoring` |
+| `langsmith-dataset`, `langsmith-evaluator`, `langsmith-graph-evaluator`, `langsmith-experiment-diagnosis` | `langchain-agent-experiments` |
+
+## Development
+
+### Checking skill CLI commands
+
+Skills should only reference commands that exist in the released LangSmith
+CLI. `scripts/check_cli_commands.py` extracts every `langsmith ...` command from
+`skills/` (shell code blocks and inline code) and checks the command path and
+each flag against `langsmith <command> --help`. Unknown commands, aliases such
+as `langsmith trace` (use `traces`), and flags that `--help` does not list fail
+the check. `--api-key` is the one allowed hidden flag. Positional arguments are
+not checked.
+
+```bash
+uv run --no-project scripts/check_cli_commands.py            # all of skills/
+uv run --no-project scripts/check_cli_commands.py path/to/SKILL.md
+```
+
+It uses the `langsmith` on your `PATH` (override with `LANGSMITH_BIN`). The
+`skills-cli-check` workflow runs it against the latest CLI release on every pull
+request and weekly.
