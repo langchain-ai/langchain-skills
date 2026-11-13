@@ -1,6 +1,6 @@
 param(
     [string]$Project = (Get-Location).Path,
-    [ValidateSet('claude', 'codex', 'cursor', 'dcode', 'deepagents')]
+    [ValidateSet('claude', 'codex', 'cursor', 'dcode')]
     [string]$Agent = 'claude',
     [switch]$Global,
     [switch]$Link,
@@ -21,7 +21,6 @@ if ($Global) {
         'codex'      { $installDir = Join-Path $homeDir '.codex' }
         'cursor'     { $installDir = Join-Path $homeDir '.cursor' }
         'dcode'      { $installDir = Join-Path $homeDir '.deepagents/agent' }
-        'deepagents' { $installDir = Join-Path $homeDir '.deepagents/langchain_agent' }
     }
 } else {
     switch ($Agent) {
@@ -29,7 +28,6 @@ if ($Global) {
         'codex'      { $installDir = Join-Path $Project '.agents' }
         'cursor'     { $installDir = Join-Path $Project '.cursor' }
         'dcode'      { $installDir = Join-Path $Project '.deepagents' }
-        'deepagents' { $installDir = Join-Path $Project '.deepagents' }
     }
 }
 
@@ -69,20 +67,6 @@ foreach ($skill in Get-ChildItem -LiteralPath $source -Directory) {
         Copy-Item -LiteralPath $skill.FullName -Destination $destination -Recurse
     }
     Write-Host "Installed $($skill.Name)"
-}
-
-if ($Agent -eq 'deepagents' -and $Global) {
-    $persona = Join-Path $installDir 'AGENTS.md'
-    if ((-not (Test-Path -LiteralPath $persona)) -or $Force) {
-        $existingPersona = Get-Item -LiteralPath $persona -Force -ErrorAction SilentlyContinue
-        if ($null -ne $existingPersona -and $existingPersona.LinkType -eq 'SymbolicLink') {
-            Remove-Item -LiteralPath $persona -Force
-        }
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'config/AGENTS.md') -Destination $persona -Force
-        Write-Host 'Installed Deep Agents persona'
-    } else {
-        Write-Host 'Skipped AGENTS.md (exists; use -Force to replace)'
-    }
 }
 
 Write-Host 'Done. Restart your agent session to load updated skills.'

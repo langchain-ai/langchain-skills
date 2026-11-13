@@ -96,9 +96,6 @@ documentation team; use it only with the user's agreement. The plugin does not
 register LangSmith Remote MCP. Skills-only installation does not register MCP
 servers.
 
-Plugin installation loads the skills, but not `config/AGENTS.md`. That file is
-copied only by `./install.sh --deepagents --global`.
-
 #### LangSmith CLI setup (optional)
 
 The plugin does not install or authenticate the LangSmith CLI. To let a local
@@ -174,9 +171,6 @@ documentation MCP servers:
 
 # Install globally
 ./install.sh --global
-
-# Install into a custom Deep Agents Code agent with a bundled persona
-./install.sh --deepagents --global
 ```
 
 On Windows, PowerShell copies skills by default. Use `-Link` to link them
@@ -197,7 +191,6 @@ prompt.
 | `--claude` | Install for Claude Code (default) |
 | `--codex`, `--cursor` | Install skills for Codex or Cursor |
 | `--dcode` | Install for the default Deep Agents Code agent |
-| `--deepagents` | Install for a custom Deep Agents Code agent named `langchain_agent` |
 | `--global`, `-g` | Install globally instead of current directory |
 | `--copy` | Copy skills instead of linking to the checkout |
 | `--force`, `-f` | Overwrite skills with same names as this package |

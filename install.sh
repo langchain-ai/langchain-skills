@@ -20,8 +20,7 @@ use --copy for a standalone installation. DIRECTORY defaults to the current
 directory and is ignored with --global.
 
 Options:
-  --claude, --codex, --cursor, --dcode, --deepagents  Target agent
-                         (default: claude; --deepagents selects a custom agent)
+  --claude, --codex, --cursor, --dcode  Target agent (default: claude)
   --global, -g       Install for all projects
   --copy             Copy skills instead of linking to this checkout
   --force, -f        Replace existing skills with the same names
@@ -36,7 +35,6 @@ while [[ $# -gt 0 ]]; do
         --codex) TARGET="codex" ;;
         --cursor) TARGET="cursor" ;;
         --dcode) TARGET="dcode" ;;
-        --deepagents) TARGET="deepagents" ;;
         --global|-g) GLOBAL=true ;;
         --copy) COPY=true ;;
         --force|-f) FORCE=true ;;
@@ -66,7 +64,6 @@ if [[ "$GLOBAL" == true ]]; then
         codex) INSTALL_DIR="$HOME/.codex" ;;
         cursor) INSTALL_DIR="$HOME/.cursor" ;;
         dcode) INSTALL_DIR="$HOME/.deepagents/agent" ;;
-        deepagents) INSTALL_DIR="$HOME/.deepagents/langchain_agent" ;;
     esac
 else
     case "$TARGET" in
@@ -74,7 +71,6 @@ else
         codex) INSTALL_DIR="$TARGET_DIR/.agents" ;;
         cursor) INSTALL_DIR="$TARGET_DIR/.cursor" ;;
         dcode) INSTALL_DIR="$TARGET_DIR/.deepagents" ;;
-        deepagents) INSTALL_DIR="$TARGET_DIR/.deepagents" ;;
     esac
 fi
 
@@ -105,19 +101,6 @@ for skill in "$SCRIPT_DIR"/skills/*; do
     fi
     echo "Installed $skill_name"
 done
-
-# The Deep Agents global persona is a separate file, so a skill refresh never
-# removes the user's other agent configuration.
-if [[ "$TARGET" == "deepagents" && "$GLOBAL" == true ]]; then
-    persona="$INSTALL_DIR/AGENTS.md"
-    if [[ ! -e "$persona" || "$FORCE" == true ]]; then
-        if [[ -L "$persona" ]]; then rm -- "$persona"; fi
-        cp -- "$SCRIPT_DIR/config/AGENTS.md" "$persona"
-        echo "Installed Deep Agents persona"
-    else
-        echo "Skipped AGENTS.md (exists; use --force to replace)"
-    fi
-fi
 
 echo "Done. Restart your agent session to load updated skills."
 if [[ "$COPY" == true ]]; then
