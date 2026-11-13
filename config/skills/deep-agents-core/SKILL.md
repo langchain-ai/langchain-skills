@@ -31,7 +31,7 @@ The agent harness provides these capabilities - you configure them, not implemen
 
 | If you need to... | Middleware | Notes |
 |------------------|------------|-------|
-| Track complex tasks | TodoListMiddleware | Opt-in since v0.7: import it from `langchain.agents.middleware` and pass it in `middleware` |
+| Track complex tasks | TodoListMiddleware | Opt-in since v0.7: pass `TodoListMiddleware()` (Python, `langchain.agents.middleware`) or `todoListMiddleware()` (TypeScript, `langchain`) in `middleware` |
 | Manage file context | FilesystemMiddleware | Configure backend |
 | Delegate work | SubAgentMiddleware | Add custom subagents |
 | Add human approval | HumanInTheLoopMiddleware | Requires checkpointer |
@@ -143,10 +143,10 @@ const agent = await createDeepAgent({
 <built-in-tools>
 By default, a deep agent has:
 
-1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `delete` (0.7+, hidden when the backend can't delete), `glob`, `grep`, plus `execute` with sandbox backends (hide them with a harness profile's `excluded_tools`, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
+1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `delete` (Python 0.7+, hidden when the backend can't delete), `glob`, `grep`, plus `execute` with sandbox backends (hide them with a harness profile's `excluded_tools`, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
 2. **Delegation**: `task` - Spawn specialized subagents (absent when the general-purpose subagent is disabled and no synchronous subagents are configured)
 
-Planning (`write_todos`) is opt-in since v0.7: add TodoListMiddleware to `middleware`.
+Planning (`write_todos`) is opt-in since v0.7: add `TodoListMiddleware()` (Python) or `todoListMiddleware()` (TypeScript), both from `langchain`, to `middleware`.
 </built-in-tools>
 
 ---
@@ -334,10 +334,10 @@ For persistent memory across threads, StoreBackend needs a store: pass one to th
 
 ```typescript
 // WRONG
-const agent = createDeepAgent({ backend: new StoreBackend() });
+const agent = createDeepAgent({ backend: new StoreBackend({ namespace: () => ["filesystem"] }) });
 
 // CORRECT
-const agent = createDeepAgent({ backend: new StoreBackend(), store: new InMemoryStore() });
+const agent = createDeepAgent({ backend: new StoreBackend({ namespace: () => ["filesystem"] }), store: new InMemoryStore() });
 ```
 </typescript>
 </fix-store-for-memory>
