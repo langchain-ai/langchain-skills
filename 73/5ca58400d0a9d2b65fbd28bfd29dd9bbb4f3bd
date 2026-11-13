@@ -1,0 +1,19 @@
+evals/tasks/trace-sdk/Task.md
+  s_77a483f9e1da2c::t_cdfab3d4ce03e4 45-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "735ca58400d0a9d2b65fbd28bfd29dd9bbb4f3bd",
+  "prompts": {},
+  "sessions": {
+    "s_77a483f9e1da2c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6ef3ffb-cdaa-4f28-afd6-1f64b36ff7ca",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
