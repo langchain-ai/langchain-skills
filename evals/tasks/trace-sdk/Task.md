@@ -42,6 +42,7 @@ carries a `thread_id`; it never stores inputs or outputs. It records, against
 The model is scripted, so no provider credentials are needed and every trial
 plays the same turns. `expected.json` stays outside the task environment; the
 conversation script is visible because the agent must run it. Tools-service
-runs are recognized by the handler function names, which `@traceable` uses by
-default; an agent that renames them is reported with every run name for
-review. One trial per profile is an anecdote, not a rate.
+runs are recognized by position: any run whose parent is the app's `call_tool`
+span counts, whatever the agent names it. A service run that lands as a root
+trace, because context did not cross the process boundary, still fails
+distributed tracing. One trial per profile is an anecdote, not a rate.
