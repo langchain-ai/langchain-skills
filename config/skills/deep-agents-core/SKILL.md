@@ -143,10 +143,10 @@ const agent = await createDeepAgent({
 <built-in-tools>
 By default, a deep agent has:
 
-1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`, plus `execute` with sandbox backends. Python (deepagents 0.7+) also has `delete`, hidden when the backend can't delete; TypeScript has no `delete` tool (hide them with a harness profile's `excluded_tools`, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
+1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`, plus `execute` with sandbox backends. Python (deepagents 0.7+) also has `delete`, hidden when the backend can't delete; TypeScript has no `delete` tool (hide them with a harness profile's `excluded_tools` in Python or `excludedTools` in TypeScript, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
 2. **Delegation**: `task` - Spawn specialized subagents (absent when the general-purpose subagent is disabled and no synchronous subagents are configured)
 
-Planning (`write_todos`) is opt-in since v0.7: add `TodoListMiddleware()` (Python) or `todoListMiddleware()` (TypeScript), both from `langchain`, to `middleware`.
+Planning (`write_todos`) is opt-in since v0.7: add `TodoListMiddleware()` (Python, from `langchain.agents.middleware`) or `todoListMiddleware()` (TypeScript, from `langchain`) to `middleware`.
 </built-in-tools>
 
 ---
