@@ -78,10 +78,13 @@ Start from what the application already uses:
   and the destination are configured. Agents running on a LangSmith Agent
   Server are traced by the server; check its deployment settings rather than
   adding tracing code.
-- **Another agent framework or model provider:** check the LangSmith
-  integrations page (Agent frameworks and providers) for an official
-  integration before writing custom instrumentation. Follow that page's setup,
-  including how it selects the agent environment.
+- **Another agent framework or model provider:** use its official LangSmith
+  integration when one exists. Find it on the
+  [integrations page](https://docs.langchain.com/langsmith/integrations) under
+  "Agent frameworks" or "LLM providers", and follow its setup, including how it
+  selects the agent environment. Wrapping the framework's entry point in
+  `traceable` instead records only your wrapper, not the framework's own agent,
+  model, and tool spans.
 - **Custom Python or TypeScript code:** wrap meaningful units of work with
   `traceable` and use the SDK's provider client wrappers so model calls nest
   under them.
@@ -93,6 +96,11 @@ Instrument each call once. Combining a framework integration, a wrapper, and an
 OpenTelemetry exporter on the same calls produces duplicate or disconnected
 runs. To send the same traces to LangSmith and another backend, use the SDK's
 tracing modes or replicas rather than parallel instrumentation.
+
+Choose the instrumentation first, then propagate context the way it expects:
+the SDK's `langsmith-trace` and `baggage` headers for `traceable`, and W3C
+`traceparent` for OpenTelemetry-based integrations. Don't switch to the SDK
+just to make cross-service propagation easier.
 
 ## Make traces useful for monitoring
 
