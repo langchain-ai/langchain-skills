@@ -5,10 +5,9 @@
   "target": "agent",
   "shared": "trace-support",
   "service_runs": {
-    "rule": "names",
-    "names": [
-      "handle_search_request",
-      "handle_ticket_request"
+    "rule": "children",
+    "parents": [
+      "call_tool"
     ]
   }
 }

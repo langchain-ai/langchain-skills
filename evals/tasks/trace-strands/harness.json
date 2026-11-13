@@ -6,5 +6,9 @@
   "shared": "trace-support",
   "service_runs": {
     "rule": "process"
-  }
+  },
+  "integration_spans": [
+    "invoke_agent",
+    "execute_event_loop_cycle"
+  ]
 }

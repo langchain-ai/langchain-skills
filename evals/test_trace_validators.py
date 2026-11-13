@@ -17,7 +17,7 @@ T0 = datetime(2026, 11, 12, 12, 0, tzinfo=timezone.utc)
 THREADS = ["conv-1001", "conv-1001", "conv-1001", "conv-1002", "conv-1002", "conv-1003", "conv-1003"]
 CALLS_SERVICE = [True, True, False, True, True, True, True]
 EXPECTED = json.loads((harness.SHARED / "trace-support" / "expected.json").read_text())
-NAMES = {"rule": "names", "names": ["handle_search_request", "handle_ticket_request"]}
+CHILDREN = {"rule": "children", "parents": ["call_tool"]}
 PROCESS = {"rule": "process"}
 
 
@@ -58,10 +58,16 @@ def passed(result):
 
 
 class TraceValidatorTests(unittest.TestCase):
-    def test_sdk_reference_shape_passes_with_names_rule(self):
-        result = validate_traces(evidence(execution()), EXPECTED, NAMES)
+    def test_sdk_reference_shape_passes_with_children_rule(self):
+        result = validate_traces(evidence(execution()), EXPECTED, CHILDREN)
         self.assertTrue(all(passed(result).values()), passed(result))
         self.assertEqual(result["threads"]["child_coverage"], 1.0)
+
+    def test_children_rule_accepts_any_service_run_name(self):
+        runs = [{**r, "name": "search_docs"} if r["name"] == "handle_search_request" else r for r in execution()]
+        result = validate_traces(evidence(runs), EXPECTED, CHILDREN)
+        self.assertTrue(all(passed(result).values()), passed(result))
+        self.assertEqual(result["distributed_tracing"]["linked_traces"], 6)
 
     def test_otel_reference_shape_passes_with_process_rule(self):
         result = validate_traces(evidence(execution(processes=("assistant", "tools"))), EXPECTED, PROCESS)
@@ -69,7 +75,7 @@ class TraceValidatorTests(unittest.TestCase):
         self.assertEqual(result["distributed_tracing"]["linked_traces"], 6)
 
     def test_unlinked_service_fails_only_distributed_tracing(self):
-        for rule, processes in ((NAMES, (None, None)), (PROCESS, ("assistant", "tools"))):
+        for rule, processes in ((CHILDREN, (None, None)), (PROCESS, ("assistant", "tools"))):
             result = validate_traces(evidence(execution(linked=False, processes=processes)), EXPECTED, rule)
             self.assertEqual(passed(result), {"destination": True, "turns_arrived": True,
                                               "threads": True, "distributed_tracing": False})
@@ -77,31 +83,48 @@ class TraceValidatorTests(unittest.TestCase):
 
     def test_latest_execution_is_evaluated(self):
         runs = execution(prefix="old", linked=False) + execution(offset=120, prefix="new")
-        result = validate_traces(evidence(runs), EXPECTED, NAMES)
+        result = validate_traces(evidence(runs), EXPECTED, CHILDREN)
         self.assertTrue(all(passed(result).values()), passed(result))
         self.assertEqual(result["turns_arrived"]["executions_observed"], 2)
 
+    def test_trailing_probe_does_not_replace_complete_run(self):
+        probe = run("probe-root", "probe", None, "test_probe", T0 + timedelta(seconds=300), None, None)
+        result = validate_traces(evidence(execution() + [probe]), EXPECTED, CHILDREN)
+        self.assertTrue(all(passed(result).values()), passed(result))
+        self.assertEqual(result["turns_arrived"]["executions_observed"], 2)
+
+    def test_integration_check_requires_spans_in_every_turn(self):
+        runs = execution()
+        with_spans = runs + [run(f"a{i}-agent", f"a{i}", f"a{i}-root", "invoke_agent Strands Agents", T0, None, None)
+                             for i in range(len(THREADS))]
+        ok = validate_traces(evidence(with_spans), EXPECTED, CHILDREN, ["invoke_agent"])
+        self.assertTrue(ok["integration"]["passed"])
+        missing = validate_traces(evidence(with_spans[:-1]), EXPECTED, CHILDREN, ["invoke_agent"])
+        self.assertFalse(missing["integration"]["passed"])
+        self.assertEqual(missing["integration"]["traces_with_spans"], len(THREADS) - 1)
+        self.assertNotIn("integration", validate_traces(evidence(runs), EXPECTED, CHILDREN))
+
     def test_missing_root_thread_fails_threads(self):
-        result = validate_traces(evidence(execution(root_thread=False)), EXPECTED, NAMES)
+        result = validate_traces(evidence(execution(root_thread=False)), EXPECTED, CHILDREN)
         self.assertFalse(result["threads"]["passed"])
 
     def test_missing_service_thread_is_reported_not_failed(self):
-        result = validate_traces(evidence(execution(service_thread=False)), EXPECTED, NAMES)
+        result = validate_traces(evidence(execution(service_thread=False)), EXPECTED, CHILDREN)
         self.assertTrue(result["threads"]["passed"])
         self.assertEqual(result["threads"]["service_coverage"], 0.0)
 
     def test_wrong_environment_or_strays_fail_destination(self):
-        wrong = validate_traces(evidence(execution(), environment="LOCAL"), EXPECTED, NAMES)
+        wrong = validate_traces(evidence(execution(), environment="LOCAL"), EXPECTED, CHILDREN)
         self.assertFalse(wrong["destination"]["passed"])
         self.assertFalse(wrong["turns_arrived"]["passed"])
-        stray = validate_traces(evidence(execution(), stray=3), EXPECTED, NAMES)
+        stray = validate_traces(evidence(execution(), stray=3), EXPECTED, CHILDREN)
         self.assertFalse(stray["destination"]["passed"])
-        target = validate_traces(evidence(execution(), target_runs=1), EXPECTED, NAMES)
+        target = validate_traces(evidence(execution(), target_runs=1), EXPECTED, CHILDREN)
         self.assertFalse(target["destination"]["passed"])
 
     def test_lost_turns_fail_turns_arrived(self):
         runs = [r for r in execution() if r["trace_id"] not in {"a5", "a6"}]
-        result = validate_traces(evidence(runs), EXPECTED, NAMES)
+        result = validate_traces(evidence(runs), EXPECTED, CHILDREN)
         self.assertFalse(result["turns_arrived"]["passed"])
         self.assertFalse(result["distributed_tracing"]["passed"])
 
@@ -141,9 +164,14 @@ class TraceHarnessTests(unittest.TestCase):
                 (path / "harness.json").write_text(json.dumps({**base, "shared": shared}))
                 with self.assertRaisesRegex(ValueError, "shared"):
                     harness.task_settings(path)
-            for rule in ("process", {"rule": "names", "names": []}, {"rule": "other"}):
+            for rule in ("process", {"rule": "children", "parents": []}, {"rule": "names", "names": ["x"]}, {"rule": "other"}):
                 (path / "harness.json").write_text(json.dumps({**base, "shared": "trace-support", "service_runs": rule}))
                 with self.assertRaisesRegex(ValueError, "service_runs"):
+                    harness.task_settings(path)
+            for spans in ([], [""], "invoke_agent", [1]):
+                (path / "harness.json").write_text(json.dumps({**base, "shared": "trace-support",
+                                                               "integration_spans": spans}))
+                with self.assertRaisesRegex(ValueError, "integration_spans"):
                     harness.task_settings(path)
 
     def test_agent_ids_fit_api_limits(self):

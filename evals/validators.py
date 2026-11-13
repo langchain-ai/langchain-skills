@@ -236,7 +236,7 @@ def _executions(roots: list[dict]) -> list[list[dict]]:
     return groups
 
 
-def validate_traces(evidence: dict, expected: dict, rule: dict) -> dict:
+def validate_traces(evidence: dict, expected: dict, rule: dict, integration_spans: list[str] | None = None) -> dict:
     environment = expected["agent_environment"]
     runs = evidence["runs"].get(environment, [])
     others = {name: env["runs"] for name, env in evidence["environments"].items() if name != environment}
@@ -245,12 +245,18 @@ def validate_traces(evidence: dict, expected: dict, rule: dict) -> dict:
     run_ids = {r["id"] for r in runs}
     orphans = [r for r in runs if r["parent_run_id"] and r["parent_run_id"] not in run_ids]
     executions = _executions([r for r in runs if r["parent_run_id"] is None])
-    latest = executions[-1] if executions else []
+    complete = [group for group in executions if len(group) >= expected["turns"]]
+    latest = (complete or executions or [[]])[-1]
     assistant = Counter(r["process"] for r in latest).most_common(1)[0][0] if latest else None
+    turn_root_name = Counter(r["name"] for r in latest).most_common(1)[0][0] if latest else None
+    by_id = {r["id"]: r for r in runs}
 
     def from_service(run: dict) -> bool:
-        if rule["rule"] == "names":
-            return run["name"] in rule["names"]
+        if rule["rule"] == "children":
+            if run["parent_run_id"] is None:
+                return run["name"] != turn_root_name
+            parent = by_id.get(run["parent_run_id"])
+            return parent is not None and parent["name"] in rule["parents"]
         return run["process"] is not None and assistant is not None and run["process"] != assistant
 
     turn_roots = [r for r in latest if not from_service(r)]
@@ -269,6 +275,14 @@ def validate_traces(evidence: dict, expected: dict, rule: dict) -> dict:
     def coverage(items: list[dict]) -> float | None:
         return round(sum(bool(r["thread"]) for r in items) / len(items), 3) if items else None
 
+    integration = {}
+    if integration_spans:
+        prefixes = tuple(integration_spans)
+        with_spans = {r["trace_id"] for r in runs if r["trace_id"] in traces and r["name"].startswith(prefixes)}
+        integration = {"integration": {"passed": bool(traces) and with_spans == traces,
+                                       "traces_with_spans": len(with_spans), "turn_traces": len(traces),
+                                       "span_prefixes": list(prefixes)}}
+
     return {
         "destination": {"passed": destination, "environment_runs": len(runs), "other_environment_runs": others,
                         "target_project_runs": evidence["target_project_runs"]},
@@ -281,6 +295,7 @@ def validate_traces(evidence: dict, expected: dict, rule: dict) -> dict:
                                 "linked_traces": len(linked_traces), "expected": expected["service_turns"],
                                 "service_roots": len(service_roots), "orphan_runs": len(orphans),
                                 "rule": rule["rule"]},
+        **integration,
         "run_names": sorted({r["name"] for r in runs}),
         "evidence": evidence,
     }

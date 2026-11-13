@@ -126,9 +126,13 @@ def task_settings(path: Path) -> dict:
         raise ValueError("shared must be a single directory name")
     rule = settings.get("service_runs")
     if rule is not None and not valid_service_rule(rule):
-        raise ValueError("service_runs must be {rule: process} or {rule: names, names: [...]}")
+        raise ValueError("service_runs must be {rule: process} or {rule: children, parents: [...]}")
     if settings["target"] == "agent" and (shared is None or rule is None):
         raise ValueError("agent-target tasks require shared and service_runs")
+    spans = settings.get("integration_spans")
+    if spans is not None and not (isinstance(spans, list) and spans
+                                  and all(isinstance(name, str) and name for name in spans)):
+        raise ValueError("integration_spans must be a non-empty list of span-name prefixes")
     return settings
 
 
@@ -136,9 +140,9 @@ def valid_service_rule(rule: object) -> bool:
     if rule == {"rule": "process"}:
         return True
     return (
-        isinstance(rule, dict) and set(rule) == {"rule", "names"} and rule["rule"] == "names"
-        and isinstance(rule["names"], list) and bool(rule["names"])
-        and all(isinstance(name, str) and name for name in rule["names"])
+        isinstance(rule, dict) and set(rule) == {"rule", "parents"} and rule["rule"] == "children"
+        and isinstance(rule["parents"], list) and bool(rule["parents"])
+        and all(isinstance(name, str) and name for name in rule["parents"])
     )
 
 
@@ -622,7 +626,8 @@ def report(args: argparse.Namespace) -> None:
             from validators import collect_traces, validate_traces
 
             expected = json.loads((shared_dir(path) / "expected.json").read_text())
-            summary["validators"] = validate_traces(collect_traces(data, ls), expected, settings["service_runs"])
+            summary["validators"] = validate_traces(collect_traces(data, ls), expected, settings["service_runs"],
+                                                   settings.get("integration_spans"))
         summary["inspected_at"] = datetime.now(timezone.utc).isoformat()
     report_path = manifest_path(args.run_id).with_name("report.json")
     report_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")

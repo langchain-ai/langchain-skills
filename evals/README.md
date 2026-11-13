@@ -78,8 +78,11 @@ without replacing files the task supplies, and whose `expected.json` holds the
 reference values. `service_runs` tells the trace validators how to recognize
 tools-service runs: `{"rule": "process"}` compares each run's OpenTelemetry
 `service.instance.id` with its trace root's, and
-`{"rule": "names", "names": [...]}` matches run names. Agent targets require
-both `shared` and `service_runs`.
+`{"rule": "children", "parents": [...]}` treats any run whose parent is one of
+the named client spans (the shared app's `call_tool`) as a service run, so the
+agent may name its service runs freely. Under that rule, a root run whose name
+differs from the turn roots counts as an unlinked service run. Agent targets
+require both `shared` and `service_runs`.
 
 ## Check and run a profile
 
@@ -169,9 +172,11 @@ $HARBOR_PY evals/harness.py report <run-id> --live --wait-seconds 120
 The live report reads only run names, types, parent links, start times, and
 hashes of each run's `thread_id` and OpenTelemetry `service.instance.id`; it
 never stores inputs, outputs, or raw metadata values. If the agent ran the app
-more than once, the checks use the latest run, identified by a gap of more than
-ten seconds between root traces, and report how many runs were observed. Four
-checks compare that run with `expected.json`:
+more than once, the checks use the latest run with at least as many root traces
+as expected turns, so a debug probe sent after the real run is not scored. Runs
+are separated by a gap of more than ten seconds between root traces, and the
+report counts how many it observed. Four checks compare that run with
+`expected.json`:
 
 - `destination`: runs are in the `development` environment and nowhere else in
   the agent or the trial's target project.
@@ -181,6 +186,13 @@ checks compare that run with `expected.json`:
   but does not affect the result.
 - `distributed_tracing`: each of the six service calls appears inside its
   turn's trace, with no tools-service root traces and no orphaned runs.
+
+A task can also set `integration_spans` in `harness.json` to a list of span-name
+prefixes that a framework's official LangSmith integration emits. The extra
+`integration` check then passes only when every turn trace contains a run
+whose name starts with one of them. This separates "didn't use the integration"
+from a tracing failure. `trace-strands` uses it to require the Strands Agents
+integration.
 
 Cleanup deletes the temporary agent, including its environments, only after
 re-reading it and matching both its ID and `agent_uuid` to the manifest. A
