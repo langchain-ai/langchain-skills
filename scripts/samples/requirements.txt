@@ -1,0 +1,21 @@
+# Packages the skill code samples import. Unpinned on purpose: the check runs against
+# the latest releases, so it catches samples that a new release breaks.
+langchain
+langchain-core
+langgraph
+deepagents
+managed-deepagents
+langchain-openai
+langchain-anthropic
+langchain-community
+langchain-text-splitters
+langchain-chroma
+langchain-tavily
+langchain-pinecone
+langchain-typesafe
+langgraph-checkpoint-postgres
+faiss-cpu
+pypdf
+beautifulsoup4
+# Used by the runner itself.
+pyflakes

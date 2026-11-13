@@ -364,6 +364,7 @@ langchain-tavily>=0.1
 <fix-community-import-deprecated>
 Many tools that used to live in `langchain-community` now have dedicated packages with updated import paths. Always prefer the dedicated package import.
 
+<!-- sample-check: skip (the WRONG half shows imports that no longer exist) -->
 ```python
 # WRONG — deprecated community import path
 from langchain_community.tools.tavily_search import TavilySearchResults

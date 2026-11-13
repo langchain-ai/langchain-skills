@@ -120,6 +120,7 @@ const response = await model.invoke([
 <python>
 Load a PDF file and extract each page as a separate document.
 
+<!-- sample-check: imports (needs a local PDF) -->
 ```python
 from langchain_community.document_loaders import PyPDFLoader
 
@@ -145,6 +146,7 @@ console.log(`Loaded ${docs.length} pages`);
 <python>
 Fetch and parse content from a web URL into a document.
 
+<!-- sample-check: imports (fetches a web page) -->
 ```python
 from langchain_community.document_loaders import WebBaseLoader
 
@@ -168,6 +170,7 @@ const docs = await loader.load();
 <python>
 Load all text files from a directory using a glob pattern.
 
+<!-- sample-check: imports (needs a local folder of documents) -->
 ```python
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 

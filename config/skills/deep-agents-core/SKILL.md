@@ -6,14 +6,14 @@ description: "INVOKE THIS SKILL when building ANY Deep Agents application. Cover
 <overview>
 Deep Agents are an opinionated agent framework built on LangChain/LangGraph with built-in middleware:
 
-- **Task Planning**: TodoListMiddleware for breaking down complex tasks
+- **Task Planning**: TodoListMiddleware for breaking down complex tasks (opt-in since v0.7)
 - **Context Management**: Filesystem tools with pluggable backends
 - **Task Delegation**: SubAgent middleware for spawning specialized agents
 - **Long-term Memory**: Persistent storage across threads via Store
 - **Human-in-the-loop**: Approval workflows for sensitive operations
 - **Skills**: On-demand loading of specialized capabilities
 
-The agent harness provides these capabilities automatically - you configure, not implement.
+The agent harness provides these capabilities - you configure them, not implement them. Task planning and skills are opt-in.
 </overview>
 
 <when-to-use>
@@ -31,12 +31,12 @@ The agent harness provides these capabilities automatically - you configure, not
 
 | If you need to... | Middleware | Notes |
 |------------------|------------|-------|
-| Track complex tasks | TodoListMiddleware | Default enabled |
+| Track complex tasks | TodoListMiddleware | Opt-in since v0.7: pass `TodoListMiddleware()` (Python, `langchain.agents.middleware`) or `todoListMiddleware()` (TypeScript, `langchain`) in `middleware` |
 | Manage file context | FilesystemMiddleware | Configure backend |
 | Delegate work | SubAgentMiddleware | Add custom subagents |
 | Add human approval | HumanInTheLoopMiddleware | Requires checkpointer |
 | Load skills | SkillsMiddleware | Provide skill directories |
-| Access memory | MemoryMiddleware | Requires Store instance |
+| Access memory | MemoryMiddleware | Needs a backend and memory sources |
 
 </middleware-selection>
 
@@ -54,7 +54,7 @@ def get_weather(city: str) -> str:
     return f"It is always sunny in {city}"
 
 agent = create_deep_agent(
-    model="claude-sonnet-4-5-20250929",
+    model="anthropic:claude-sonnet-4-5-20250929",
     tools=[get_weather],
     system_prompt="You are a helpful assistant"
 )
@@ -70,7 +70,7 @@ Create a basic deep agent with a custom tool and invoke it with a user message.
 
 ```typescript
 import { createDeepAgent } from "deepagents";
-import { tool } from "@langchain/core/tools";
+import { tool } from "langchain";
 import { z } from "zod";
 
 const getWeather = tool(
@@ -79,7 +79,7 @@ const getWeather = tool(
 );
 
 const agent = await createDeepAgent({
-  model: "claude-sonnet-4-5-20250929",
+  model: "anthropic:claude-sonnet-4-5-20250929",
   tools: [getWeather],
   systemPrompt: "You are a helpful assistant"
 });
@@ -97,6 +97,7 @@ const result = await agent.invoke({
 Configure a deep agent with all available options including subagents, skills, and persistence.
 
 ```python
+import os
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langgraph.checkpoint.memory import MemorySaver
@@ -104,11 +105,11 @@ from langgraph.store.memory import InMemoryStore
 
 agent = create_deep_agent(
     name="my-assistant",
-    model="claude-sonnet-4-5-20250929",
+    model="anthropic:claude-sonnet-4-5-20250929",
     tools=[custom_tool1, custom_tool2],
     system_prompt="Custom instructions",
     subagents=[research_agent, code_agent],
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     interrupt_on={"write_file": True},
     skills=["./skills/"],
     checkpointer=MemorySaver(),
@@ -125,11 +126,11 @@ import { MemorySaver, InMemoryStore } from "@langchain/langgraph";
 
 const agent = await createDeepAgent({
   name: "my-assistant",
-  model: "claude-sonnet-4-5-20250929",
+  model: "anthropic:claude-sonnet-4-5-20250929",
   tools: [customTool1, customTool2],
   systemPrompt: "Custom instructions",
   subagents: [researchAgent, codeAgent],
-  backend: new FilesystemBackend({ rootDir: ".", virtualMode: true }),
+  backend: new FilesystemBackend({ rootDir: process.cwd(), virtualMode: true }),
   interruptOn: { write_file: true },
   skills: ["./skills/"],
   checkpointer: new MemorySaver(),
@@ -140,11 +141,12 @@ const agent = await createDeepAgent({
 </ex-full-configuration>
 
 <built-in-tools>
-Every deep agent has access to:
+By default, a deep agent has:
 
-1. **Planning**: `write_todos` - Track multi-step tasks
-2. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`
-3. **Delegation**: `task` - Spawn specialized subagents
+1. **Filesystem**: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep`, plus `execute` with sandbox backends. Python (deepagents 0.7+) also has `delete`, hidden when the backend can't delete; TypeScript has no `delete` tool (hide them with a harness profile's `excluded_tools` in Python or `excludedTools` in TypeScript, or expose a subset with a `tools` allowlist on FilesystemMiddleware)
+2. **Delegation**: `task` - Spawn specialized subagents (absent when the general-purpose subagent is disabled and no synchronous subagents are configured)
+
+Planning (`write_todos`) is opt-in since v0.7: add `TodoListMiddleware()` (Python, from `langchain.agents.middleware`) or `todoListMiddleware()` (TypeScript, from `langchain`) to `middleware`.
 </built-in-tools>
 
 ---
@@ -192,7 +194,7 @@ Step-by-step guidance for the agent.
 | On-demand loading | Always loaded at startup |
 | Task-specific instructions | General preferences |
 | Large documentation | Compact context |
-| SKILL.md in directories | Single AGENTS.md file |
+| SKILL.md in directories | AGENTS.md files (global and project), appended to the system prompt |
 
 </skills-vs-memory>
 
@@ -201,12 +203,13 @@ Step-by-step guidance for the agent.
 Set up an agent with skills directory and filesystem backend for on-demand skill loading.
 
 ```python
+import os
 from deepagents import create_deep_agent
 from deepagents.backends import FilesystemBackend
 from langgraph.checkpoint.memory import MemorySaver
 
 agent = create_deep_agent(
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     skills=["./skills/"],
     checkpointer=MemorySaver()
 )
@@ -224,7 +227,7 @@ import { createDeepAgent, FilesystemBackend } from "deepagents";
 import { MemorySaver } from "@langchain/langgraph";
 
 const agent = await createDeepAgent({
-  backend: new FilesystemBackend({ rootDir: ".", virtualMode: true }),
+  backend: new FilesystemBackend({ rootDir: process.cwd(), virtualMode: true }),
   skills: ["./skills/"],
   checkpointer: new MemorySaver()
 });
@@ -263,7 +266,7 @@ store.put(
 )
 
 agent = create_deep_agent(
-    backend=lambda rt: StoreBackend(rt),
+    backend=StoreBackend(namespace=lambda rt: ("filesystem",)),
     store=store,
     skills=["/skills/"]
 )
@@ -284,8 +287,8 @@ agent = create_deep_agent(
 
 ### What Agents CANNOT Configure
 
-- Core middleware removal (TodoList, Filesystem, SubAgent always present)
-- The write_todos, task, or filesystem tool names
+- Removing FilesystemMiddleware (it is required scaffolding; hide its tools instead)
+- Renaming the built-in tools (`write_todos`, `task`, filesystem tools); they can be hidden or allowlisted, not renamed
 - The SKILL.md frontmatter format
 </boundaries>
 
@@ -316,25 +319,25 @@ const agent = await createDeepAgent({ interruptOn: { write_file: true }, checkpo
 
 <fix-store-for-memory>
 <python>
-StoreBackend requires a Store instance for persistent memory across threads.
+For persistent memory across threads, StoreBackend needs a store: pass one to the agent (or deploy where the platform provisions it).
 
 ```python
 # WRONG
-agent = create_deep_agent(backend=lambda rt: StoreBackend(rt))
+agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem",)))
 
 # CORRECT
-agent = create_deep_agent(backend=lambda rt: StoreBackend(rt), store=InMemoryStore())
+agent = create_deep_agent(backend=StoreBackend(namespace=lambda rt: ("filesystem",)), store=InMemoryStore())
 ```
 </python>
 <typescript>
-StoreBackend requires a Store instance for persistent memory across threads.
+For persistent memory across threads, StoreBackend needs a store: pass one to the agent (or deploy where the platform provisions it).
 
 ```typescript
 // WRONG
-const agent = await createDeepAgent({ backend: (config) => new StoreBackend(config) });
+const agent = createDeepAgent({ backend: new StoreBackend({ namespace: () => ["filesystem"] }) });
 
 // CORRECT
-const agent = await createDeepAgent({ backend: (config) => new StoreBackend(config), store: new InMemoryStore() });
+const agent = createDeepAgent({ backend: new StoreBackend({ namespace: () => ["filesystem"] }), store: new InMemoryStore() });
 ```
 </typescript>
 </fix-store-for-memory>
@@ -389,15 +392,16 @@ This is my skill...
 
 <fix-backend-for-skills>
 <python>
-Skills require a proper backend to load from the filesystem.
+To load skills from a directory on local disk, use a filesystem backend. The default StateBackend only sees skill files passed in with `invoke(files={...})`.
 
 ```python
-# WRONG: Skills won't load without proper backend
+import os
+# WRONG: ./skills/ on disk isn't visible to the default StateBackend
 agent = create_deep_agent(skills=["./skills/"])
 
-# CORRECT: Use FilesystemBackend for local skills
+# CORRECT: Use FilesystemBackend for skills on local disk
 agent = create_deep_agent(
-    backend=FilesystemBackend(root_dir=".", virtual_mode=True),
+    backend=FilesystemBackend(root_dir=os.path.abspath("."), virtual_mode=True),
     skills=["./skills/"]
 )
 ```
@@ -424,8 +428,9 @@ description: Python testing best practices with pytest fixtures, mocking, and as
 
 <fix-subagent-skills>
 <python>
-Skills are not inherited by subagents - provide them explicitly.
+Custom subagents do not inherit the main agent's skills (the general-purpose subagent does) - give custom subagents their skills explicitly.
 
+<!-- sample-check: skip (pseudo-code: `...` stands for the rest of the subagent) -->
 ```python
 # WRONG: Custom subagents don't inherit skills
 agent = create_deep_agent(
