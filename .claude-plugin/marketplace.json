@@ -5,13 +5,13 @@
     "email": "support@langchain.dev"
   },
   "metadata": {
-    "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents"
+    "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access"
   },
   "plugins": [
     {
       "name": "langchain-skills",
       "source": "./",
-      "description": "Agent skills for building agents with LangChain, LangGraph, and Deep Agents",
+      "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
       "homepage": "https://github.com/langchain-ai/langchain-skills"
     }
   ]

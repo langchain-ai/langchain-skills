@@ -1,0 +1,70 @@
+{
+  "seed": [
+    {
+      "expected_resolved": true,
+      "turns": [
+        ["How do I reset my password?", "Go to Settings > Security and choose Reset password. We'll email you a reset link."],
+        ["I didn't get the email.", "Check your spam folder. If it isn't there, I can resend it to the address on file."],
+        ["Found it in spam, it worked. Thanks!", "Glad that worked! Anything else I can help with?"]
+      ]
+    },
+    {
+      "expected_resolved": false,
+      "turns": [
+        ["My order 4417 arrived with a cracked screen.", "Sorry about that. I can create a support ticket for a replacement."],
+        ["Yes please.", "I've created ticket #88213. The team will reach out within 2 business days."],
+        ["The ticket link says it doesn't exist.", "I'm sorry, I can't see ticket details from here. Please try the link again later."],
+        ["This is useless, I'll just call my bank.", "I understand. Let me know if there's anything else I can do."]
+      ]
+    },
+    {
+      "expected_resolved": true,
+      "turns": [
+        ["Does the Pro plan include API access?", "Yes, Pro includes API access with 10,000 requests per day."],
+        ["Great, that's all I needed.", "Happy to help!"]
+      ]
+    },
+    {
+      "expected_resolved": false,
+      "turns": [
+        ["Can you change the email on my billing account?", "I can't change billing account details, but I can create a support ticket for the billing team."],
+        ["I already have a ticket open for a week with no reply.", "I'm sorry for the delay. I can create another ticket if you'd like."],
+        ["No, forget it.", "Okay. Let me know if you change your mind."]
+      ]
+    }
+  ],
+  "held_out": [
+    {
+      "expected_resolved": true,
+      "turns": [
+        ["How do I export my data to CSV?", "Open Reports, choose the date range, then click Export > CSV."],
+        ["I don't see Export.", "Export appears after you pick a date range. Have you selected one?"],
+        ["Ah, there it is. Downloaded, thanks.", "You're welcome!"]
+      ]
+    },
+    {
+      "expected_resolved": false,
+      "turns": [
+        ["The mobile app crashes when I open it.", "Try updating to the latest version from the app store."],
+        ["I'm on the latest version.", "Please try reinstalling the app."],
+        ["Reinstalled, it still crashes.", "Sorry about that. Is there anything else I can help with?"]
+      ]
+    },
+    {
+      "expected_resolved": true,
+      "turns": [
+        ["My package from order 5520 never arrived.", "I'm sorry. I can create a support ticket so the shipping team can trace it."],
+        ["Please do.", "Done. Ticket #90117 is open and you'll get updates by email."],
+        ["Perfect, thanks for the quick help.", "Anytime!"]
+      ]
+    },
+    {
+      "expected_resolved": false,
+      "turns": [
+        ["Can you set up two-factor authentication for me?", "Sure. Go to Settings > Security > Two-factor and scan the QR code."],
+        ["There's no Two-factor option there.", "It should be under Security. Try refreshing the page."],
+        ["Still not there. I'll try later I guess.", "Okay, have a good day!"]
+      ]
+    }
+  ]
+}

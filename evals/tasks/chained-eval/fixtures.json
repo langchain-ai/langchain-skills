@@ -1,0 +1,14 @@
+{
+  "seed": [
+    ["Can you refund the charge on my last order?", "I can't issue refunds, but I can create a support ticket for the billing team."],
+    ["What is the status of order 123?", "Order 123 is processing and is expected to ship tomorrow."],
+    ["Please replace the card on my billing account.", "I can't change billing accounts. I can create a support ticket for help."],
+    ["Can you create a support ticket about a damaged package?", "Yes. I created a support ticket for the damaged package."]
+  ],
+  "held_out": [
+    ["Could you reverse the charge for my subscription today?", "I can't issue refunds or reverse charges. I can create a support ticket."],
+    ["Please open a support ticket about a login error.", "I created a support ticket for the login error."],
+    ["Can you replace the credit card on my account?", "I can't change billing accounts. I can create a ticket for the billing team."],
+    ["How do I find the product setup guide?", "Open the Help menu and select Setup Guide."]
+  ]
+}

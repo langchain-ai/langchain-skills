@@ -1,0 +1,21 @@
+schema_version = "1.3"
+
+[task]
+name = "langchain-skills/trace-strands"
+description = "Add LangSmith tracing to a Strands support agent that calls a separate tools service: agent environment, threads, and distributed tracing"
+
+[agent]
+timeout_sec = 1800.0
+network_mode = "no-network"
+
+[verifier]
+timeout_sec = 120.0
+network_mode = "no-network"
+
+[environment]
+workdir = "/app"
+build_timeout_sec = 1200.0
+network_mode = "public"
+cpus = 2
+memory_mb = 4096
+storage_mb = 8192

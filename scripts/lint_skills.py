@@ -2,7 +2,7 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Lint the skills in config/skills against the Agent Skills guidelines.
+"""Lint the skills in skills/ against the Agent Skills guidelines.
 
 Layers the first-party `claude plugin validate` and `claude plugin details`
 reports with house rules the validator does not cover. Exits 1 on BLOCK.
@@ -270,6 +270,24 @@ def check_skill(root: Path, skill: Path) -> list[Finding]:
     return findings
 
 
+def check_skill_prefix(skill: Path) -> list[Finding]:
+    findings = []
+    prefix = "langchain-"
+    if not skill.parent.name.startswith(prefix):
+        findings.append(
+            Finding(BLOCK, "skill-prefix", skill, 2,
+                    f"skill directory '{skill.parent.name}' must start with '{prefix}'")
+        )
+
+    declared = parse_frontmatter(skill.read_text(encoding="utf-8")).get("name")
+    if declared and not declared.startswith(prefix):
+        findings.append(
+            Finding(BLOCK, "skill-prefix", skill, 2,
+                    f"frontmatter name '{declared}' must start with '{prefix}'")
+        )
+    return findings
+
+
 def check_document(root: Path, path: Path) -> list[Finding]:
     text = path.read_text(encoding="utf-8")
     findings = []
@@ -323,7 +341,7 @@ def annotate(finding: Finding, root: Path) -> None:
 
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
-    skills_dir = root / "config" / "skills"
+    skills_dir = root / "skills"
     if not skills_dir.is_dir():
         print(f"no skills directory at {skills_dir}", file=sys.stderr)
         return 1
@@ -344,6 +362,7 @@ def main() -> int:
     findings += check_token_cost(root, plugin_name, skills)
     for skill in skills:
         findings += check_skill(root, skill)
+        findings += check_skill_prefix(skill)
     for document in documents:
         findings += check_document(root, document)
 
