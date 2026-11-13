@@ -31,7 +31,7 @@ The agent harness provides these capabilities - you configure them, not implemen
 
 | If you need to... | Middleware | Notes |
 |------------------|------------|-------|
-| Track complex tasks | TodoListMiddleware | Opt-in since v0.7: pass it in `middleware` |
+| Track complex tasks | TodoListMiddleware | Opt-in since v0.7: import it from `langchain.agents.middleware` and pass it in `middleware` |
 | Manage file context | FilesystemMiddleware | Configure backend |
 | Delegate work | SubAgentMiddleware | Add custom subagents |
 | Add human approval | HumanInTheLoopMiddleware | Requires checkpointer |
