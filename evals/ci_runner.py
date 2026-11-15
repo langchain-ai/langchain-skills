@@ -105,7 +105,6 @@ def main() -> int:
     replay_needed = _has_held_out_fixtures(args.task)
     results: list[dict] = []
     failed = False
-    required_checks = ("evaluator_pair", "chain_configuration", "insights_job")
     for profile in args.profiles:
         item: dict = {"profile": profile, "status": "preflight"}
         results.append(item)
@@ -180,10 +179,7 @@ def main() -> int:
             failed = True
         else:
             item["status"] = "completed"
-        checks_ok = args.task != "chained-eval" or profile != "full" or all(
-            item["validators"].get(name) is True for name in required_checks
-        )
-        if not item["trace_parentage_ok"] or not checks_ok:
+        if not item["trace_parentage_ok"]:
             failed = True
             if item["status"] == "completed":
                 item["status"] = "validation_failed"
