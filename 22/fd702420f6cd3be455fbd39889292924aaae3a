@@ -1,0 +1,19 @@
+EVALS_PHILOSOPHY.md
+  s_d57873060cc4d8::t_92759e43baa01b 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "22fd702420f6cd3be455fbd39889292924aaae3a",
+  "prompts": {},
+  "sessions": {
+    "s_d57873060cc4d8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f1978da2-c24f-4d35-97dc-4683dad5155c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
