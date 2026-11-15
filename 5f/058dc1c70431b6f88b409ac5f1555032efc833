@@ -1,0 +1,22 @@
+.github/workflows/skills-evals.yml
+  s_d57873060cc4d8::t_b5e52b1af2073a 24
+evals/README.md
+  s_d57873060cc4d8::t_24f7ca1b078ea9 240
+  s_d57873060cc4d8::t_a429774c46e047 234-236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5f058dc1c70431b6f88b409ac5f1555032efc833",
+  "prompts": {},
+  "sessions": {
+    "s_d57873060cc4d8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f1978da2-c24f-4d35-97dc-4683dad5155c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
