@@ -1,0 +1,21 @@
+README.md
+  s_4ea3cbfd0047ae::t_240de7993cce37 34-43
+  s_4ea3cbfd0047ae::t_34375d87d2e2ef 135-177
+  s_4ea3cbfd0047ae::t_ac9c280e572317 70-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6da0c86c970d96148d22ffceb85f1f7b5c3fbadf",
+  "prompts": {},
+  "sessions": {
+    "s_4ea3cbfd0047ae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ce0f34fc-a9d3-483a-80e2-9d194f87e550",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
