@@ -13,7 +13,7 @@
 name: skill-claims
 on:
   pull_request_target:
-    paths: ["config/skills/**"]
+    paths: ["skills/**"]
 permissions:
   contents: read
   pull-requests: write # one comment per changed skill
