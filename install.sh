@@ -1,218 +1,110 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Install LangChain skills for Claude Code or Deep Agents CLI
-
-set -e
+# Install skills from a local checkout. Linked installs follow future git pulls.
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Default values
-TARGET="claude"  # claude or deepagents
+TARGET="claude"
 GLOBAL=false
+COPY=false
 FORCE=false
 YES=false
 TARGET_DIR=""
 
-# Usage
 usage() {
-    echo "Usage: $0 [OPTIONS] [DIRECTORY]"
-    echo ""
-    echo "Install LangChain skills for Claude Code or Deep Agents CLI."
-    echo ""
-    echo "Arguments:"
-    echo "  DIRECTORY           Target project directory (default: current directory)"
-    echo "                      Ignored when --global is used"
-    echo ""
-    echo "Options:"
-    echo "  --claude        Install for Claude Code (default)"
-    echo "  --deepagents    Install for Deep Agents CLI"
-    echo "  --global, -g    Install globally (~/.claude or ~/.deepagents/langchain_agent)"
-    echo "                  Default: install in current directory"
-    echo "  --force, -f     Overwrite skills with same names as this package"
-    echo "  --yes, -y       Skip confirmation prompts"
-    echo "  --help, -h      Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0                          # Install for Claude Code in current directory"
-    echo "  $0 ~/my-project             # Install for Claude Code in ~/my-project"
-    echo "  $0 --global                 # Install for Claude Code globally"
-    echo "  $0 --deepagents ~/my-project  # Install for Deep Agents in ~/my-project"
-    echo "  $0 -f -y                    # Force reinstall without prompts"
-    exit 0
+    cat <<'EOF'
+Usage: ./install.sh [OPTIONS] [DIRECTORY]
+
+Install LangChain skills from this checkout. Skills are symlinked by default;
+use --copy for a standalone installation. DIRECTORY defaults to the current
+directory and is ignored with --global.
+
+Options:
+  --claude, --codex, --cursor, --dcode  Target agent (default: claude)
+  --global, -g       Install for all projects
+  --copy             Copy skills instead of linking to this checkout
+  --force, -f        Replace existing skills with the same names
+  --yes, -y          Skip confirmation
+  --help, -h         Show this help
+EOF
 }
 
-# Parse arguments
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        --claude)
-            TARGET="claude"
-            shift
-            ;;
-        --deepagents)
-            TARGET="deepagents"
-            shift
-            ;;
-        --global|-g)
-            GLOBAL=true
-            shift
-            ;;
-        --force|-f)
-            FORCE=true
-            shift
-            ;;
-        --yes|-y)
-            YES=true
-            shift
-            ;;
-        --help|-h)
-            usage
-            ;;
-        -*)
-            echo "Unknown option: $1"
-            usage
-            ;;
+    case "$1" in
+        --claude) TARGET="claude" ;;
+        --codex) TARGET="codex" ;;
+        --cursor) TARGET="cursor" ;;
+        --dcode) TARGET="dcode" ;;
+        --global|-g) GLOBAL=true ;;
+        --copy) COPY=true ;;
+        --force|-f) FORCE=true ;;
+        --yes|-y) YES=true ;;
+        --help|-h) usage; exit 0 ;;
+        -*) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
         *)
-            if [ -n "$TARGET_DIR" ]; then
-                echo "Error: multiple directories specified: '$TARGET_DIR' and '$1'"
+            if [[ -n "$TARGET_DIR" ]]; then
+                echo "Specify only one target directory." >&2
                 exit 1
             fi
             TARGET_DIR="$1"
-            shift
             ;;
     esac
+    shift
 done
 
-# Resolve target directory (default to current directory)
-if [ -z "$TARGET_DIR" ]; then
-    TARGET_DIR="$(pwd)"
-fi
-
-# Determine installation directory and whether to include AGENTS.md
-INCLUDE_AGENTS_MD=false
-
-if [ "$TARGET" = "claude" ]; then
-    if [ "$GLOBAL" = true ]; then
-        INSTALL_DIR="$HOME/.claude"
-    else
-        INSTALL_DIR="$TARGET_DIR/.claude"
-    fi
-    TOOL_NAME="Claude Code"
-else
-    # Deep Agents
-    if [ "$GLOBAL" = true ]; then
-        # Global: install as agent with persona
-        INSTALL_DIR="$HOME/.deepagents/langchain_agent"
-        INCLUDE_AGENTS_MD=true
-    else
-        # Local: just skills, no agent persona
-        INSTALL_DIR="$TARGET_DIR/.deepagents"
-    fi
-    TOOL_NAME="Deep Agents CLI"
-fi
-
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "LangChain Skills Installer"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "Target:    $TOOL_NAME"
-echo "Location:  $INSTALL_DIR"
-if [ "$GLOBAL" = true ]; then
-    echo "Scope:     Global (all projects)"
-else
-    echo "Scope:     Local (current directory)"
-fi
-echo ""
-
-# For Deep Agents global, check if agent already exists
-if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ] && [ -d "$INSTALL_DIR" ]; then
-    if [ "$FORCE" = true ]; then
-        echo "⚠️  Existing agent found. Will overwrite (--force)."
-    else
-        echo "❌ ERROR: Agent 'langchain_agent' already exists at $INSTALL_DIR"
-        echo ""
-        echo "To reinstall, use --force flag:"
-        echo "  $0 --deepagents --global --force"
-        echo ""
-        echo "Or manually remove:"
-        echo "  rm -rf $INSTALL_DIR"
-        exit 1
-    fi
-fi
-
-# Confirm installation
-if [ "$YES" != true ]; then
-    read -p "Proceed with installation? (y/n): " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Installation cancelled."
-        exit 0
-    fi
-fi
-
-echo ""
-echo "Installing..."
-
-# For Deep Agents global with --force, remove existing agent
-if [ "$TARGET" = "deepagents" ] && [ "$GLOBAL" = true ] && [ "$FORCE" = true ] && [ -d "$INSTALL_DIR" ]; then
-    rm -rf "$INSTALL_DIR"
-fi
-
-# Create directory structure
-mkdir -p "$INSTALL_DIR"
-
-# Copy AGENTS.md only for global Deep Agents install
-if [ "$INCLUDE_AGENTS_MD" = true ]; then
-    if [ -f "$SCRIPT_DIR/config/AGENTS.md" ]; then
-        cp "$SCRIPT_DIR/config/AGENTS.md" "$INSTALL_DIR/AGENTS.md"
-        echo "✓ Copied AGENTS.md (agent persona)"
-    else
-        echo "❌ ERROR: config/AGENTS.md not found"
-        exit 1
-    fi
-fi
-
-# Copy skills
-if [ -d "$SCRIPT_DIR/config/skills" ]; then
-    mkdir -p "$INSTALL_DIR/skills"
-    for skill in "$SCRIPT_DIR/config/skills"/*; do
-        skill_name=$(basename "$skill")
-        if [ -d "$INSTALL_DIR/skills/$skill_name" ]; then
-            if [ "$FORCE" = true ]; then
-                rm -rf "$INSTALL_DIR/skills/$skill_name"
-            else
-                echo "⚠️  Skipping $skill_name (already exists, use --force to overwrite)"
-                continue
-            fi
-        fi
-        cp -r "$skill" "$INSTALL_DIR/skills/$skill_name"
-        echo "✓ Installed $skill_name"
-    done
-else
-    echo "❌ ERROR: config/skills directory not found"
+if [[ ! -d "$SCRIPT_DIR/skills" ]]; then
+    echo "Skills directory not found: $SCRIPT_DIR/skills" >&2
     exit 1
 fi
 
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ Installation complete!"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-echo "Skills installed to $TOOL_NAME!"
-echo ""
-echo "To see installed skills:"
-echo "  ls $INSTALL_DIR/skills/"
-echo ""
-if [ "$TARGET" = "deepagents" ]; then
-    if [ "$GLOBAL" = true ]; then
-        echo "To use this agent, run:"
-        echo "  deepagents --agent langchain_agent"
-        echo ""
-    fi
-    echo "For usage, configuration, and API key setup, see the CLI docs:"
-    echo "  https://docs.langchain.com/deepagents-cli"
+TARGET_DIR="${TARGET_DIR:-$PWD}"
+if [[ "$GLOBAL" == true ]]; then
+    case "$TARGET" in
+        claude) INSTALL_DIR="$HOME/.claude" ;;
+        codex) INSTALL_DIR="$HOME/.codex" ;;
+        cursor) INSTALL_DIR="$HOME/.cursor" ;;
+        dcode) INSTALL_DIR="$HOME/.deepagents/agent" ;;
+    esac
 else
-    echo "For usage, configuration, and API key setup, see the Claude Code docs:"
-    echo "  https://code.claude.com/docs/en/overview"
+    case "$TARGET" in
+        claude) INSTALL_DIR="$TARGET_DIR/.claude" ;;
+        codex) INSTALL_DIR="$TARGET_DIR/.agents" ;;
+        cursor) INSTALL_DIR="$TARGET_DIR/.cursor" ;;
+        dcode) INSTALL_DIR="$TARGET_DIR/.deepagents" ;;
+    esac
 fi
-echo ""
+
+MODE="linked"
+if [[ "$COPY" == true ]]; then MODE="copied"; fi
+echo "Install $TARGET skills to $INSTALL_DIR ($MODE)"
+if [[ "$YES" != true ]]; then
+    read -r -p "Proceed? [y/N] " REPLY
+    if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then exit 0; fi
+fi
+
+mkdir -p "$INSTALL_DIR/skills"
+for skill in "$SCRIPT_DIR"/skills/*; do
+    [[ -f "$skill/SKILL.md" ]] || continue
+    skill_name="${skill##*/}"
+    destination="$INSTALL_DIR/skills/$skill_name"
+    if [[ -e "$destination" || -L "$destination" ]]; then
+        if [[ "$FORCE" != true ]]; then
+            echo "Skipped $skill_name (exists; use --force to replace)"
+            continue
+        fi
+        rm -rf -- "$destination"
+    fi
+    if [[ "$COPY" == true ]]; then
+        cp -R -- "$skill" "$destination"
+    else
+        ln -s -- "$skill" "$destination"
+    fi
+    echo "Installed $skill_name"
+done
+
+echo "Done. Restart your agent session to load updated skills."
+if [[ "$COPY" == true ]]; then
+    echo "After a git pull, rerun this installer with --force to refresh copies."
+else
+    echo "After a git pull, existing links use updated skills. Rerun this installer to add new skills."
+fi

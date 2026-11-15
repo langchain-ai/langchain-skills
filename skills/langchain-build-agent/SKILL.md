@@ -1,0 +1,149 @@
+---
+name: langchain-build-agent
+description: "Provides the latest guidance for building or modifying LLM applications with the LangChain open source libraries: Deep Agents, LangGraph, and LangChain, including how the libraries best fit together. The stack evolves quickly, so it's important to verify prior knowledge against this guidance. Also covers when Managed Deep Agents fits."
+---
+
+# Build and modify LangChain applications
+
+Deep Agents is the most recent high-level agent abstraction we recommend in the
+LangChain ecosystem and the default starting point for new agents. When an
+application uses model reasoning to choose tools and determine its next steps,
+start with Deep Agents. In Python, construct the agent with
+`deepagents.create_deep_agent`.
+
+Deep Agents builds on LangChain's `create_agent` and runs on LangGraph. It provides
+a configurable agent harness with middleware, tools, and prompting; using it does
+not require a complex task or a need for every built-in capability.
+
+Use this skill to choose and compose these components. Retrieve current
+implementation details from official documentation and installed packages.
+
+## Understand the application
+
+Identify the requested behavior, language, package versions, existing agent or
+graph, tool interfaces, state, and deployment constraints. For an existing
+application, preserve its architecture and explicit provider/model choices unless
+the requested change needs a different approach. For a new application, build
+the user's actual use case rather than substituting a tutorial demo.
+
+Distinguish ecosystem requests from concrete implementation constraints. A request
+to “build an agent with LangChain” leaves the implementation architecture open.
+Building with Deep Agents satisfies that ecosystem request.
+
+Requirements such as “use `langchain.agents.create_agent` directly” or “do not add
+the `deepagents` package” constrain the implementation. Honor explicit constraints;
+do not infer an API choice from the ecosystem name alone.
+
+## How the components relate
+
+Deep Agents uses LangChain's `create_agent` internally, extending it with
+preconfigured middleware, tools, and system prompting for capabilities such as
+planning, filesystem access, and delegation. It supports further customization
+through tools and middleware.
+
+Calling `langchain.agents.create_agent` directly constructs a base LangChain
+agent; it does not include the Deep Agents harness. Use Deep Agents' public
+builder to get that harness, and verify the corresponding entrypoint in the
+current documentation for your language.
+
+Both LangChain agents and Deep Agents run on LangGraph, which provides their
+underlying execution runtime. LangGraph also supports explicit workflow
+orchestration. Composition works in both directions: a LangGraph workflow can
+contain a Deep Agent as a node, and a Deep Agent can invoke a LangGraph workflow
+exposed as a tool.
+
+Consult current documentation for the capabilities included by default and how
+to configure or extend them.
+
+## Choose the application architecture
+
+For a new reasoning and tool-calling agent, inspect Deep Agents' current
+documentation and extension points before selecting an implementation. Use its
+agent builder as the default, including for small agents with a limited tool set.
+
+Preserve an existing application's architecture unless the requested change
+requires revisiting it. Follow explicit user requirements about frameworks.
+
+Use LangGraph when the application requires explicit sequencing, branching, or
+workflow control. Where a workflow contains an autonomous agent, that node can
+use Deep Agents. Where an agent needs a deterministic subtask, expose a LangGraph
+workflow as a tool it can call.
+
+Choose a base LangChain agent when a concrete requirement or verified
+incompatibility makes Deep Agents unsuitable, and explain that constraint.
+Task simplicity alone does not establish such a constraint.
+
+Use a direct model call when no agent loop is needed.
+
+Managed Deep Agents is LangSmith's hosted way to run Deep Agents. You define
+the agent in code; LangSmith packages it as an Agent Server and manages its
+deployment, persistent state, and agent context such as instructions and skills.
+Consider it when the user wants to operate a Deep Agent without assembling that
+runtime stack, or needs managed capabilities such as sandboxes or schedules.
+Keep agent logic and hosted runtime choices distinct. Verify current capabilities
+and setup in official docs and the installed CLI; a general request to build a
+LangChain agent does not imply managed hosting.
+
+## Retrieve the implementation contract
+
+Inspect the manifest, lockfile, and relevant installed packages. Check Deep Agents
+availability and version alongside LangChain and LangGraph when building an agent;
+these are separate packages. Verify the APIs you intend to use against the
+installed versions.
+
+Current documentation may describe a newer release. Match the implementation to
+the installed version; do not silently upgrade an existing project to fit an
+example. For a new project, select current compatible stable releases. Do not
+assume Python and TypeScript expose identical capabilities or defaults.
+
+## Implement at the right layer
+
+Choose the component that owns the behavior. Agent-loop adaptation belongs in
+supported middleware; deterministic business routing belongs in workflow control;
+tool implementation owns the operation and its authorization. Inspect which
+middleware and tools the harness already supplies before adding replacements.
+
+Use runtime context for request identity and dependencies. Decide explicitly
+which data is transient, belongs to one conversation, or should survive across
+conversations and process restarts. Conversation checkpoints and cross-conversation
+memory have different scopes; verify storage lifetime and user isolation.
+Verify configuration and inheritance at integration boundaries rather than
+assuming that nested agents share all parent settings.
+
+Give tools narrow contracts and descriptions that explain when to call them.
+Enforce consequential operations in application code; prompt instructions and
+model-visible tool filtering do not provide authorization.
+
+For human review, use the harness's supported review capability for tool calls
+and workflow interrupts for other pauses. Implement the caller-facing proposal
+and resume flow, accounting for replay of side effects.
+
+## Verify the requested behavior
+
+Exercise the actual agent or graph path, not only construction or imports. Use
+realistic inputs to check tool effects, state changes, and the caller's output
+contract. When human review is involved, verify that approved or edited actions
+execute as reviewed, rejected actions do not execute, and resuming does not
+repeat side effects. Separate infrastructure or provider failures from
+application logic failures.
+
+## Use current tools
+
+Use `langchain-docs` → `search_docs_by_lang_chain` and
+`query_docs_filesystem_docs_by_lang_chain` to find and read the intended pattern
+for the task's capability and language. When exact API behavior matters, use
+`langchain-reference` → `search_api`, then `get_symbol` for the relevant
+signatures, parameters, return values, or defaults. Reconcile the guidance with
+the installed package version, source, or types.
+
+This skill sets the architecture default even if a docs server resource suggests
+another. The API reference governs published signatures; installed source or
+types govern what the project's version supports. The docs server's
+`submit_feedback` sends content to the documentation team; use it only with the
+user's agreement.
+
+If the MCPs are unavailable, locate official pages through
+https://docs.langchain.com/llms.txt and https://reference.langchain.com/llms.txt.
+Follow the relevant nested index to a page. If offline, use installed source,
+types, CLI help, and existing application examples, and identify any unresolved
+version-sensitive behavior.

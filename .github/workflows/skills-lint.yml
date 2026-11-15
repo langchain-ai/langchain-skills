@@ -14,47 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           persist-credentials: false
-
-      - name: Require a plugin version bump for skill changes
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- config/skills/; then
-            exit 0
-          fi
-
-          base_version="$(git show "$BASE_SHA:.claude-plugin/plugin.json" | jq -r '.version')"
-          head_version="$(git show "$HEAD_SHA:.claude-plugin/plugin.json" | jq -r '.version')"
-          version_pattern='^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$'
-
-          if [[ ! "$base_version" =~ $version_pattern ]]; then
-            echo "Base plugin version is not a supported semantic version: $base_version"
-            exit 1
-          fi
-          base_major="${BASH_REMATCH[1]}"
-          base_minor="${BASH_REMATCH[2]}"
-          base_patch="${BASH_REMATCH[3]}"
-
-          if [[ ! "$head_version" =~ $version_pattern ]]; then
-            echo "Head plugin version is not a supported semantic version: $head_version"
-            exit 1
-          fi
-          head_major="${BASH_REMATCH[1]}"
-          head_minor="${BASH_REMATCH[2]}"
-          head_patch="${BASH_REMATCH[3]}"
-
-          if ((
-            head_major < base_major
-            || (head_major == base_major && head_minor < base_minor)
-            || (head_major == base_major && head_minor == base_minor && head_patch <= base_patch)
-          )); then
-            echo "Skill changes require a plugin version greater than $base_version; found $head_version."
-            exit 1
-          fi
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -72,3 +33,41 @@ jobs:
         run: uv run --no-project --python 3.11 python -m unittest discover -s tests/skills_lint -v
 
       - run: uv run --no-project scripts/lint_skills.py
+
+      - name: Check plugin release version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            uv run --no-project scripts/check_plugin_versions.py --base "$BASE_SHA"
+          else
+            uv run --no-project scripts/check_plugin_versions.py
+          fi
+
+      - name: Smoke test linked and copied installs
+        run: bash tests/test_install.sh
+
+  windows-install:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Smoke test Windows installer
+        shell: pwsh
+        run: |
+          $project = Join-Path $env:RUNNER_TEMP 'skills-install-test'
+          New-Item -ItemType Directory -Path (Join-Path $project '.agents/skills/unrelated') -Force | Out-Null
+          Set-Content -Path (Join-Path $project '.agents/skills/unrelated/marker') -Value 'keep'
+          ./install.ps1 -Project $project -Agent codex -Yes
+          ./install.ps1 -Project $project -Agent codex -Yes -Force
+          if (-not (Test-Path (Join-Path $project '.agents/skills/langchain-build-agent/SKILL.md'))) {
+            throw 'Codex skill was not copied'
+          }
+          if (-not (Test-Path (Join-Path $project '.agents/skills/unrelated/marker'))) {
+            throw 'Installer changed unrelated content'
+          }
+          ./install.ps1 -Project $project -Agent dcode -Yes
+          if (-not (Test-Path (Join-Path $project '.deepagents/skills/langchain-build-agent/SKILL.md'))) {
+            throw 'Deep Agents Code skill was not copied'
+          }

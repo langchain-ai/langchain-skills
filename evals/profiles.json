@@ -1,0 +1,26 @@
+{
+  "none": {
+    "skills": [],
+    "documentation_mcp": false,
+    "agent": "claude-code",
+    "model": "claude-sonnet-4-6",
+    "agent_version": "2.1.292",
+    "max_budget_usd": "5.00"
+  },
+  "full": {
+    "skills": "*",
+    "documentation_mcp": true,
+    "agent": "claude-code",
+    "model": "claude-sonnet-4-6",
+    "agent_version": "2.1.292",
+    "max_budget_usd": "5.00"
+  },
+  "mcp-only": {
+    "skills": [],
+    "documentation_mcp": true,
+    "agent": "claude-code",
+    "model": "claude-sonnet-4-6",
+    "agent_version": "2.1.292",
+    "max_budget_usd": "5.00"
+  }
+}

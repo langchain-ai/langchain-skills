@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "langchain-skills",
+  "version": "0.2.0",
+  "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
+  "author": {
+    "name": "LangChain",
+    "url": "https://langchain.com"
+  },
+  "homepage": "https://github.com/langchain-ai/langchain-skills",
+  "repository": "https://github.com/langchain-ai/langchain-skills",
+  "license": "MIT",
+  "keywords": ["langchain", "langgraph", "deep-agents", "ai-agents", "rag"]
+}

@@ -1,0 +1,10 @@
+{
+  "fixture_type": "none",
+  "linux_cli_required": true,
+  "verifier_enabled": false,
+  "target": "agent",
+  "shared": "trace-support",
+  "service_runs": {
+    "rule": "process"
+  }
+}

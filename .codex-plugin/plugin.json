@@ -1,0 +1,24 @@
+{
+  "name": "langchain-skills",
+  "version": "0.2.0",
+  "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
+  "author": {
+    "name": "LangChain",
+    "url": "https://langchain.com"
+  },
+  "homepage": "https://github.com/langchain-ai/langchain-skills",
+  "repository": "https://github.com/langchain-ai/langchain-skills",
+  "license": "MIT",
+  "keywords": ["langchain", "langgraph", "deep-agents", "ai-agents", "rag"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "LangChain Skills",
+    "shortDescription": "Build agents and work with LangSmith.",
+    "longDescription": "Skills for building with Deep Agents, LangGraph, and LangChain; working with LangSmith traces, evaluations, and feedback; and engineering Harbor benchmarks, bundled with official documentation MCP connections.",
+    "developerName": "LangChain",
+    "category": "Productivity",
+    "capabilities": ["Documentation"],
+    "defaultPrompt": "Help me build an agent with the LangChain ecosystem."
+  }
+}
