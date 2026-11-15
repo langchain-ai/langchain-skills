@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "langchain-skills",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
   "author": {
     "name": "LangChain",

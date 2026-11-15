@@ -1,6 +1,6 @@
 {
   "name": "langchain-skills",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
   "author": {
     "name": "LangChain",
@@ -14,11 +14,23 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "LangChain Skills",
-    "shortDescription": "Build agents and work with LangSmith.",
+    "shortDescription": "Build and evaluate agents",
     "longDescription": "Skills for building with Deep Agents, LangGraph, and LangChain; working with LangSmith traces, evaluations, and feedback; and engineering Harbor benchmarks, bundled with official documentation MCP connections.",
     "developerName": "LangChain",
-    "category": "Productivity",
-    "capabilities": ["Documentation"],
-    "defaultPrompt": "Help me build an agent with the LangChain ecosystem."
+    "category": "Developer Tools",
+    "capabilities": ["Read"],
+    "defaultPrompt": [
+      "Help me build an agent with the LangChain ecosystem.",
+      "Add LangSmith tracing to this agent.",
+      "Set up evals for this agent."
+    ],
+    "websiteURL": "https://docs.langchain.com",
+    "supportURL": "https://github.com/langchain-ai/langchain-skills/issues",
+    "privacyPolicyURL": "https://www.langchain.com/privacy-policy",
+    "termsOfServiceURL": "https://www.langchain.com/terms-of-service",
+    "brandColor": "#030710",
+    "brandColorDark": "#7FC8FF",
+    "logo": "./assets/icon.png",
+    "composerIcon": "./assets/icon.png"
   }
 }
