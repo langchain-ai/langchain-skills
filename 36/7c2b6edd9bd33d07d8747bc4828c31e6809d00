@@ -1,0 +1,21 @@
+evals/ci_runner.py
+  s_d57873060cc4d8::t_1f00e58806a567 182
+evals/README.md
+  s_d57873060cc4d8::t_35a3d162838927 236-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "367c2b6edd9bd33d07d8747bc4828c31e6809d00",
+  "prompts": {},
+  "sessions": {
+    "s_d57873060cc4d8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f1978da2-c24f-4d35-97dc-4683dad5155c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
