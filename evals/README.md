@@ -228,9 +228,9 @@ target project and local JSONL may be needed for diagnosis.
 9:00 AM Sunday in `America/New_York`. GitHub evaluates schedules from the
 repository's default branch, so merge the workflow there to activate the
 schedule. `workflow_dispatch` also permits a manual run. The action checks out
-the current `skill-restructure` branch for the skills and the default branch
-for the harness and task definitions. Changes to a skill on `skill-restructure`
-or a task on the default branch appear in the next run without editing the
+the triggering ref for both the skills and the harness: the default branch on
+scheduled runs, or the selected branch on a manual run. Changes to a skill or
+task on the default branch appear in the next scheduled run without editing the
 workflow. The workflow runs `chained-eval`, `trace-sdk`, `trace-otel`, and
 `trace-strands` as parallel matrix jobs, each through all three profiles, and
 posts one Slack message per task. The tracing tasks are exploratory: their
