@@ -31,6 +31,16 @@ API-reference MCP connections. The skills also work when MCP is unavailable.
 /plugin install langchain-skills@langchain-skills
 ```
 
+Or from your shell, in one command (Claude Code v2.1.292 or later):
+
+```bash
+claude plugin install langchain-skills --marketplace langchain-ai/langchain-skills
+```
+
+Then turn on auto-update (see [Updates](#updates)). If you installed the
+standalone skills before, remove them first: see
+[Migrate from the standalone skills](#migrate-from-the-standalone-skills).
+
 #### Codex
 
 ```bash
@@ -57,8 +67,20 @@ new release, start a new agent session to load the updated skills.
 
 - **Claude Code:** Open `/plugin` → **Marketplaces**, select
   `langchain-skills`, and choose **Enable auto-update**. Claude Code leaves
-  auto-update off for third-party marketplaces until you enable it. For an
-  immediate update, run `/plugin marketplace update langchain-skills`.
+  auto-update off for third-party marketplaces until you enable it. To turn
+  it on from a script, set `autoUpdate` on the marketplace entry in
+  `~/.claude/settings.json`, which the install command creates:
+
+  ```json
+  "extraKnownMarketplaces": {
+    "langchain-skills": {
+      "source": { "source": "github", "repo": "langchain-ai/langchain-skills" },
+      "autoUpdate": true
+    }
+  }
+  ```
+
+  For an immediate update, run `/plugin marketplace update langchain-skills`.
 - **Codex local install:** Run
   `codex plugin marketplace upgrade langchain-skills` to refresh the Git
   marketplace and its installed plugin. Local Git marketplace installs do not
@@ -109,6 +131,49 @@ through the SDK.
 The user's coding-agent or workspace policy may disable MCP servers. In that
 case, use official web documentation, installed package source and types, and
 CLI help to verify implementation details.
+
+### Migrate from the standalone skills
+
+Earlier versions of this repository shipped many smaller skills, such as
+`langchain-fundamentals` and `langgraph-persistence`, and
+[`langsmith-skills`](https://github.com/langchain-ai/langsmith-skills) shipped
+the LangSmith ones. The plugin's four skills replace all of them. Remove the old
+skills before installing the plugin, so the agent doesn't see two overlapping
+sets of guidance.
+
+1. **Installed with `npx skills`:** remove every retired skill. Names that
+   aren't installed are skipped. Run it once with `--global`, and once without
+   it in each project where you installed skills.
+
+   ```bash
+   npx skills remove deep-agents-core deep-agents-memory \
+     deep-agents-orchestration deepagents-python-quickstart \
+     deepagents-typescript-quickstart ecosystem-primer eval-engineering \
+     framework-selection langchain-agent-starter-kit langchain-agents \
+     langchain-dependencies langchain-fundamentals langchain-middleware \
+     langchain-models langchain-output langchain-python-quickstart \
+     langchain-rag langchain-typescript-quickstart langgraph-cli langgraph-code \
+     langgraph-decision-models langgraph-execution langgraph-fundamentals \
+     langgraph-human-in-the-loop langgraph-persistence \
+     langgraph-python-quickstart langgraph-typescript-quickstart \
+     langsmith-custom-apps langsmith-dataset langsmith-evaluator \
+     langsmith-experiment-diagnosis langsmith-graph-evaluator \
+     langsmith-online-eval-engineering langsmith-trace managed-deep-agents \
+     swarm --global --yes
+   ```
+
+2. **Installed with `install.sh` or by copying:** delete the folders with the
+   names above from the skills directory you installed into, such as
+   `~/.claude/skills/`, `.claude/skills/`, `~/.agents/skills/`, or
+   `.agents/skills/`.
+3. **Installed the `langsmith-skills` Claude Code plugin:** run
+   `claude plugin marketplace remove langsmith-skills`, which also uninstalls
+   its plugin.
+4. **Installed this plugin before version 0.2.0:** nothing to remove. Run
+   `claude plugin update langchain-skills@langchain-skills` and turn on
+   [auto-update](#updates).
+
+Then install the plugin as described in [Plugin install](#plugin-install-recommended).
 
 ### Skills-only install
 
