@@ -353,7 +353,7 @@ def main() -> int:
     documents = sorted(
         {
             *skills,
-            *(p for p in (root / "config").rglob("*.md")),
+            *(p for p in skills_dir.rglob("*.md")),
             *(p for p in [root / "README.md", root / "install.sh"] if p.is_file()),
         }
     )
