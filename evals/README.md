@@ -231,12 +231,13 @@ schedule. `workflow_dispatch` also permits a manual run. The action checks out
 the triggering ref for both the skills and the harness: the default branch on
 scheduled runs, or the selected branch on a manual run. Changes to a skill or
 task on the default branch appear in the next scheduled run without editing the
-workflow. The workflow runs `chained-eval`, `trace-sdk`, `trace-otel`, and
-`trace-strands` as parallel matrix jobs, each through all three profiles, and
-posts one Slack message per task. The tracing tasks are exploratory: their
-trace checks are reported but do not fail the job, and they skip the held-out replay
-because they have no held-out conversations. `thread-llm-judge` is available
-through the harness commands above and is not scheduled.
+workflow. The workflow runs every task (`chained-eval`, `thread-llm-judge`,
+`trace-sdk`, `trace-otel`, and `trace-strands`) as parallel matrix jobs, each
+through all three profiles, and
+posts one Slack message per task. Every task is exploratory: its checks are
+reported but do not fail the job, while harness failures such as setup, agent
+trace nesting, or cleanup still do. The tracing tasks skip the held-out replay
+because they have no held-out conversations.
 
 Configure these GitHub Actions secrets in the `langchain-ai/langchain-skills`
 repository: `LANGSMITH_API_KEY` for the LangChain Inc workspace,
