@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [chained-eval, trace-sdk, trace-otel, trace-strands]
+        task: [chained-eval, thread-llm-judge, trace-sdk, trace-otel, trace-strands]
     steps:
       - name: Select Sunday 9 AM in New York
         id: slot
