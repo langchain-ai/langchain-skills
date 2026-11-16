@@ -75,14 +75,15 @@ Task simplicity alone does not establish such a constraint.
 
 Use a direct model call when no agent loop is needed.
 
-Managed Deep Agents is LangSmith's hosted way to run Deep Agents. You define
-the agent in code; LangSmith packages it as an Agent Server and manages its
-deployment, persistent state, and agent context such as instructions and skills.
-Consider it when the user wants to operate a Deep Agent without assembling that
-runtime stack, or needs managed capabilities such as sandboxes or schedules.
-Keep agent logic and hosted runtime choices distinct. Verify current capabilities
-and setup in official docs and the installed CLI; a general request to build a
-LangChain agent does not imply managed hosting.
+Managed Deep Agents is LangSmith's public-beta hosted way to run Deep Agents.
+You define the agent in code; LangSmith packages it as an Agent Server and
+provides the backend, store, and checkpointer, plus managed project context
+such as instructions and skills. Durable memory is optional and must be
+configured. Consider it when the user wants to operate a Deep Agent
+without assembling that runtime stack, or needs managed capabilities such as
+sandboxes or schedules. Keep agent logic and hosted runtime choices distinct.
+Verify current capabilities and setup in official docs and the installed CLI; a
+general request to build a LangChain agent does not imply managed hosting.
 
 ## Retrieve the implementation contract
 
