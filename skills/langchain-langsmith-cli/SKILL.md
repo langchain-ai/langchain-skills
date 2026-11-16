@@ -31,12 +31,14 @@ langsmith threads list --project my-app --last-n-minutes 60
 
 ## Score live runs with an evaluator
 
-Attach an LLM-as-judge evaluator to a project. Only a sample of runs is
-scored, and runs that score below the threshold are flagged:
+Attach an LLM-as-judge evaluator to a project. `--model-config` is always
+required; give the judge prompt with `--prompt` and `--schema`. To score only a
+sample of runs, set `--sampling-rate` (the default, 1, scores every run):
 
 ```bash
 langsmith evaluators create-llm --name relevance --project my-app \
-  --prompt prompt.json --sampling-rate 0.2 --threshold 0.8
+  --prompt prompt.json --schema schema.json --model-config model.json \
+  --sampling-rate 0.2
 ```
 
 ## Trace a Python function
@@ -44,9 +46,9 @@ langsmith evaluators create-llm --name relevance --project my-app \
 Decorate a function so every call is recorded as a run:
 
 ```python
-from langsmith import trace_function
+from langsmith import traceable
 
-@trace_function
+@traceable
 def answer(question: str) -> str:
     ...
 ```
