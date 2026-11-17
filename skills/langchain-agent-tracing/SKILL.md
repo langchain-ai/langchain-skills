@@ -175,7 +175,8 @@ langsmith traces get <trace-id> --project-id <session-id> --full --format json
 
 In a project-based workspace, find the project ID with `langsmith projects list`.
 Narrow `traces list` with `--error`, `--tags`, `--metadata key=value`, or
-`--filter`. Use `langsmith runs list --project-id <session-id> --trace-ids <trace-id>`
+`--filter`. `--min-latency` and `--max-latency` take seconds, e.g. `--min-latency 5`
+for traces slower than five seconds. Use `langsmith runs list --project-id <session-id> --trace-ids <trace-id>`
 for the runs in one trace, adding `--metadata thread_id=<thread-id>` to confirm
 child runs carry the thread. Check grouping with `langsmith threads list` and
 `langsmith threads get <thread-id>` using the same `--project-id`.
