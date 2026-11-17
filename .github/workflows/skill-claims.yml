@@ -4,21 +4,23 @@
 # behaviors), cites the docs lines that support them, and fails this check when the docs say
 # something different. It comments on the PR once per skill with what to fix.
 #
-# pull_request_target runs this file as it is on main, with this repo's secrets, so PRs from forks
-# are checked too. It never checks out or runs PR code: it sends commit ids to the deployment,
-# which reads the public repos itself, and posts the comment text it returns.
+# Runs on pull requests from branches in this repository, which only people with write access can
+# open. Pull requests from forks are skipped: they get no secrets. It never checks out or runs PR
+# code: it sends commit ids to the deployment, which reads the public repos itself, and posts the
+# comment text it returns.
 #
 # Repo settings: variable SKILL_CLAIMS_URL and secret SKILL_CLAIMS_API_KEY. Until the variable is
-# set, the check passes with a notice. Make `skill-claims` a required check once it is.
+# set, the check passes with a notice.
 name: skill-claims
 on:
-  pull_request_target:
+  pull_request:
     paths: ["skills/**"]
 permissions:
   contents: read
   pull-requests: write # one comment per changed skill
 jobs:
   skill-claims:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
