@@ -1,0 +1,481 @@
+skills/langchain-eval-engineering/references/multi-turn-simulation/guide.md
+  h_fe5ed23bcee8dc 30-32,44
+skills/langchain-eval-engineering/SKILL.md
+  h_fe5ed23bcee8dc 2
+skills/langchain-eval-engineering/agents/openai.yaml
+  h_fe5ed23bcee8dc 4
+skills/langchain-eval-engineering/assets/world-skill/SKILL.md.template
+  h_fe5ed23bcee8dc 3,8
+skills/langchain-eval-engineering/references/examples/service-desk.md
+  h_fe5ed23bcee8dc 57
+skills/langchain-eval-engineering/references/harbor.md
+  h_fe5ed23bcee8dc 20
+skills/langchain-eval-engineering/references/world-knowledge.md
+  h_fe5ed23bcee8dc 61,111,172,176
+plugin.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 1-3,6-14
+  s_731e6774cfc6ce::t_5626e78d80dda4 5
+tests/skills_lint/test_lint_skills.py
+  s_9b8b49824a1442::t_4c48fefa695f1c 27
+  s_4285b1993ebe68::t_9d0bf772f09463 140-163
+.codex-plugin/plugin.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 13
+  s_9b8b49824a1442::t_b3b2445f5882b2 1-2,5-12,14-16,19,35-36
+  s_731e6774cfc6ce::t_5626e78d80dda4 4,18
+mcp.json
+  s_9b8b49824a1442::t_4c48fefa695f1c 1-13
+.mcp.json
+  s_9b8b49824a1442::t_b3b2445f5882b2 1-12
+README.md
+  s_9b8b49824a1442::t_b3b2445f5882b2 22-23,26-33,44-50,110-115,134,178
+  s_731e6774cfc6ce::t_5626e78d80dda4 6-8
+  s_731e6774cfc6ce::t_84bea8b0993a1b 132,210-212
+  s_731e6774cfc6ce::t_441625ca549e00 5,15,25,131,266-267
+  s_731e6774cfc6ce::t_544a97f391a5f4 58-59
+  s_731e6774cfc6ce::t_c9f74d2ee048e9 120-124,130
+  s_731e6774cfc6ce::t_a0fbd48e69cb22 10-12
+  s_f52806ea1f0d5c::t_7a0bf97f9ce2f8 109,116-120,270-276
+  s_f52806ea1f0d5c::t_5af52ff9330ce2 125-129
+  s_f52806ea1f0d5c::t_bfa6a7de90720a 268-269
+  s_12daf266e9e76f::t_ec3e3daf2cb1dc 249-252
+  s_12daf266e9e76f::t_aa463d757585c8 16-18,24,51-57,60-61,91-93,133,209,219,234-235,246-247,258,278-280
+  s_12daf266e9e76f::t_7c2e213dc6f871 63-69,84-90,94-97
+  s_12daf266e9e76f::t_e116c7472413aa 98-102,106-107,216,218,220-221,224,227,230-232,237,241-245,257,260
+  s_12daf266e9e76f::t_684a4e77c383e8 103-105
+  s_12daf266e9e76f::t_e62981208697b1 62
+  s_12daf266e9e76f::t_9ff38c4b5173ae 238
+  s_12daf266e9e76f::t_c82e17f6ec93d7 248
+scripts/lint_skills.py
+  s_9b8b49824a1442::t_4c48fefa695f1c 5,344
+  s_4285b1993ebe68::t_9d0bf772f09463 273-290,365
+skills/langchain-build-agent/SKILL.md
+  s_2ffc178a979a82::t_1c44272f366d33 108-111,117-118
+  s_731e6774cfc6ce::t_6d1ceb0fa15dcc 3,78-86
+  s_f52806ea1f0d5c::t_17ef6e76953951 119,123-128
+  s_f52806ea1f0d5c::t_d81a3457685cad 129-130
+  s_f52806ea1f0d5c::t_ffc25fd67f5be3 132-149
+.claude-plugin/plugin.json
+  s_731e6774cfc6ce::t_5626e78d80dda4 5
+  s_12daf266e9e76f::t_bba495be741093 14,20-24
+.claude-plugin/marketplace.json
+  s_731e6774cfc6ce::t_5626e78d80dda4 8,14
+pyproject.toml
+  s_731e6774cfc6ce::t_63ea5ca00239d3 4
+skills/langchain-agent-monitoring/SKILL.md
+  s_731e6774cfc6ce::t_b566887785dbf3 29-40
+  s_731e6774cfc6ce::t_fb06f5bdcedeec 107,111
+  s_f52806ea1f0d5c::t_7149a4bda27d58 14
+  s_f52806ea1f0d5c::t_63d4d3bcea352e 119-142
+  s_f52806ea1f0d5c::t_f3c858f86bc071 19
+  s_f52806ea1f0d5c::t_14fde76df80de1 17-18
+  s_104afc537b6962::t_87caa530972b8e 84-86
+  s_4285b1993ebe68::t_585e3ab80e851a 1,4-5,7,14-23,26-40,60-142
+  s_8784970402fd4d::t_cd38a6437c824a 45,48-49
+  s_8784970402fd4d::t_bb87794b8d43f3 41-44,46-47,50-58
+  s_8784970402fd4d::t_e6538c49c07798 59
+  s_558b07242c82da::t_1cc1f355c82ecb 2-13
+  s_558b07242c82da::t_71ffd2ea0b9716 24-25
+SKILLS_PHILOSOPHY.md
+  s_731e6774cfc6ce::t_a0fbd48e69cb22 1-5,8-10,16-32,56-59,67-76
+  s_f52806ea1f0d5c::t_521c4bcb677c3f 1-5,8-10,16-32,56-59,67-76
+  s_f52806ea1f0d5c::t_fce27dca0b5e67 6-7,11-15,33-45
+  s_8784970402fd4d::t_6e46cc051bdcfe 46-50,53-55,60-66
+  s_8784970402fd4d::t_f251680bdaff2c 51-52
+skills/langchain-eval-engineering/references/discovery.md
+  s_f52806ea1f0d5c::t_3acc5b057bdfc4 29-31,107-111,116
+  s_f52806ea1f0d5c::t_861eb55b79c4f1 117
+  s_558b07242c82da::t_7d77b0d56a495e 112-115
+skills/langchain-agent-monitoring/references/chained-eval-cli-setup.md
+  s_104afc537b6962::t_44fea6ed99a8b1 1-12,15-211
+  s_104afc537b6962::t_87caa530972b8e 13-14
+  s_4285b1993ebe68::t_585e3ab80e851a 1-211
+.github/workflows/skills-lint.yml
+  s_12daf266e9e76f::t_466104c38093b8 60-61,63,66-68
+  s_12daf266e9e76f::t_064fc5fddcd2bb 46-59,62,64-65,69
+  s_12daf266e9e76f::t_529f050e213b2a 39
+  s_12daf266e9e76f::t_d85ae1b5e37bc1 70-73
+  s_12daf266e9e76f::t_2b8e5f992183c0 18,36-38,40-45
+install.sh
+  s_12daf266e9e76f::t_684a4e77c383e8 109
+  s_12daf266e9e76f::t_9637ae3dc8cab1 1,3-4,7,9,15-22,24-29,33-36,38-43,45-46,52,55-57,60-65,67,69-72,74,77-82,85-95,97-100,102-103,105-107
+  s_12daf266e9e76f::t_0273c021fb4c73 37,66,73
+  s_8cc46a8451c638::t_68eb5ac6eb3fe9 23
+install.ps1
+  s_12daf266e9e76f::t_466104c38093b8 54-58
+  s_12daf266e9e76f::t_0273c021fb4c73 23,30
+  s_12daf266e9e76f::t_d89d068d07c547 1-2,4-22,24-29,31-53,59-71,72-73,75-77
+  s_12daf266e9e76f::t_684a4e77c383e8 74
+  s_8cc46a8451c638::t_9c46f203a0121b 3
+tests/skills_lint/test_plugin_versions.py
+  s_12daf266e9e76f::t_18e4c478d4a257 1-45
+.github/workflows/plugin-release.yml
+  s_12daf266e9e76f::t_db06afd4aa655f 1-45
+scripts/check_plugin_versions.py
+  s_12daf266e9e76f::t_2b8e5f992183c0 1-23,25-60,63-71,75-110
+  s_12daf266e9e76f::t_7c2e213dc6f871 61-62
+  s_12daf266e9e76f::t_aba2a3a78235a5 24
+  s_12daf266e9e76f::t_529f050e213b2a 72-74
+tests/test_install.sh
+  s_12daf266e9e76f::t_2e41bf59f31bcb 1-30,39
+  s_12daf266e9e76f::t_d85ae1b5e37bc1 31-38
+evals/test_cleanup.py
+  s_21552cb4b54f73::t_2c421a6dfff95d 1-107,109-114,235-237
+  s_21552cb4b54f73::t_5c7730cd34302e 108
+  s_21552cb4b54f73::t_a6f26f67952330 115-130
+  s_558b07242c82da::t_459d30c2214378 132-235
+evals/allowlist.py
+  s_21552cb4b54f73::t_d9a27da4523a83 1-61
+evals/shared_project_plugin.py
+  s_21552cb4b54f73::t_cdab2af630165d 11,13,55-63
+  s_21552cb4b54f73::t_d9a27da4523a83 1-10,12,14-31,33-54,64-77
+  s_8784970402fd4d::t_0febc2ffe693a7 32
+evals/README.md
+  s_21552cb4b54f73::t_aa0c9da7437a60 1-7,18-29,32-37,42-43,44,47-52,53-66,70-73,87-91,92-105,107-109,111-131,201-202,205-206,211-212,220-223
+  s_21552cb4b54f73::t_ca817185b4a9cc 203-204,207-210,213-215,217-219
+  s_21552cb4b54f73::t_5c7730cd34302e 8-9,132-142,216
+  s_21552cb4b54f73::t_6ac61b95ff2fed 264-269
+  s_21552cb4b54f73::t_2ce277e2e19813 261
+  s_21552cb4b54f73::t_6dd7c20213d046 30-31,38-41,45-46,106,110,224-230,241-249,262-263
+  s_8784970402fd4d::t_1eb3f2cf9d8853 10-13,67-69,143-149
+  s_558b07242c82da::t_9207ca34361f48 74-80,86
+  s_558b07242c82da::t_31837fca760abf 14-17
+  s_558b07242c82da::t_0d651d9ae4bcf6 150-174,180-189,197-200
+  s_77a483f9e1da2c::t_3efabc718ab9b2 175-179
+  s_77a483f9e1da2c::t_1a7a7c338354b7 81-85
+  s_77a483f9e1da2c::t_04409d2ae7fca8 190-196
+  s_77a483f9e1da2c::t_c44b60038d47a9 254-256
+  s_77a483f9e1da2c::t_cc9917313dee5c 250-253,257-260
+evals/tasks/chained-eval/task.toml
+  s_21552cb4b54f73::t_9b0de736a38c65 1-21
+evals/tasks/chained-eval/Task.md
+  s_21552cb4b54f73::t_9b0de736a38c65 1-37
+evals/cleanup.py
+  s_21552cb4b54f73::t_ca817185b4a9cc 1,3-12,16-44,58-67,69-81,84-85,87-88,91,93-98,129-146
+  s_21552cb4b54f73::t_24518ae7a37cd7 68
+  s_558b07242c82da::t_409b04608bf08f 82-83,86,89-90,92,99-128
+  s_558b07242c82da::t_19ce8d51731974 45-57
+  s_558b07242c82da::t_037a544d501b30 2,13-15
+evals/tasks/chained-eval/instruction.md
+  s_21552cb4b54f73::t_9b0de736a38c65 1-11
+evals/tasks/chained-eval/harness.json
+  s_21552cb4b54f73::t_8e0870b8c67fd4 3
+  s_21552cb4b54f73::t_9dad780a1b46d8 1-2,4-5
+evals/tasks/chained-eval/fixtures.json
+  s_21552cb4b54f73::t_9b0de736a38c65 1-14
+evals/harness.py
+  s_21552cb4b54f73::t_b9e3407b2d5dd0 443-444
+  s_21552cb4b54f73::t_22b9ee4e628f08 21,482-551,560-595,597-611,631-636,720-725
+  s_21552cb4b54f73::t_8e0870b8c67fd4 118-119,358-359,370-371,406
+  s_21552cb4b54f73::t_1af85c638a3732 312
+  s_21552cb4b54f73::t_ca817185b4a9cc 638-640
+  s_21552cb4b54f73::t_6cd2685502c332 11,184-194,422,596,641-657,659,661-666,697-698,701
+  s_21552cb4b54f73::t_eb092173b1fa0e 300,318,446,669-688,702-705
+  s_21552cb4b54f73::t_5bb160799362fc 1-10,12-13,15-18,20,22-31,33-36,44-45,68-77,79-80,83-85,92-96,108-109,137-138,171-174,176-183,195-236,290-292,294-299,301,307-311,313,315-317,319-328,334-338,357,360-366,387-389,392,395,397,399-405,407-420,425-428,430-437,439-442,445,447-473,477-481,637,667-668,689-693,695-696,706-708,711-719,726-735
+  s_21552cb4b54f73::t_8ac4736bf406ac 46-67,293,372-386,390-391,393,396,398,423-424,694,699
+  s_21552cb4b54f73::t_cdab2af630165d 438,552-559
+  s_21552cb4b54f73::t_9dad780a1b46d8 78,81-82,86-88,91,110-113,115-117,136,475
+  s_21552cb4b54f73::t_19f54c68c92ba5 302-306
+  s_21552cb4b54f73::t_24518ae7a37cd7 612-615
+  s_21552cb4b54f73::t_a9b64e3fd40899 39-43,175,429,660,700,709-710
+  s_21552cb4b54f73::t_de9c0102d57c48 37-38
+  s_ff5f4505668244::t_3cee776f6bd6ff 90,97,114
+  s_ff5f4505668244::t_57840d9f816333 19
+  s_ff5f4505668244::t_a374c054967376 619
+  s_8784970402fd4d::t_cd3d559e8156e9 98-107
+  s_ff5f4505668244::t_d9ea34df7de936 332-333
+  s_ff5f4505668244::t_d8140fb5d5e396 474,476
+  s_ff5f4505668244::t_c3f5926f6829f9 616-618,620-622
+  s_ff5f4505668244::t_6dc1f1714d710f 237-277
+  s_558b07242c82da::t_4f8666f6e03b7d 120-127,130-131,149-168
+  s_558b07242c82da::t_b1f87b458901c3 89
+  s_558b07242c82da::t_b55149738abe72 623-628
+  s_558b07242c82da::t_979676283d44bb 14
+  s_558b07242c82da::t_28adc6e56211a0 32
+  s_558b07242c82da::t_488f437c0561dc 367-369
+  s_558b07242c82da::t_3ff2b057b2ad87 128
+  s_558b07242c82da::t_fe75e5c77e457a 339-356
+  s_558b07242c82da::t_592442ef6a7fe0 139-142,146-148
+  s_558b07242c82da::t_89e2913438c8d8 329-331
+  s_558b07242c82da::t_c950166282dbf5 394
+  s_558b07242c82da::t_c9233cf1932621 658
+  s_558b07242c82da::t_c0cfe62206f887 314
+  s_558b07242c82da::t_67e639dbdaf387 278-289
+  s_558b07242c82da::t_86980139c3e58c 421
+  s_558b07242c82da::t_b2eebc25f0b9bc 169-170
+  s_77a483f9e1da2c::t_b89d65ea307a26 629-630
+  s_77a483f9e1da2c::t_e4fdf5ae314c3c 143-145
+  s_77a483f9e1da2c::t_c96e0b3991b815 129
+  s_77a483f9e1da2c::t_d4dbbe470ae853 132-135
+evals/tasks/chained-eval/environment/Dockerfile
+  s_21552cb4b54f73::t_a108c9739f3189 4-6,9
+  s_21552cb4b54f73::t_9b0de736a38c65 1-3,7-8,10-11
+.gitignore
+  s_21552cb4b54f73::t_9b0de736a38c65 16-17
+evals/profiles.json
+  s_21552cb4b54f73::t_8ac4736bf406ac 1-26
+evals/tasks/chained-eval/environment/.dockerignore
+  s_21552cb4b54f73::t_cdab2af630165d 1-11
+evals/validators.py
+  s_21552cb4b54f73::t_53c548ef57253a 2-4,6-9,12-13,15,17-34,37-64,69-85,90-94,96-97,99-106,110-113,116-122,125-127,130-132,141,143-150
+  s_21552cb4b54f73::t_aac471ec3f2835 107-109,114-115,134-138
+  s_21552cb4b54f73::t_6a84e4a4ef6f74 14,16,86-89,95,98,123-124
+  s_21552cb4b54f73::t_4d77361c04bcd2 35-36
+  s_21552cb4b54f73::t_c7b9faa840c706 128-129,133,139-140,142
+  s_21552cb4b54f73::t_b43c4d02f00747 65-68
+  s_ff5f4505668244::t_a374c054967376 151-184
+  s_558b07242c82da::t_7806da2f6309bb 1,5,10-11,185-238,240-247,250,253-254,260-277,286-297,299-301
+  s_77a483f9e1da2c::t_1ec9c2d10965bd 298
+  s_77a483f9e1da2c::t_742e4bf40e17a6 251-252,255-259
+  s_77a483f9e1da2c::t_3c8234654466c5 239,248-249
+  s_77a483f9e1da2c::t_e3236806a1cc84 278-285
+evals/test_validators.py
+  s_21552cb4b54f73::t_111845544c4d3d 1-3,6,8-25,27,29-56,87-90
+  s_21552cb4b54f73::t_aac471ec3f2835 26,28
+  s_21552cb4b54f73::t_d12fb7f308618f 4-5,7,57-86
+evals/ci_runner.py
+  s_21552cb4b54f73::t_94bb5ba4dd24e8 8,10,38-40,51-53,57-61
+  s_21552cb4b54f73::t_bbf5836a8e6b1e 183-185
+  s_21552cb4b54f73::t_85465678236657 1-7,9,11-37,41-43,49-50,54-56,62-72,80-92,93-104,106-107,108-116,118-124,126-129,131-133,135-136,138-146,148,152-153,155-162,164-172,174-181,186,188-189,190-194
+  s_21552cb4b54f73::t_39b5a75e4620cc 130,137
+  s_21552cb4b54f73::t_4734fdba517006 117,125,134,147,154,163,173
+  s_558b07242c82da::t_476dfb2f7872d9 44-48
+  s_77a483f9e1da2c::t_89853b33b1eb84 187
+  s_77a483f9e1da2c::t_b121c91f0c3af9 151
+  s_77a483f9e1da2c::t_c51eff533334d7 149-150
+  s_77a483f9e1da2c::t_3f47d331d2e52b 73-79
+  s_77a483f9e1da2c::t_1116b3b5a18956 105
+.github/workflows/skills-evals.yml
+  s_21552cb4b54f73::t_8d4f5984b2b18f 1-17,19-20,25-49,51-56,58,59-63,65-84,86-125,127-135,137-142,144
+  s_21552cb4b54f73::t_61ae46e3b0aee4 50,57,64,85
+  s_21552cb4b54f73::t_6aa2930c2c9960 37
+  s_77a483f9e1da2c::t_91b40a680d805a 143,145-178
+  s_77a483f9e1da2c::t_aa6232de6b670a 18,21-23,126,136
+evals/test_ci_runner.py
+  s_21552cb4b54f73::t_c8f0ab894ce258 1-7,9-63,74-75
+  s_77a483f9e1da2c::t_b61da51c6097bd 8
+  s_77a483f9e1da2c::t_3a4a47a5d534ef 64-71
+  s_77a483f9e1da2c::t_94870d5d071e1f 72-73
+evals/patch_harbor.py
+  s_21552cb4b54f73::t_a269a4463a5d69 1-344
+evals/tasks/thread-llm-judge/instruction.md
+  s_ff5f4505668244::t_51fcf11596e2f2 1-12
+evals/tasks/thread-llm-judge/harness.json
+  s_ff5f4505668244::t_00cfda3d971f3e 1-5
+evals/tasks/thread-llm-judge/task.toml
+  s_ff5f4505668244::t_50eb4aeafebbfd 1-21
+evals/tasks/thread-llm-judge/fixtures.json
+  s_ff5f4505668244::t_9772a9624e2546 1-70
+evals/tasks/thread-llm-judge/environment/.dockerignore
+  s_ff5f4505668244::t_0add6613e7e5bd 1-11
+evals/tasks/thread-llm-judge/Task.md
+  s_ff5f4505668244::t_20064ad42df080 1-6,8-29
+  s_558b07242c82da::t_cc717089a4e160 7
+evals/tasks/thread-llm-judge/environment/Dockerfile
+  s_ff5f4505668244::t_0add6613e7e5bd 1-11
+evals/test_thread_fixtures.py
+  s_8784970402fd4d::t_d4ccd183c96d34 1-99
+skills/langchain-agent-tracing/SKILL.md
+  s_558b07242c82da::t_7eb91b6e802940 1-42,72-80,88-99,105-187,190-198,202-218
+  s_558b07242c82da::t_b6cbaa9b0958d0 188-189
+  s_558b07242c82da::t_b8e6bc80aa0390 199-201
+  s_558b07242c82da::t_51fa36b0b4c458 43-71
+  s_77a483f9e1da2c::t_fb36536c3f64da 81-87
+  s_77a483f9e1da2c::t_ab2c3bea8652f0 100-103
+  s_77a483f9e1da2c::t_c97c8fe3f1ee80 104
+evals/tasks/trace-strands/Task.md
+  s_558b07242c82da::t_f615b8f05b8f90 1,7-11,14-15,19-29,33-35
+  s_558b07242c82da::t_8dde68556aa8d8 2-6,12-13,16-18,30-32
+  s_558b07242c82da::t_1063dd224fabc2 36
+  s_558b07242c82da::t_d2bfedac1f275d 37-38
+evals/tasks/trace-otel/Task.md
+  s_558b07242c82da::t_f120d17ec79203 1,7-12,15-16,20-30,35-37
+  s_558b07242c82da::t_cc46cb730a4c85 2-6,13-14,17-19,31-34
+  s_558b07242c82da::t_ede7b0145991e1 38-40
+evals/tasks/trace-strands/harness.json
+  s_558b07242c82da::t_8dde68556aa8d8 1-5,14
+  s_558b07242c82da::t_cd89b6e7f372cd 6-8
+  s_77a483f9e1da2c::t_aeac958e609b88 9-13
+evals/tasks/trace-strands/environment/Dockerfile
+  s_558b07242c82da::t_8dde68556aa8d8 1-14
+evals/tasks/trace-sdk/Task.md
+  s_558b07242c82da::t_e88fb13c5cd2fb 1-43
+  s_558b07242c82da::t_26441de51425a4 44
+  s_77a483f9e1da2c::t_cdfab3d4ce03e4 45-48
+evals/tasks/trace-otel/instruction.md
+  s_558b07242c82da::t_cc46cb730a4c85 1-5,9-15
+  s_558b07242c82da::t_e908c8072b0c8a 6-8
+evals/tasks/trace-strands/instruction.md
+  s_558b07242c82da::t_8dde68556aa8d8 6-15
+  s_558b07242c82da::t_d5235e3c85254f 1-5
+evals/tasks/trace-strands/task.toml
+  s_558b07242c82da::t_8dde68556aa8d8 1-21
+evals/tasks/trace-strands/environment/app/assistant.py
+  s_558b07242c82da::t_3605661a268e2e 1-116
+evals/tasks/trace-otel/harness.json
+  s_558b07242c82da::t_cc46cb730a4c85 1-5,10
+  s_558b07242c82da::t_cd89b6e7f372cd 6-9
+evals/tasks/trace-otel/task.toml
+  s_558b07242c82da::t_cc46cb730a4c85 1-21
+evals/tasks/trace-otel/environment/Dockerfile
+  s_558b07242c82da::t_cc46cb730a4c85 1-14
+evals/tasks/trace-sdk/harness.json
+  s_558b07242c82da::t_b777dc3ccb7d92 5
+  s_558b07242c82da::t_fe4c48a8608e1b 2-4
+  s_558b07242c82da::t_7a4f1c7f3b70ea 13
+  s_558b07242c82da::t_27fe1fc9101375 1
+  s_558b07242c82da::t_cd89b6e7f372cd 6-7,11-12
+  s_77a483f9e1da2c::t_a3049583528dd2 8-10
+evals/shared/trace-support/expected.json
+  s_558b07242c82da::t_48219927e9ed39 2-4
+  s_558b07242c82da::t_c2271ee34f7eb5 11
+  s_558b07242c82da::t_470e9d8a3ae781 1
+  s_558b07242c82da::t_cd89b6e7f372cd 5-10
+evals/tasks/trace-sdk/environment/Dockerfile
+  s_558b07242c82da::t_a15789f4f95c6b 1-14
+evals/tasks/trace-sdk/task.toml
+  s_558b07242c82da::t_cc06c7cd26b2f4 1-21
+evals/shared/trace-support/app/assistant.py
+  s_558b07242c82da::t_5df52022dc4a82 1-63
+evals/shared/trace-support/app/conversations.json
+  s_558b07242c82da::t_2e88b75d793055 1-24
+evals/shared/trace-support/app/run_conversations.py
+  s_558b07242c82da::t_73becb7ea411d7 1-55
+evals/shared/trace-support/app/tools_service.py
+  s_558b07242c82da::t_4c2bea9b3320b2 1-83
+evals/tasks/trace-sdk/instruction.md
+  s_558b07242c82da::t_dc8d557ae48227 1-14
+evals/test_trace_validators.py
+  s_558b07242c82da::t_418acb56cacdb1 1-19,21-60,63-65,72-77,79-85,93-95,107,109-111,113-116,118-119,121,123-126,128-166,168-170,176-198
+  s_77a483f9e1da2c::t_165ce9da96fc08 62,78,86,108,112,117,120,122,127
+  s_77a483f9e1da2c::t_bf20d41960dba4 20,61,167
+  s_77a483f9e1da2c::t_eee35e8a83965e 66-70,87
+  s_77a483f9e1da2c::t_2a34c4cf9efd30 90-92,96-106
+  s_77a483f9e1da2c::t_c9f7352682923b 171-175
+  s_77a483f9e1da2c::t_6ecddbccbef797 71
+  s_77a483f9e1da2c::t_fc5ae0e376198b 88-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "85cbba7a770281c9c9cfd0209534903ec8800ce0",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  },
+  "sessions": {
+    "s_104afc537b6962": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b6ea-88a2-7570-9e39-f04b3671a975",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_12daf266e9e76f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7d1-6086-7043-9031-bc8859cc5a9a",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_21552cb4b54f73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7f0-3c00-7991-92a1-26fe7aa9c46d",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_2ffc178a979a82": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11e06-a784-71e2-85b1-3ddc09d45ba6",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_3d95654a054578": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "71379ef3-9cc3-4109-92e6-68e256237139",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_4285b1993ebe68": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b7cc-4672-75a2-8ce3-f86627f4d708",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_558b07242c82da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4888091d-3c83-4676-8411-38267d0814dc",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_731e6774cfc6ce": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a1d6-74f3-7771-96e2-6d7d03ee5e71",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_77a483f9e1da2c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6ef3ffb-cdaa-4f28-afd6-1f64b36ff7ca",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_8784970402fd4d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1bbf6-397f-7541-9fc0-48a97fce942f",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_8cc46a8451c638": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f05e9e34-9d88-4d6b-8ea8-e9ea95cfea3d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_9b8b49824a1442": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a11308-b516-75e0-a8f8-cdca6cfde3db",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_f52806ea1f0d5c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1b249-981b-7120-b59b-1c189a78ecfa",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    },
+    "s_ff5f4505668244": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee72519c-39d5-4d0d-b08f-33b8e39d4c7e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
