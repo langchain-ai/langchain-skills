@@ -1,19 +1,31 @@
 ---
 name: langchain-agent-experiments
-description: Use when testing an agent or LLM application offline in LangSmith before it ships, including building evaluation datasets from traces or by hand, writing the target function and evaluators (code checks, LLM judges, and graph evaluators), running experiments with evaluate(), comparing versions, and diagnosing why an experiment scored badly.
+description: Use when testing an agent or LLM application offline in LangSmith before it ships, including building evaluation datasets from traces, reviews, or by hand; writing the target function and evaluators (code checks, LLM judges, pairwise and graph evaluators); aligning judges with human labels; running and comparing experiments; and diagnosing why an experiment scored badly.
 ---
 
 # Test agents with LangSmith experiments
 
 An experiment runs one version of an application over a dataset and scores each
 result with evaluators. It answers "is this version better than the last one,
-and where does it fail?" before a change ships. Use `langchain-agent-monitoring`
-for scoring live production traffic and `langchain-eval-engineering` for Harbor
-benchmark tasks with controlled environments.
+and where does it fail?" before a change ships.
 
 The order matters: inspect real outputs, shape the dataset to match, write the
 target function, then evaluators. Most broken evaluations come from guessing
 the output shape.
+
+## Choose the harness
+
+- **Experiment with `evaluate()`:** the default for comparing versions of an
+  application over a shared dataset, with results, comparisons, and evaluator
+  feedback in LangSmith.
+- **pytest or Vitest/Jest integration:** when the checks belong next to the
+  code as test cases with assertions, run in CI, and the team already reads
+  test output. Results are still logged to LangSmith as experiments.
+- **Harbor task:** when the agent must act in a controlled environment, such as
+  files, services, or a simulated user, and the verifier inspects the resulting
+  state. Use `langchain-eval-engineering`.
+- **Online evaluator:** when the question is how live traffic behaves, not how
+  a candidate version compares. Use `langchain-agent-monitoring`.
 
 ## Inspect before you build
 
@@ -26,8 +38,11 @@ intermediate decisions appear. Framework output shapes vary; never assume one.
 
 Choose the example shape by what the experiment should catch:
 
-- **Final response:** inputs and the expected answer or answer criteria. Tests
-  end-to-end behavior.
+- **Final response:** inputs and the expected answer. Tests end-to-end
+  behavior.
+- **Assertions:** inputs and short claims a correct answer must or must not
+  satisfy. Use when a full reference answer is hard to write or many answers
+  are acceptable.
 - **Single step:** the inputs and expected output of one model call, node, or
   tool. Tests a component in isolation.
 - **Trajectory:** inputs and the expected ordered tool calls. Tests the
@@ -39,7 +54,9 @@ Start from production traces when they exist: they hold the inputs users
 actually send. Export them, keep the root runs worth testing, and write the
 reference outputs the application should have produced. Do not copy the
 recorded output as the reference without reviewing it; that turns today's
-mistakes into the expected answer.
+mistakes into the expected answer. Reviewers can write assertions while
+reviewing runs in a single-run annotation queue, and Engine can propose them
+for recurring issues; both save to a dataset.
 
 ```bash
 langsmith traces export ./traces --project-id <session-id> --limit 50 --full
@@ -68,26 +85,28 @@ trajectory against the trace, which shows every call.
 
 ## Write evaluators
 
-Each evaluator returns one metric: `{"score": ..., "comment": ...}`. Write one
-evaluator per metric.
+Write one evaluator per metric, and return a score with a comment that explains
+it. Evaluators passed to `evaluate()` declare the arguments they need by name,
+such as `inputs`, `outputs`, and `reference_outputs`. Evaluators that run inside
+LangSmith (uploaded, or created in the UI) receive `run` and `example` dicts
+instead; read `run["outputs"]` and `example["outputs"]`.
 
 - **Code evaluator:** deterministic checks such as exact match, required
-  fields, format, or trajectory order. Prefer it whenever the check is
-  objective.
+  fields, format, assertion keys, or trajectory order. Prefer it whenever the
+  check is objective.
 - **LLM judge:** subjective quality such as correctness against a reference,
-  helpfulness, or groundedness. Use structured output with a reasoning field and
-  a boolean or small scale, and test it on known good and bad examples before
-  trusting it.
+  whether an assertion holds, helpfulness, or groundedness. Use structured
+  output with a reasoning field and a boolean or small scale.
+- **Pairwise evaluator:** an LLM judge that compares two experiments' outputs
+  for the same example and prefers one. Use it when both versions score well
+  on absolute metrics but you need to know which is better; randomize the order
+  to reduce position bias.
 - **Graph evaluator:** several checks chained together, for example a code
   check that gates an LLM judge, or a decision model that classifies before a
   judge scores. Build it with `openevals.graph`, which is experimental and
   Python only; pin the openevals version and check its current API. Each node
   is traced as its own span, so a wrong final score can be traced to the node
   that produced it.
-
-Offline evaluators receive `(run, example)`. Locally, Python passes a `Run`
-object (`run.outputs`); evaluators that run inside LangSmith receive a dict
-(`run["outputs"]`). Handle both when an evaluator will be used both ways.
 
 Run evaluators locally first by passing them to `evaluate()`; this has full
 package access and the fastest feedback loop. Attach an evaluator to the
@@ -108,23 +127,39 @@ graph evaluator needs its packages and provider keys, which `upload` cannot
 declare: create it through the evaluators API with its dependencies and the
 names of the workspace secrets it uses, and never put a key in the file.
 
+## Align judges with human labels
+
+Do not trust an LLM judge until it agrees with people on this application's
+outputs. Send a sample of experiment results, including borderline ones, to an
+annotation queue with a rubric that uses the judge's feedback key and scale.
+After reviewers label them, compare the judge's scores with the labels, read
+the disagreements, and revise the judge prompt or criteria. LangSmith's Align
+Evaluator flow runs this loop for LLM-as-a-judge evaluators; corrections on
+judge scores can also become few-shot examples. Repeat until agreement is good
+enough for the decision the score drives, and keep the labeled set to recheck
+the judge after each prompt change.
+
 ## Run and compare experiments
 
 ```python
-from langsmith import evaluate
+from langsmith import Client
 
-results = evaluate(
+results = Client().evaluate(
     target,
     data="support-agent-regression",
     evaluators=[exact_trajectory, correctness_judge],
     experiment_prefix="support-agent-prompt-v2",
+    metadata={"models": [...], "prompts": [...], "change": "tighter refund policy"},
+    num_repetitions=3,
 )
 ```
 
-Use a descriptive `experiment_prefix` and record the change under test in the
-experiment metadata. Compare experiments on the same dataset version with the
-same evaluators. Run more than once when the application is nondeterministic,
-and look at per-example differences, not only averages.
+Use a descriptive `experiment_prefix`, and describe the version under test in
+`metadata`. The documented `models`, `prompts`, and `tools` keys fill the
+matching columns in the experiment view; check the docs for their current
+shape. Compare experiments on the same dataset version with the same
+evaluators. Use repetitions when the application is nondeterministic, and look
+at per-example differences, not only averages.
 
 ## Diagnose a poor experiment
 
@@ -163,8 +198,9 @@ inventing a diagnosis.
 
 ## Use current tools
 
-For current behavior of datasets, experiments, evaluators, and `evaluate()`,
-use `langchain-docs` → `search_docs_by_lang_chain` and read relevant pages with
+For current behavior of datasets, experiments, evaluators, `evaluate()`, the
+pytest and Vitest integrations, and annotation queues, use `langchain-docs` →
+`search_docs_by_lang_chain` and read relevant pages with
 `query_docs_filesystem_docs_by_lang_chain`. For SDK and openevals calls, use
 `langchain-reference` → `search_api`, then `get_symbol` for exact contracts. If
 MCP is unavailable, follow official docs through
