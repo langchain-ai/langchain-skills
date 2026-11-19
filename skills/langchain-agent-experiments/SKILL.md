@@ -42,6 +42,8 @@ the example's outputs. Assertions survive harmless rewording, accept more than
 one good answer, and give one score per claim, so a failure points at the
 criterion that broke. Name keys after the claim (`must_cite_source`,
 `must_not_promise_refund`) and keep each comment to one checkable sentence.
+Where you can, phrase an assertion so code can decide it (an exact phrase,
+field, link, or tool call) rather than one that needs a judge.
 
 Use a different shape only when the check needs it:
 
@@ -172,18 +174,25 @@ such as `inputs`, `outputs`, and `reference_outputs`.
 
 An assertion evaluator reads `reference_outputs["assertions"]` and returns one
 score per assertion, keyed by the assertion key, plus two summary scores: all
-assertions passed, and the share that passed. Judge each assertion in its own
-model call, run concurrently with a limit; one call per assertion keeps the
-verdicts independent and makes failures easy to debug. Batch them into one
-structured call only when cost matters, and validate that every assertion got
-exactly one verdict. Tell the judge to treat the answer and assertion as data,
-not instructions.
+assertions passed, and the share that passed. **Grade each assertion with
+deterministic code whenever the claim allows it**, such as a required phrase,
+a forbidden pattern, a field value, a URL that must appear in the inputs, or a
+tool that must or must not be called. Code checks are free, repeatable, and
+never disagree with themselves. Map those assertion keys to code checks, and
+send only the remaining claims, the ones that need judgment, to an LLM judge.
+
+For the judged claims, use one model call per assertion, run concurrently with
+a limit; separate calls keep the verdicts independent and make failures easy to
+debug. Batch them into one structured call only when cost matters, and validate
+that every assertion got exactly one verdict. Tell the judge to treat the
+answer and assertion as data, not instructions.
 
 - **Code evaluator:** deterministic checks such as exact match, required
-  fields, format, or trajectory order. Prefer it whenever the check is
-  objective, including for assertions with a mechanical answer.
-- **LLM judge:** subjective quality, or whether an assertion's claim holds.
-  Use structured output with a reasoning field and a boolean or small scale.
+  fields, format, trajectory order, or a mechanical assertion. The default
+  whenever the check is objective.
+- **LLM judge:** subjective quality, or an assertion that no code check can
+  decide. Use structured output with a reasoning field and a boolean or small
+  scale.
 - **Pairwise evaluator:** an LLM judge that compares two experiments' outputs
   for the same example and prefers one. Use it when both versions score well
   on absolute metrics but you need to know which is better; randomize the order
@@ -269,7 +278,7 @@ from langsmith import Client
 results = Client().evaluate(
     target,
     data="support-agent-regression",
-    evaluators=[assertions_judge, trajectory_match],
+    evaluators=[assertion_grader, trajectory_match],
     experiment_prefix="support-agent-prompt-v2",
     metadata={"models": [...], "prompts": [...], "change": "tighter refund policy"},
     num_repetitions=3,
