@@ -6,7 +6,7 @@ These steps create three things on a tracing project, all with the `langsmith` C
 2. An LLM-judge evaluator gated on stage 1's score (stage 2).
 3. An Insights job that clusters the cases the judge confirmed.
 
-Two steps use the CLI's generic `langsmith api` command, because the dedicated subcommands can't set an option the chain needs. Those steps explain why.
+Two steps use the CLI's generic `langsmith api` command. Those steps explain why.
 
 ## 1. Prerequisites
 
@@ -80,7 +80,7 @@ langsmith api runs/rules/decision-models -X POST --body @dm-body.json --workspac
 - `group_by: "thread_id"` evaluates each thread once it goes idle. The score lands on the thread's latest root run.
 - The call also creates the evaluator record and a hub prompt for it.
 
-**Why `langsmith api`:** `langsmith evaluators create-decision-model` has no group-by option, so it can't create the thread-level evaluator. Without `group_by` it covers everything else here, and you can set the questions with its `--questions` flag.
+**Why `langsmith api`:** it sends the whole config above as one JSON file. `langsmith evaluators create-decision-model` can also create the thread-level evaluator: pass `--group-by thread_id` with `--session-id`, and set the questions with its `--questions` flag.
 
 ## 3. Stage 2: LLM-judge evaluator
 
