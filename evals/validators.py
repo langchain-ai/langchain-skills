@@ -299,3 +299,143 @@ def validate_traces(evidence: dict, expected: dict, rule: dict, integration_span
         "run_names": sorted({r["name"] for r in runs}),
         "evidence": evidence,
     }
+
+
+SCORE_TOLERANCE = 1e-9
+
+
+def _case_for(blob, cases: list[dict]) -> str | None:
+    text = json.dumps(blob, default=str).lower()
+    matches = [case["id"] for case in cases if case["question"] in text]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _marker_holds(outputs, marker: dict) -> bool:
+    text = json.dumps(outputs, default=str).lower()
+    if "contains" in marker and marker["contains"].lower() not in text:
+        return False
+    return not ("excludes" in marker and marker["excludes"].lower() in text)
+
+
+def collect_experiment(data: dict, ls, expected: dict) -> dict:
+    """Record the trial dataset and its experiments as IDs, case IDs, feedback keys, and scores only."""
+    cases = expected["cases"]
+    markers = {case["id"]: case["unchanged_marker"] for case in cases if case.get("unchanged_marker")}
+    try:
+        dataset = ls.read_dataset(dataset_name=data["target_dataset_name"])
+    except LangSmithNotFoundError:
+        return {"dataset_id": None, "dataset_name": data["target_dataset_name"], "experiments": [], "dataset_rule_ids": []}
+    examples = list(ls.list_examples(dataset_id=dataset.id))
+    example_cases = {str(example.id): _case_for(example.inputs, cases) for example in examples}
+    experiments = []
+    for project in ls.list_projects(reference_dataset_id=dataset.id):
+        runs = list(ls.list_runs(project_id=project.id, is_root=True))
+        feedback: dict[str, list] = {}
+        if runs:
+            for item in ls.list_feedback(run_ids=[run.id for run in runs]):
+                feedback.setdefault(str(item.run_id), []).append(item)
+        records = []
+        for run in runs:
+            case_id = example_cases.get(str(run.reference_example_id)) if run.reference_example_id else None
+            scores = [
+                {"key": item.key, "score": float(item.score)}
+                for item in feedback.get(str(run.id), [])
+                if type(item.score) in (int, float, bool)
+            ]
+            records.append({
+                "case_id": case_id,
+                "errored": bool(run.error),
+                "unchanged": _marker_holds(run.outputs, markers[case_id]) if case_id in markers else None,
+                "scores": scores,
+            })
+        experiments.append({
+            "id": str(project.id),
+            "name": project.name,
+            "start_time": project.start_time.isoformat() if project.start_time else None,
+            "runs": records,
+        })
+    rules = _items(_api(ls, f"/runs/rules?dataset_id={UUID(str(dataset.id))}"))
+    return {
+        "dataset_id": str(dataset.id),
+        "dataset_name": dataset.name,
+        "example_cases": sorted(case or "unmapped" for case in example_cases.values()),
+        "experiments": experiments,
+        "dataset_rule_ids": [rule["id"] for rule in rules if str(rule.get("dataset_id")) == str(dataset.id)],
+    }
+
+
+def _key_passes(score: float, scores_for_key: list[float]) -> bool:
+    if all(0 <= value <= 1 for value in scores_for_key):
+        return score >= 1 - SCORE_TOLERANCE
+    return score >= max(scores_for_key) - SCORE_TOLERANCE
+
+
+def _case_verdicts(experiment: dict) -> dict[str, dict]:
+    by_key: dict[str, list[float]] = {}
+    for run in experiment["runs"]:
+        for item in run["scores"]:
+            by_key.setdefault(item["key"], []).append(item["score"])
+    verdicts: dict[str, dict] = {}
+    for run in experiment["runs"]:
+        if run["case_id"] is None:
+            continue
+        verdict = verdicts.setdefault(run["case_id"], {"passing": set(), "failing": set(), "runs": 0, "unscored": 0})
+        verdict["runs"] += 1
+        verdict["unscored"] += not run["scores"]
+        for item in run["scores"]:
+            passed = _key_passes(item["score"], by_key[item["key"]])
+            verdict["passing" if passed else "failing"].add(item["key"])
+    for verdict in verdicts.values():
+        verdict["passing"] -= verdict["failing"]
+    return verdicts
+
+
+def _complete(experiment: dict, case_ids: set[str]) -> bool:
+    covered = {run["case_id"] for run in experiment["runs"] if run["case_id"]}
+    return covered >= case_ids and not any(run["errored"] or not run["scores"] for run in experiment["runs"])
+
+
+def validate_experiment(evidence: dict, expected: dict) -> dict:
+    """Pass iff the latest complete experiment localizes the two seeded failures and flags nothing else."""
+    case_ids = {case["id"] for case in expected["cases"]}
+    failing_ids = sorted(case["id"] for case in expected["cases"] if case["failing"])
+    mapped = evidence.get("example_cases") or []
+    result = {"evidence": evidence}
+    result["dataset"] = {
+        "passed": evidence["dataset_id"] is not None and sorted(mapped) == sorted(case_ids),
+        "detail": f"examples={mapped}" if evidence["dataset_id"] else "dataset not found",
+    }
+    complete = sorted(
+        (e for e in evidence["experiments"] if _complete(e, case_ids)),
+        key=lambda e: e["start_time"] or "",
+    )
+    result["experiment"] = {
+        "passed": bool(complete),
+        "detail": f"{len(complete)} of {len(evidence['experiments'])} experiments ran and scored every case without errors",
+    }
+    if not complete:
+        for name in ("app_unchanged", "failures_localized", "no_false_failures"):
+            result[name] = {"passed": False, "detail": "no complete experiment"}
+        return result
+    selected = complete[-1]
+    result["experiment"]["selected"] = selected["id"]
+    unchanged = [run["unchanged"] for run in selected["runs"] if run["unchanged"] is not None]
+    result["app_unchanged"] = {
+        "passed": bool(unchanged) and all(unchanged),
+        "detail": f"{sum(unchanged)}/{len(unchanged)} seeded-failure runs still show the shipped behavior",
+    }
+    verdicts = _case_verdicts(selected)
+    failing_sets = [frozenset(verdicts[case]["failing"]) for case in failing_ids]
+    localized = all(verdicts[case]["failing"] and verdicts[case]["passing"] for case in failing_ids)
+    result["failures_localized"] = {
+        "passed": localized and len(set(failing_sets)) == len(failing_sets),
+        "detail": {case: {"failing": sorted(verdicts[case]["failing"]), "passing": sorted(verdicts[case]["passing"])}
+                   for case in failing_ids},
+    }
+    false_failures = {case: sorted(verdicts[case]["failing"]) for case in sorted(case_ids - set(failing_ids))
+                      if verdicts[case]["failing"]}
+    result["no_false_failures"] = {
+        "passed": not false_failures,
+        "detail": false_failures or "every requirement passes on the cases the agent answers correctly",
+    }
+    return result

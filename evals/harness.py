@@ -129,6 +129,11 @@ def task_settings(path: Path) -> dict:
         raise ValueError("service_runs must be {rule: process} or {rule: children, parents: [...]}")
     if settings["target"] == "agent" and (shared is None or rule is None):
         raise ValueError("agent-target tasks require shared and service_runs")
+    settings.setdefault("target_dataset", False)
+    if not isinstance(settings["target_dataset"], bool):
+        raise ValueError("target_dataset must be a boolean")
+    if settings["target_dataset"] and not (path / "expected.json").is_file():
+        raise FileNotFoundError("target_dataset tasks require expected.json")
     spans = settings.get("integration_spans")
     if spans is not None and not (isinstance(spans, list) and spans
                                   and all(isinstance(name, str) and name for name in spans)):
@@ -329,6 +334,11 @@ def prepare(args: argparse.Namespace) -> None:
     if task_settings(path)["target"] == "agent":
         data.update(create_target_agent(ls, target_agent_id(args.task, args.profile, run_id)))
         save_manifest(data)
+    if task_settings(path)["target_dataset"]:
+        if ls.has_dataset(dataset_name=target_name):
+            raise RuntimeError(f"dataset {target_name} already exists")
+        data["target_dataset_name"] = target_name
+        save_manifest(data)
     if task_settings(path)["fixture_type"] != "none":
         data["seed_run_ids"] = emit_fixtures(ls, args.task, target_name, "seed", run_id)
     data["status"] = "prepared"
@@ -351,7 +361,10 @@ def stage_shared_app(source: Path, destination: Path) -> None:
 def target_env(data: dict, settings: dict) -> dict:
     if settings["target"] == "agent":
         return {"TARGET_AGENT_ID": data["target_agent_id"]}
-    return {"TARGET_PROJECT_ID": data["target_project_id"]}
+    env = {"TARGET_PROJECT_ID": data["target_project_id"]}
+    if settings["target_dataset"]:
+        env["TARGET_DATASET_NAME"] = data["target_dataset_name"]
+    return env
 
 
 def stage_run(data: dict, cli_bin: Path) -> Path:
@@ -628,6 +641,11 @@ def report(args: argparse.Namespace) -> None:
             expected = json.loads((shared_dir(path) / "expected.json").read_text())
             summary["validators"] = validate_traces(collect_traces(data, ls), expected, settings["service_runs"],
                                                    settings.get("integration_spans"))
+        if settings["target_dataset"]:
+            from validators import collect_experiment, validate_experiment
+
+            expected = json.loads((path / "expected.json").read_text())
+            summary["validators"] = validate_experiment(collect_experiment(data, ls, expected), expected)
         summary["inspected_at"] = datetime.now(timezone.utc).isoformat()
     report_path = manifest_path(args.run_id).with_name("report.json")
     report_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
@@ -656,6 +674,7 @@ def check(args: argparse.Namespace) -> None:
         "run_id": placeholder, "task": args.task, "profile": args.profile,
         "target_project_id": placeholder, "workspace_id": placeholder,
         "target_agent_id": target_agent_id(args.task, args.profile, placeholder),
+        "target_dataset_name": target_agent_id(args.task, args.profile, placeholder),
     }
     config_path = stage_run(data, linux_cli_path(args.cli_bin))
     child_env = os.environ.copy()

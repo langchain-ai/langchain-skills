@@ -20,7 +20,7 @@ langsmith auth info                       # log in with `langsmith auth login` i
 export WS=<workspace-uuid>
 
 # Agent-based workspace: resolve the production environment's tracing project
-export PROJECT_ID=$(langsmith sessions resolve --kind AGENT --id <agent-id> --environment PRODUCTION \
+export PROJECT_ID=$(langsmith projects resolve --kind AGENT --id <agent-id> --environment PRODUCTION \
   --workspace $WS --format json | jq -r '.session_id')
 # Project-based workspace: copy the project UUID from `langsmith projects list --format json`
 ```

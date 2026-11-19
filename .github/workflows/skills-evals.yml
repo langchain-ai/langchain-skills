@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [chained-eval, thread-llm-judge, trace-sdk, trace-otel, trace-strands]
+        task: [chained-eval, thread-llm-judge, trace-sdk, trace-otel, trace-strands, experiment-regression]
     steps:
       - name: Check out harness
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

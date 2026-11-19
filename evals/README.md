@@ -15,6 +15,9 @@ The `trace-sdk`, `trace-otel`, and `trace-strands` tasks ask the agent to add
 LangSmith tracing to the same two-service support app, using the SDK,
 OpenTelemetry, or Strands Agents. They target a temporary LangSmith agent
 instead of a tracing project; see [Tracing tasks](#tracing-tasks).
+The `experiment-regression` task asks the agent to turn written requirements
+into a LangSmith dataset and a per-requirement experiment over a scripted
+support agent; see [Experiment task](#experiment-task).
 
 The `none`, `full`, and `mcp-only` profiles are the supported comparison. `full`
 copies the current `skills/` tree, so a newly added skill participates without
@@ -83,6 +86,10 @@ the named client spans (the shared app's `call_tool`) as a service run, so the
 agent may name its service runs freely. Under that rule, a root run whose name
 differs from the turn roots counts as an unlinked service run. Agent targets
 require both `shared` and `service_runs`.
+
+Set `target_dataset: true` for a task in which the agent creates a dataset.
+`prepare` then passes a per-trial name as `TARGET_DATASET_NAME`, the task
+directory must hold `expected.json`, and cleanup deletes that dataset.
 
 ## Check and run a profile
 
@@ -198,6 +205,39 @@ Cleanup deletes the temporary agent, including its environments, only after
 re-reading it and matching both its ID and `agent_uuid` to the manifest. A
 completed run needs a saved live report with trace evidence before cleanup.
 
+## Experiment task
+
+`experiment-regression` gives the agent a LangChain support agent driven by a
+scripted model, so answers are deterministic and need no provider calls, and
+`cases.md`, six questions with two written requirements each. The agent breaks
+one requirement in each of two cases; `expected.json` records which. It has no
+held-out cases, so skip `replay`. Dataset-bound evaluators score
+asynchronously, so give `report` a short wait:
+
+```bash
+$HARBOR_PY evals/harness.py report <run-id> --live --wait-seconds 120
+```
+
+The live report reads the dataset named in the manifest, maps its examples
+and each experiment's root runs to case IDs by question text, and records
+feedback keys and scores, never inputs, outputs, or comments. Five checks
+compare the latest experiment that scored every case without errors with
+`expected.json`:
+
+- `dataset`: one example per case.
+- `experiment`: such a complete experiment exists.
+- `app_unchanged`: the two broken answers still show the shipped behavior.
+- `failures_localized`: each broken case has a failing and a passing score,
+  and the two fail on different keys.
+- `no_false_failures`: the four correct cases have no failing score.
+
+A score fails below 1 when its key's scores lie in [0, 1], and below the key's
+best observed score otherwise. `Task.md` explains the reasoning.
+
+Cleanup deletes the trial dataset, with its experiments and the rules bound to
+it, only when its name matches the run, it was created after `prepare`, and
+its ID matches the one in the saved live report.
+
 ## Cleanup and retention
 
 The manifest records exact project and run IDs. After saving a live report for
@@ -230,7 +270,8 @@ the GitHub API (for example, `gh workflow run skills-evals.yml --ref main`).
 The action checks out the selected ref for both the skills and the harness, so
 changes to a skill or task on that ref appear in the next run without editing
 the workflow. The workflow runs every task (`chained-eval`, `thread-llm-judge`,
-`trace-sdk`, `trace-otel`, and `trace-strands`) as parallel matrix jobs, each
+`trace-sdk`, `trace-otel`, `trace-strands`, and `experiment-regression`) as
+parallel matrix jobs, each
 through all three profiles, and
 posts one Slack message per task. Every task is exploratory: its checks are
 reported but do not fail the job, while harness failures such as setup, agent

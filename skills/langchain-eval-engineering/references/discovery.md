@@ -111,7 +111,7 @@ repeatable JSONL snapshot when needed. Check authentication with
 for parsed list or get output, and consult each command's `--help` for filters.
 In an agent-based workspace, find the agent with `langsmith agents list`, then
 resolve its environment to a session ID with
-`langsmith sessions resolve --kind AGENT --id <agent-id> --environment <ENVIRONMENT>`
+`langsmith projects resolve --kind AGENT --id <agent-id> --environment <ENVIRONMENT>`
 before project-scoped queries. Keep raw exports out of the
 repository and Harbor Tasks; synthesize privacy-safe scenarios from them.
 
