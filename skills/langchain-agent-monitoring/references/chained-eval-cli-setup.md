@@ -76,7 +76,7 @@ langsmith api runs/rules/decision-models -X POST --body @dm-body.json --workspac
 
 - Each key in `questions` becomes a feedback key; here, `perceived_error_tuned`.
 - `type` can be `noul` (yes/no, scored 0–1), `choice` or `score`. A `noul` question can also take `yes` and `no` descriptions; set both or neither.
-- `human_ai_pairs` gives the model only the user and assistant turns. Use `all_messages` to include tool calls.
+- `human_ai_pairs` gives the model only the user and assistant turns. `all_messages` and `human_ai_pairs` are built from root-run inputs and outputs, so they omit tool calls made in child runs; use `trajectory` to include tool calls and their results.
 - `group_by: "thread_id"` evaluates each thread once it goes idle. The score lands on the thread's latest root run.
 - The call also creates the evaluator record and a hub prompt for it.
 
