@@ -42,8 +42,9 @@ DEFAULT_PATHS = [ROOT / "skills"]
 BIN = os.environ.get("LANGSMITH_BIN", "langsmith")
 
 # Hidden in --help but intentionally documented: the CLI's own auth error
-# tells users to "pass --api-key".
-ALLOWED_HIDDEN_FLAGS = {"--api-key"}
+# tells users to "pass --api-key", and --version is Cobra's built-in root
+# flag, which langsmith 0.5.0 stopped listing in --help.
+ALLOWED_HIDDEN_FLAGS = {"--api-key", "--version"}
 
 # Generated commands accept langsmith's global auth and routing flags even
 # though their --help does not list them (the CLI strips them before the
