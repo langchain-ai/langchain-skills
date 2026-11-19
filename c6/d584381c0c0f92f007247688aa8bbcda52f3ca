@@ -1,0 +1,14 @@
+skills/langchain-agent-experiments/SKILL.md
+  h_fe5ed23bcee8dc 3,39-44,46-49,52-53,56-58,60-67,71,74-90,95-97,105-129,134-136,139-142,148-193,201-206,228,259-260,265,275-276,280-285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c6d584381c0c0f92f007247688aa8bbcda52f3ca",
+  "prompts": {},
+  "humans": {
+    "h_fe5ed23bcee8dc": {
+      "author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
