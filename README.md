@@ -291,7 +291,7 @@ after installing this one:
 | `langsmith-trace` | `langchain-agent-tracing` |
 | `langsmith-online-eval-engineering` | `langchain-agent-monitoring` |
 | `langsmith-dataset`, `langsmith-evaluator`, `langsmith-graph-evaluator`, `langsmith-experiment-diagnosis` | `langchain-agent-experiments` |
-| `langsmith-custom-apps` | Removed; use the docs MCP and the Custom Apps docs |
+| `langsmith-custom-apps` | Removed as a skill; `langchain-agent-experiments` covers when to use Custom Apps for datasets and experiment review |
 
 ## Development
 
