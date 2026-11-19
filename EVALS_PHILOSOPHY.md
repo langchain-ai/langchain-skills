@@ -20,7 +20,7 @@ as the three tracing tasks do. A reworded instruction is not a new task.
 A task that checks a fact, flag, or command name tests the docs, not the
 skill's judgment; leave that to `skill-claims`. Once a task has run for a few
 weeks, one that every profile completes equally well, or none can complete,
-does not separate the profiles and is not worth its weekly cost.
+does not separate the profiles and is not worth the cost of running it.
 
 ## What goes in a task
 
@@ -67,27 +67,27 @@ revise or remove the skill as described in `SKILLS_PHILOSOPHY.md`; do not tune
 the task, or the skill's wording, around one prompt. One trial per profile is an
 anecdote. Before attributing a result to a skill, read the trajectory and rule
 out instruction, environment, verifier, and infrastructure defects, and compare
-across several weekly runs.
+across several runs.
 
 ## Report, don't gate
 
 For now, outcome checks are reported, not enforced: a failed check does not
-fail the weekly run. Failures of the harness itself, such as setup, agent
+fail the suite run. Failures of the harness itself, such as setup, agent
 tracing, or cleanup, still fail the run because they make the results
 unusable. Revisit gating once tasks have approved verifiers that stay stable
-across several weekly runs.
+across several runs.
 
 ## How we maintain the harness
 
-- Every task runs in the weekly schedule. Add a new task to the workflow matrix
-  in the same change that adds the task.
+- Every task runs in each suite run. Add a new task to the workflow matrix in
+  the same change that adds the task.
 - When a skill changes materially, check that its tasks still target what the
   skill claims to improve, and update `Task.md` and the verifier together.
   Retire a task when its skill is removed or it no longer separates the
   profiles.
 - Bump pins (Harbor, the agent version, the model, the LangSmith CLI, and the
   tracing plugin) deliberately and in their own commit, so changes between
-  weekly runs can be attributed to skills rather than to the harness. Keep them
+  runs can be attributed to skills rather than to the harness. Keep them
   current enough that tasks exercise what users have.
 - The repository, workflow logs, task prompts, and fixtures are public. Never
   put confidential content or real customer data in a task.

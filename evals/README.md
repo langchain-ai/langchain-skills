@@ -262,16 +262,14 @@ automatic cleanup boundary; inspect and remove those by their exact IDs if an
 agent created them. Do not run cleanup merely because a trial failed: its
 target project and local JSONL may be needed for diagnosis.
 
-## Scheduled GitHub Action
+## GitHub Action
 
-`.github/workflows/skills-evals.yml` runs the three profiles sequentially at
-9:00 AM Sunday in `America/New_York`. GitHub evaluates schedules from the
-repository's default branch, so merge the workflow there to activate the
-schedule. `workflow_dispatch` also permits a manual run. The action checks out
-the triggering ref for both the skills and the harness: the default branch on
-scheduled runs, or the selected branch on a manual run. Changes to a skill or
-task on the default branch appear in the next scheduled run without editing the
-workflow. The workflow runs every task (`chained-eval`, `thread-llm-judge`,
+`.github/workflows/skills-evals.yml` runs the three profiles sequentially. It
+has no schedule: start it with `workflow_dispatch`, from the Actions tab or
+the GitHub API (for example, `gh workflow run skills-evals.yml --ref main`).
+The action checks out the selected ref for both the skills and the harness, so
+changes to a skill or task on that ref appear in the next run without editing
+the workflow. The workflow runs every task (`chained-eval`, `thread-llm-judge`,
 `trace-sdk`, `trace-otel`, `trace-strands`, and `experiment-regression`) as
 parallel matrix jobs, each
 through all three profiles, and
