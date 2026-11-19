@@ -142,29 +142,10 @@ trajectory against the trace, which shows every call.
 ### When the target calls a deployed agent
 
 If the target calls the agent over HTTP, the experiment and the service record
-two unrelated traces. The experiment's trace has no model runs under it, so its
-token, cost, and step-level detail stay empty, and evaluators cannot see the
-agent's steps. Join them with distributed tracing:
-
-- **Caller:** inside the target, read the current run with
-  `get_current_run_tree()` and merge `run_tree.to_headers()` into the request
-  headers. Read them in the target itself; context does not follow work handed
-  to a thread pool or a new event loop.
-- **Service:** when a request carries `langsmith-trace` (and `baggage`), run the
-  agent inside `tracing_context(parent=<those headers>)`. Requests without them
-  behave as before. Agent Server has its own setup for this.
-- **Trust:** these headers choose where runs are recorded. Apply them only for
-  trusted internal callers, and strip them from public traffic.
-- **Where runs land:** experiment requests are then recorded only in the
-  experiment project. If the service's own project must also keep them, write a
-  rerooted copy there with trace replicas, and leave that off by default.
-  Replicas replace the default destination, so always list the experiment's
-  own project as well, or the runs leave the experiment.
-
-Verify on one example: the trace should nest the target, the agent, and its
-model calls, and the experiment's token and cost columns should fill in. Tokens
-without cost usually means the model name has no pricing entry in the
-workspace.
+two unrelated traces: the experiment shows no tokens, cost, or agent steps.
+Join them with distributed tracing, applying the incoming headers only for
+trusted internal callers. Follow
+[Trace a deployed agent into an experiment](references/remote-agent-tracing.md).
 
 ## Write evaluators
 
