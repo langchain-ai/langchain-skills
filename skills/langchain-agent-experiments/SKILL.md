@@ -1,6 +1,6 @@
 ---
 name: langchain-agent-experiments
-description: Use when testing an agent or LLM application offline in LangSmith before it ships, including building and editing evaluation datasets (assertion-based references by default), writing the target function, tracing a remotely deployed agent into an experiment, choosing openevals or custom evaluators and where they run, aligning LLM judges with human labels, running and comparing experiments, and diagnosing why an experiment scored badly.
+description: Use when testing an agent or LLM application offline in LangSmith before it ships, including building and editing evaluation datasets (assertion-based references by default, Custom Apps for non-technical reviewers), writing the target function, tracing a remotely deployed agent into an experiment, choosing openevals or custom evaluators and where they run, aligning LLM judges with human labels, running and comparing experiments, and diagnosing why an experiment scored badly.
 ---
 
 # Test agents with LangSmith experiments
@@ -51,6 +51,10 @@ Use a different shape only when the check needs it:
   tool. Tests a component in isolation.
 - **Trajectory:** inputs and the expected tool calls. Tests the execution path.
 - **Retrieval:** the chunks a question should retrieve or cite. Tests grounding.
+- **Conversation:** for a multi-turn agent, either store the conversation so
+  far and score the next reply, or store a scenario and let a simulated user
+  (openevals) drive several turns, then score the whole conversation. The first
+  is cheaper and repeatable; the second tests how the agent recovers.
 
 Start from production traces when they exist: they hold the inputs users
 actually send. Keep the root runs worth testing and write what a correct answer
@@ -87,7 +91,38 @@ After that, change the dataset in place rather than uploading a new copy:
 
 Use the SDK (`Client.create_examples`, `Client.update_examples`) when building
 or editing the dataset from code. Every change creates a new dataset version,
-so earlier experiments keep pointing at the examples they ran on.
+so earlier experiments keep pointing at the examples they ran on. Never delete
+and recreate a dataset to refresh it: deleting a dataset deletes its
+experiments.
+
+When test cases live in git, keep one LangSmith dataset per eval suite, not a
+copy per branch or developer; copies get different example IDs, so their
+experiments cannot be compared. Give each case a stable ID, derive the example
+ID from it, update examples in place, and record the branch and commit in
+experiment metadata. When several branches write to one dataset, pass each run
+its own examples or a tagged version rather than relying on the latest one.
+
+### Let reviewers work in a custom app
+
+Engineers can use the CLI, but subject-matter experts who write assertions and
+review results usually should not edit JSON. The built-in Datasets &
+Experiments pages cover viewing and comparing; when a team needs a workflow
+they do not, suggest a LangSmith Custom App: a UI that runs inside LangSmith
+with each viewer's own permissions, so there is nothing separate to host or
+log in to. Common ones:
+
+- **Dataset editor:** a spreadsheet-style view where reviewers edit inputs,
+  add or change assertions, and leave comments, writing straight back to the
+  dataset.
+- **Experiment review:** results side by side with a baseline, filtered to
+  failed assertions or low scores, with the trace one click away.
+- **Trace triage:** production traces filtered by feedback, with a button that
+  adds the chosen ones to the dataset.
+
+Build one by describing it to LangSmith Chat in the browser, or locally with
+`langsmith apps init`, `langsmith apps dev`, and `langsmith apps push`; check
+`langsmith apps init --help` for the starter templates. Custom Apps need a Plus
+or Enterprise plan.
 
 ## Write the target function
 
@@ -121,6 +156,8 @@ agent's steps. Join them with distributed tracing:
 - **Where runs land:** experiment requests are then recorded only in the
   experiment project. If the service's own project must also keep them, write a
   rerooted copy there with trace replicas, and leave that off by default.
+  Replicas replace the default destination, so always list the experiment's
+  own project as well, or the runs leave the experiment.
 
 Verify on one example: the trace should nest the target, the agent, and its
 model calls, and the experiment's token and cost columns should fill in. Tokens
@@ -131,9 +168,16 @@ workspace.
 
 Write one evaluator per metric, and return a score with a comment that explains
 it. Evaluators passed to `evaluate()` declare the arguments they need by name,
-such as `inputs`, `outputs`, and `reference_outputs`. An assertion evaluator
-reads `reference_outputs["assertions"]` and returns one score per assertion,
-keyed by the assertion key.
+such as `inputs`, `outputs`, and `reference_outputs`.
+
+An assertion evaluator reads `reference_outputs["assertions"]` and returns one
+score per assertion, keyed by the assertion key, plus two summary scores: all
+assertions passed, and the share that passed. Judge each assertion in its own
+model call, run concurrently with a limit; one call per assertion keeps the
+verdicts independent and makes failures easy to debug. Batch them into one
+structured call only when cost matters, and validate that every assertion got
+exactly one verdict. Tell the judge to treat the answer and assertion as data,
+not instructions.
 
 - **Code evaluator:** deterministic checks such as exact match, required
   fields, format, or trajectory order. Prefer it whenever the check is
