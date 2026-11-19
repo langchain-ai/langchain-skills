@@ -189,6 +189,8 @@ commands above to confirm:
   project, and nowhere else.
 - The run tree has the expected structure, with no duplicate or orphaned runs.
 - `thread_id` and the chosen metadata appear on child runs, not only the root.
+  LangSmith does not propagate metadata or tags from parent to child runs, so
+  attach them explicitly to each child run that needs them.
 - Inputs, outputs, and metadata contain no secrets or data that should have
   been redacted.
 - Calls across services appear as one trace.

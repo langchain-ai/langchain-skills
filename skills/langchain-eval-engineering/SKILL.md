@@ -15,7 +15,9 @@ description: Inspect an agent repository and optional traces, interview the user
 - Draft the Task Spec and World Skill together. Show both to the user, keep exact
   Task truth only in `Task.md`, and refine both until the user approves them.
 - Implement the approved Task, validate its Environment and Verifier, run the
-  real Harness, inspect the full evidence, and fix only non-agent failures.
+  real Harness, and inspect the full evidence. Fix the Task or Verifier when
+  the eval does not measure the intended behavior, and update the agent when
+  the eval exposes a real product failure.
 - Reconcile the World Skill with what the run proved, then repeat this flow for
   the next Task.
 
