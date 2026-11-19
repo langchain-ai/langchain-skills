@@ -1,0 +1,19 @@
+README.md
+  s_05d5b9c403113f::t_9057e2eda71a05 294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "99da6ce5bf153a078c299cc25a091b1fdb3b05a8",
+  "prompts": {},
+  "sessions": {
+    "s_05d5b9c403113f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "045612cd-73e8-4e68-8684-84c2a328129f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
