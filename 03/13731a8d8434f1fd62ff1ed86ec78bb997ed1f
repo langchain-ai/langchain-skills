@@ -1,0 +1,52 @@
+evals/tasks/experiment-regression/harness.json
+  s_5716d9d082f5b5::t_d7f9555bee9c37 1-6
+evals/test_experiment_validators.py
+  s_5716d9d082f5b5::t_43457772797355 1-223
+evals/tasks/experiment-regression/expected.json
+  s_5716d9d082f5b5::t_54b3332780a66b 1-12
+.github/workflows/skills-evals.yml
+  s_5716d9d082f5b5::t_25819a41ff106b 24
+evals/test_cleanup.py
+  s_5716d9d082f5b5::t_b052b68b9091fa 8,237-340
+  s_5716d9d082f5b5::t_a5eea8d8f1c675 341-342
+evals/tasks/experiment-regression/environment/app/support_agent.py
+  s_5716d9d082f5b5::t_3c631c008fc75c 1-92
+evals/tasks/experiment-regression/Task.md
+  s_5716d9d082f5b5::t_35d1497fbb549c 1-66
+evals/tasks/experiment-regression/task.toml
+  s_5716d9d082f5b5::t_89115fb298f9bd 1-21
+evals/validators.py
+  s_5716d9d082f5b5::t_bb9420050eeef5 302-441
+evals/tasks/experiment-regression/environment/app/cases.md
+  s_5716d9d082f5b5::t_24f533ee4e4125 1-30,32-45
+  s_5716d9d082f5b5::t_fe8c55f9789ec1 31
+evals/README.md
+  s_5716d9d082f5b5::t_c6b5c71748eeb1 18-20,90-93,208-240,275-276
+evals/cleanup.py
+  s_5716d9d082f5b5::t_25819a41ff106b 9,58-71,97-98,101,105-106,130-132,150-161,164-178
+  s_5716d9d082f5b5::t_4f67a82a923b3f 162-163
+  s_5716d9d082f5b5::t_7205b3598de5d6 179-181
+evals/tasks/experiment-regression/instruction.md
+  s_5716d9d082f5b5::t_0d7259e90df9bd 1-12
+evals/harness.py
+  s_5716d9d082f5b5::t_7f011fcdd53f76 677
+  s_5716d9d082f5b5::t_9390f0dc15f5e3 132-136,337-341,364-367,644-648
+evals/tasks/experiment-regression/environment/Dockerfile
+  s_5716d9d082f5b5::t_5b761a20881f62 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0313731a8d8434f1fd62ff1ed86ec78bb997ed1f",
+  "prompts": {},
+  "sessions": {
+    "s_5716d9d082f5b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b47fc584-6aca-42f3-8d25-66e7918a3199",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
