@@ -18,17 +18,18 @@ experiment traffic, and the experiment's own results never need them.
 - **Keep the experiment copy primary.** The primary replica keeps the original
   run IDs, which the experiment's results and evaluator feedback refer to.
   Every other replica gets new, deterministic run IDs.
-- **Feedback stays with the experiment copy.** Evaluator scores attach to the
-  primary copy only. To add feedback to a secondary copy, compute its run ID
-  with `compute_run_id_for_secondary_replica`.
+- **Feedback goes to the run ID it names.** The experiment's evaluators score
+  the original run IDs, so their feedback lands on the primary copy. To also
+  attach feedback to a secondary copy, compute its run ID with
+  `compute_run_id_for_secondary_replica`.
 - **Reroot copies whose parent lives elsewhere.** If the copied runs start
   below the experiment's root (as in a remote agent service), mark that
-  replica with `updates={"reroot": True}` so it becomes a standalone trace in
-  the tracing project.
+  replica with `"updates": {"reroot": True}` so it becomes a standalone trace
+  in the tracing project.
 
 Replica options change between SDK versions; check the trace replicas docs and
-`WriteReplica` in `langchain-reference` against the installed `langsmith`
-version before writing this.
+the replica type in `langchain-reference` against the installed `langsmith`
+version before writing this. The examples below pass replicas as dicts.
 
 ## When the experiment runs the agent in process
 
@@ -37,12 +38,11 @@ to the experiment's project.
 
 ```python
 from langsmith import Client, tracing_context
-from langsmith.run_trees import WriteReplica
 
 with tracing_context(
     replicas=[
-        WriteReplica(primary=True),                       # experiment copy
-        WriteReplica(project_name="my-tracing-project"),  # extra copy
+        {"primary": True},                        # experiment copy
+        {"project_name": "my-tracing-project"},   # extra copy
     ]
 ):
     Client().evaluate(target, data="my-dataset", evaluators=[...])
@@ -59,17 +59,17 @@ default:
 ```python
 import os
 import langsmith as ls
-from langsmith.run_trees import RunTree, WriteReplica
+from langsmith.run_trees import RunTree
 
-def experiment_replicas(trace_headers: dict) -> list[WriteReplica] | None:
+def experiment_replicas(trace_headers: dict) -> list[dict] | None:
     if os.getenv("MIRROR_EXPERIMENT_TRACES", "false") != "true":
         return None
     parent = RunTree.from_headers(trace_headers)
     if parent is None:
         return None
     return [
-        WriteReplica(project_name=parent.session_name),  # experiment copy, unchanged
-        WriteReplica(project_name=os.environ["LANGSMITH_PROJECT"], updates={"reroot": True}),
+        {"project_name": parent.session_name},  # experiment copy, unchanged
+        {"project_name": os.environ["LANGSMITH_PROJECT"], "updates": {"reroot": True}},
     ]
 
 with ls.tracing_context(parent=trace_headers, replicas=experiment_replicas(trace_headers)):

@@ -19,9 +19,10 @@ trace context, and the service applies it.
 ## Caller: the target function
 
 Inside the target, read the current run and merge its headers into the
-request. Read them in the target itself; context does not follow work handed
-to a thread pool or a new event loop, so pass the headers along if the request
-is made there. Merge with existing headers such as auth; do not replace them.
+request. Read them in the target itself and pass them along if the request is
+made elsewhere: a standard thread pool does not carry tracing context, and on
+Python older than 3.11 async code may not either. Merge with existing headers
+such as auth; do not replace them.
 
 ```python
 from langsmith.run_helpers import get_current_run_tree

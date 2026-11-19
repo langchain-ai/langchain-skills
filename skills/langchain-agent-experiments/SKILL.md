@@ -196,8 +196,9 @@ integrations. Before writing an evaluator from scratch, check it for:
   your own prompt, model, scores, and output schema when they don't fit.
 - Structured-output and JSON match, exact match, string distance, and embedding
   similarity.
-- Agent trajectory match: strict, unordered, subset, or superset, with
-  configurable tool argument matching.
+- Agent trajectory match and trajectory judges. Some docs still point to the
+  separate `agentevals` package for these; check which package the installed
+  version uses.
 - Code checks: type checking and execution, optionally sandboxed.
 - Multi-turn simulation with a simulated user, for conversations.
 - Graph evaluators that chain checks, as above.
@@ -217,9 +218,10 @@ arguments; for LangGraph-specific graph trajectories, see `agentevals`.
 - **In LangSmith, attached to the dataset:** every new experiment on the
   dataset is scored the same way, including runs started from the UI or by
   another teammate. LLM judges here can be edited without a code change, and
-  aligned and corrected against human labels. Uploaded code evaluators run in
-  a sandbox with standard-library imports only (put imports inside the
-  function) and receive `run` and `example` dicts; read `run["outputs"]` and
+  aligned and corrected against human labels. Code evaluators here run in a
+  sandbox without network access and with a fixed set of allowed packages
+  (check the docs for the current list; put imports inside the function), and
+  receive `run` and `example` dicts; read `run["outputs"]` and
   `example["outputs"]`.
 
 Iterate in code until an evaluator's definition is stable, then attach it to
@@ -234,10 +236,10 @@ langsmith evaluators rule list --dataset "support-agent-regression" --format jso
 
 `langsmith evaluators create-llm` needs a server-supported serialized
 `--model-config`; take it from a working evaluator or the LangSmith UI rather
-than writing one from a local model constructor. An evaluator that needs
-packages such as openevals, or provider keys, cannot use `upload`: create it
-through the evaluators API with its dependencies and the names of the workspace
-secrets it uses, and never put a key in the file.
+than writing one from a local model constructor. An evaluator that needs other
+packages, such as openevals, network access, or provider keys must be an
+advanced code evaluator: declare its dependencies and the names of the
+workspace secrets it uses, and never put a key in the file.
 
 ## Align judges with human labels
 
@@ -328,8 +330,8 @@ Use the authenticated `langsmith` CLI for datasets, examples, experiments, and
 evaluator rules, and the SDK for target functions, evaluator code, and
 experiment runs. Before the first workspace command, check `langsmith --version`
 and authentication with `langsmith auth info`; do not call `langsmith auth token`.
-Confirm the target workspace and pin it with `--workspace`. The CLI's saved
-profile does not configure the SDK, so confirm both target the same endpoint and
-workspace. Request `--format json` when parsing results, and check each
+Confirm the target workspace and pin it with `--workspace`. The SDK can read the
+CLI's saved profile, but environment variables and client arguments override
+it, so confirm the CLI and SDK target the same endpoint and workspace. Request `--format json` when parsing results, and check each
 command's `--help` for current flags. Commands that replace or delete prompt
 for confirmation; do not pass `--yes` unless the user asks.
