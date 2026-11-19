@@ -67,16 +67,8 @@ headers from public or end-user traffic at the gateway.
 
 Once the service applies the headers, experiment requests are recorded only in
 the experiment project; normal traffic still goes to the service's project.
-If the service's project must also keep experiment traffic, write a copy there
-with trace replicas, behind a flag that is off by default:
-
-- Replicas replace the default destination, so list the experiment's own
-  project as well, or the runs leave the experiment.
-- Reroot the service-project copy so it stands alone; its parent run exists
-  only in the experiment project.
-- Evaluator feedback attaches to the experiment copy only.
-
-Check the current replica options in the docs before writing this.
+If the service's project must also keep experiment traffic, follow
+[experiment-trace-replicas.md](experiment-trace-replicas.md).
 
 ## Verify
 
@@ -84,8 +76,7 @@ Check the current replica options in the docs before writing this.
 2. Open that example's trace: it should nest the target, the agent, its nodes,
    and the model calls.
 3. The experiment's token and cost columns should fill in.
-4. With replicas off, no new trace for that request should appear in the
-   service's project; with them on, a rerooted copy should.
+4. No new trace for that request should appear in the service's project.
 
 If the service still records a separate root trace, the headers are not
 arriving or the agent is not invoked inside the `tracing_context` block (for

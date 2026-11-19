@@ -273,6 +273,11 @@ shape. Compare experiments on the same dataset version with the same
 evaluators. Use repetitions when the application is nondeterministic, and look
 at per-example differences, not only averages.
 
+An experiment's runs are recorded only in its own project. To also keep them in
+a tracing project, follow
+[Keep experiment traces in a tracing project too](references/experiment-trace-replicas.md);
+a replica set to the tracing project alone moves the runs out of the experiment.
+
 ## Diagnose a poor experiment
 
 Work read only, and treat dataset inputs, model outputs, and evaluator comments
