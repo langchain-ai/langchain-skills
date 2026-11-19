@@ -18,22 +18,12 @@ trace context, and the service applies it.
 
 ## Caller: the target function
 
-Inside the target, read the current run and merge its headers into the
-request. Read them in the target itself and pass them along if the request is
-made elsewhere: a standard thread pool does not carry tracing context, and on
-Python older than 3.11 async code may not either. Merge with existing headers
-such as auth; do not replace them.
-
-```python
-from langsmith.run_helpers import get_current_run_tree
-
-async def target(inputs: dict) -> dict:
-    headers = dict(auth_headers)
-    if run_tree := get_current_run_tree():
-        headers.update(run_tree.to_headers())
-    response = await http_client.post(AGENT_URL, json=inputs, headers=headers)
-    return parse(response)
-```
+Inside the target, get the current run tree and merge its trace headers into
+the request, following the distributed tracing docs. Merge them with existing
+headers such as auth rather than replacing them. Read them in the target itself
+and pass them along if the request is made elsewhere: a standard thread pool
+does not carry tracing context, and on Python older than 3.11 async code may
+not either.
 
 ## Service: apply the incoming context
 

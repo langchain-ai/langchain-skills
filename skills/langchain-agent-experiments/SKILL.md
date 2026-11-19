@@ -1,6 +1,6 @@
 ---
 name: langchain-agent-experiments
-description: Use when testing an agent or LLM application offline in LangSmith before it ships, including building and editing evaluation datasets (assertion-based references by default, Custom Apps for non-technical reviewers), writing the target function, tracing a remotely deployed agent into an experiment, choosing openevals or custom evaluators and where they run, aligning LLM judges with human labels, running and comparing experiments, and diagnosing why an experiment scored badly.
+description: Use when testing an agent or LLM application offline in LangSmith before it ships, including building and maintaining evaluation datasets, writing the target function and evaluators, aligning LLM judges with human labels, running and comparing experiments, and diagnosing why an experiment scored badly.
 ---
 
 # Test agents with LangSmith experiments
@@ -79,17 +79,14 @@ langsmith examples list --dataset "support-agent-regression" --format json
 
 After that, change the dataset in place rather than uploading a new copy:
 
-- **Add an example:** `langsmith examples create --dataset <name>` with JSON
-  `--inputs` and `--outputs`, plus `--metadata` and `--split` as needed.
-- **Edit an example:** find its ID with `examples list`, then
-  `langsmith examples update --example-id <id>`. Each of `--inputs`,
-  `--outputs`, and `--metadata` replaces the whole field, so pass the full new
-  value, such as every assertion, not just the one that changed.
-- **Large edits:** `langsmith datasets export` to a file, review the change,
+- **Add:** `langsmith examples create`.
+- **Edit:** `langsmith examples update` replaces each field it is given, so
+  pass the full new value, such as every assertion, not just the one that
+  changed.
+- **Large edits:** export with `langsmith datasets export`, review the change,
   then apply it example by example.
 - **Freeze a version:** before comparing experiments across changes, tag it
-  with `langsmith datasets update-tags --dataset-id <id> --as-of latest --tag <tag>`
-  and run experiments against that tag.
+  with `langsmith datasets update-tags` and run experiments against that tag.
 
 Use the SDK (`Client.create_examples`, `Client.update_examples`) when building
 or editing the dataset from code. Every change creates a new dataset version,
@@ -123,8 +120,7 @@ log in to. Common ones:
 
 Build one by describing it to LangSmith Chat in the browser, or locally with
 `langsmith apps init`, `langsmith apps dev`, and `langsmith apps push`; check
-`langsmith apps init --help` for the starter templates. Custom Apps need a Plus
-or Enterprise plan.
+`langsmith apps init --help` for the starter templates.
 
 ## Write the target function
 
@@ -179,34 +175,21 @@ answer and assertion as data, not instructions.
   on absolute metrics but you need to know which is better; randomize the order
   to reduce position bias.
 - **Graph evaluator:** several checks chained together, for example a code
-  check that gates an LLM judge. Build it with `openevals.graph`, which is
-  experimental and Python only; pin the openevals version and check its current
-  API. Each node is traced as its own span, so a wrong final score can be traced
-  to the node that produced it.
+  check that gates an LLM judge, so a wrong final score can be traced to the
+  step that produced it. openevals provides one; check its current status and
+  API before relying on it.
 
 ### Start from openevals
 
-`openevals` (Python and TypeScript, open source from LangChain) provides
-evaluators that already follow the `evaluate()` argument contract and log
-feedback to LangSmith when run inside an experiment or the pytest and Vitest
-integrations. Before writing an evaluator from scratch, check it for:
-
-- LLM-as-judge with prebuilt prompts for correctness, conciseness, RAG
-  groundedness and retrieval relevance, safety, and trajectory accuracy, with
-  your own prompt, model, scores, and output schema when they don't fit.
-- Structured-output and JSON match, exact match, string distance, and embedding
-  similarity.
-- Agent trajectory match and trajectory judges. Some docs still point to the
-  separate `agentevals` package for these; check which package the installed
-  version uses.
-- Code checks: type checking and execution, optionally sandboxed.
-- Multi-turn simulation with a simulated user, for conversations.
-- Graph evaluators that chain checks, as above.
-
-Use a prebuilt evaluator when its question matches yours, and replace its
-prompt when your criteria differ. Pin the package version, and check the
-openevals README or `langchain-reference` for current factory names and
-arguments; for LangGraph-specific graph trajectories, see `agentevals`.
+Before writing an evaluator from scratch, check `openevals`, LangChain's open
+source evaluator package for Python and TypeScript. Its evaluators already
+follow the `evaluate()` argument contract and log feedback inside experiments
+and the pytest and Vitest integrations. It covers the common cases: LLM judges
+with prebuilt prompts, structured-output and string matching, agent
+trajectories, code checks, and multi-turn simulation. Use a prebuilt evaluator
+when its question matches yours, and replace its prompt when your criteria
+differ. Pin the version and look up current names in the openevals README or
+`langchain-reference`; some trajectory evaluators live in `agentevals`.
 
 ## Decide where evaluators run
 
@@ -219,10 +202,8 @@ arguments; for LangGraph-specific graph trajectories, see `agentevals`.
   dataset is scored the same way, including runs started from the UI or by
   another teammate. LLM judges here can be edited without a code change, and
   aligned and corrected against human labels. Code evaluators here run in a
-  sandbox without network access and with a fixed set of allowed packages
-  (check the docs for the current list; put imports inside the function), and
-  receive `run` and `example` dicts; read `run["outputs"]` and
-  `example["outputs"]`.
+  restricted sandbox and receive `run` and `example` dicts instead of named
+  arguments, so an evaluator written for `evaluate()` needs adapting.
 
 Iterate in code until an evaluator's definition is stable, then attach it to
 the dataset when it should become the shared bar for every experiment. Do not
@@ -236,10 +217,10 @@ langsmith evaluators rule list --dataset "support-agent-regression" --format jso
 
 `langsmith evaluators create-llm` needs a server-supported serialized
 `--model-config`; take it from a working evaluator or the LangSmith UI rather
-than writing one from a local model constructor. An evaluator that needs other
-packages, such as openevals, network access, or provider keys must be an
-advanced code evaluator: declare its dependencies and the names of the
-workspace secrets it uses, and never put a key in the file.
+than writing one from a local model constructor. An evaluator that needs
+packages the sandbox lacks, such as openevals, or provider keys must be
+created as an advanced code evaluator that declares its dependencies and the
+names of the workspace secrets it uses; never put a key in the file.
 
 ## Align judges with human labels
 
@@ -330,8 +311,9 @@ Use the authenticated `langsmith` CLI for datasets, examples, experiments, and
 evaluator rules, and the SDK for target functions, evaluator code, and
 experiment runs. Before the first workspace command, check `langsmith --version`
 and authentication with `langsmith auth info`; do not call `langsmith auth token`.
-Confirm the target workspace and pin it with `--workspace`. The SDK can read the
-CLI's saved profile, but environment variables and client arguments override
-it, so confirm the CLI and SDK target the same endpoint and workspace. Request `--format json` when parsing results, and check each
-command's `--help` for current flags. Commands that replace or delete prompt
+Confirm the target workspace and pin it with `--workspace`. The SDK can read
+the CLI's saved profile, but environment variables and client arguments
+override it, so confirm the CLI and SDK target the same endpoint and workspace.
+Request `--format json` when parsing results, and check each command's `--help`
+for current flags. Commands that replace or delete prompt
 for confirmation; do not pass `--yes` unless the user asks.
