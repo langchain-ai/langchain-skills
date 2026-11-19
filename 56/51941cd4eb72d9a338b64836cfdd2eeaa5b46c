@@ -1,0 +1,21 @@
+skills/langchain-agent-experiments/SKILL.md
+  s_05d5b9c403113f::t_e3393fe1c432ff 45-46
+  s_05d5b9c403113f::t_92de4690563df3 177-188,191-195
+  s_05d5b9c403113f::t_7574c2cf84eda9 281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5651941cd4eb72d9a338b64836cfdd2eeaa5b46c",
+  "prompts": {},
+  "sessions": {
+    "s_05d5b9c403113f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "045612cd-73e8-4e68-8684-84c2a328129f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
