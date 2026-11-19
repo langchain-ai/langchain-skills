@@ -1,0 +1,21 @@
+skills/langchain-agent-experiments/references/remote-agent-tracing.md
+  s_05d5b9c403113f::t_e581f13c66ed2b 1-93
+skills/langchain-agent-experiments/SKILL.md
+  s_05d5b9c403113f::t_70fcaadd43a02c 145-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ab9736de9aa2d55b5da898ee7883d4a363e1063",
+  "prompts": {},
+  "sessions": {
+    "s_05d5b9c403113f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "045612cd-73e8-4e68-8684-84c2a328129f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
