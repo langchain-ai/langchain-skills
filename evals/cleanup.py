@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 
@@ -55,6 +55,20 @@ def validate_manifest(run_id: str, data: dict) -> None:
                 or not isinstance(report.get("validators", {}).get("evidence"), dict)
             ):
                 raise ValueError(f"{run_id}: a live report with trace evidence is required before cleanup")
+    if data.get("target_dataset_name") is not None:
+        if data["target_dataset_name"] != expected_name:
+            raise ValueError(f"{run_id}: target dataset name does not match run identity")
+        if data["status"] == "completed":
+            report_path = manifest_path(run_id).with_name("report.json")
+            report = json.loads(report_path.read_text()) if report_path.is_file() else {}
+            evidence = report.get("validators", {}).get("evidence")
+            if (
+                report.get("run_id") != run_id
+                or not report.get("inspected_at")
+                or not isinstance(evidence, dict)
+                or evidence.get("dataset_name") != expected_name
+            ):
+                raise ValueError(f"{run_id}: a live report with dataset evidence is required before cleanup")
     if data.get("held_out_run_ids"):
         report_path = manifest_path(run_id).with_name("report.json")
         report = json.loads(report_path.read_text())
@@ -80,14 +94,16 @@ def cleanup_runs(run_ids: list[str], all_runs: bool = False, execute: bool = Fal
         data = load_manifest(run_id)
         validate_manifest(run_id, data)
         agent_pending = data.get("target_agent_id") is not None and not data.get("target_agent_deleted")
-        if not data.get("target_project_deleted") or agent_pending:
+        dataset_pending = data.get("target_dataset_name") is not None and not data.get("target_dataset_deleted")
+        if not data.get("target_project_deleted") or agent_pending or dataset_pending:
             pending.append(data)
     if not pending:
-        print("no temporary target projects or agents to delete")
+        print("no temporary target projects, agents, or datasets to delete")
         return
     for data in pending:
         agent = f"; agent {data['target_agent_id']}" if data.get("target_agent_id") else ""
-        print(f"{data['run_id']}: {data['target_project_name']} ({data['target_project_id']}){agent}")
+        dataset = f"; dataset {data['target_dataset_name']}" if data.get("target_dataset_name") else ""
+        print(f"{data['run_id']}: {data['target_project_name']} ({data['target_project_id']}){agent}{dataset}")
     if not execute:
         print("dry run; pass --execute to delete these exact targets")
         return
@@ -111,6 +127,9 @@ def cleanup_runs(run_ids: list[str], all_runs: bool = False, execute: bool = Fal
         if data.get("target_agent_id") is not None and not data.get("target_agent_deleted"):
             delete_target_agent(ls, data)
             print(f"{run_id}: deleted target agent {data['target_agent_id']} and its environments")
+        if data.get("target_dataset_name") is not None and not data.get("target_dataset_deleted"):
+            delete_target_dataset(ls, data)
+            print(f"{run_id}: deleted target dataset {data['target_dataset_name']}, its experiments, and its rules")
 
 
 def delete_target_agent(ls, data: dict) -> None:
@@ -125,6 +144,38 @@ def delete_target_agent(ls, data: dict) -> None:
             raise RuntimeError(f"{run_id}: live target agent identity mismatch")
         ls.request_with_retries("DELETE", f"/api/v1/agents/{agent_id}")
     data["target_agent_deleted"] = True
+    save_manifest(data)
+
+
+def _aware(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+def delete_target_dataset(ls, data: dict) -> None:
+    """Delete the dataset the agent created for this trial, with its experiments and bound rules."""
+    run_id, name = data["run_id"], data["target_dataset_name"]
+    try:
+        dataset = ls.read_dataset(dataset_name=name)
+    except LangSmithNotFoundError:
+        dataset = None
+    if dataset is not None:
+        report_path = manifest_path(run_id).with_name("report.json")
+        report = json.loads(report_path.read_text()) if report_path.is_file() else {}
+        recorded_id = (report.get("validators", {}).get("evidence") or {}).get("dataset_id")
+        dataset_id = str(dataset.id)
+        if (
+            dataset.name != name
+            or not name.startswith("lcskills-eval-")
+            or _aware(dataset.created_at) < datetime.fromisoformat(data["created_at"])
+            or (recorded_id is not None and recorded_id != dataset_id)
+        ):
+            raise RuntimeError(f"{run_id}: live target dataset identity mismatch")
+        rules = ls.request_with_retries("GET", f"/runs/rules?dataset_id={dataset_id}").json()
+        for rule in rules if isinstance(rules, list) else []:
+            if str(rule.get("dataset_id")) == dataset_id:
+                ls.request_with_retries("DELETE", f"/runs/rules/{UUID(rule['id'])}")
+        ls.delete_dataset(dataset_id=dataset_id)
+    data["target_dataset_deleted"] = True
     save_manifest(data)
 
 

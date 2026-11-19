@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -231,6 +232,112 @@ class AgentCleanupTests(unittest.TestCase):
         cleanup.cleanup_runs([self.run_id], execute=True)
         self.assertEqual(self.ls.deleted_agents, [])
         self.assertTrue(harness.load_manifest(self.run_id)["target_agent_deleted"])
+
+
+
+class FakeDatasetClient(FakeClient):
+    def __init__(self, workspace_id: str, project: SimpleNamespace, dataset: SimpleNamespace | None):
+        super().__init__(workspace_id, project)
+        self.dataset = dataset
+        self.deleted_datasets: list[str] = []
+        self.deleted_rules: list[str] = []
+        self.rules: list[dict] = []
+
+    def read_dataset(self, dataset_name: str) -> SimpleNamespace:
+        if self.dataset is None:
+            raise cleanup.LangSmithNotFoundError("missing")
+        return self.dataset
+
+    def delete_dataset(self, dataset_id: str) -> None:
+        self.deleted_datasets.append(dataset_id)
+
+    def request_with_retries(self, method: str, path: str, **kwargs) -> FakeResponse:
+        if method == "GET":
+            return FakeResponse(self.rules)
+        self.deleted_rules.append(path.rsplit("/", 1)[-1])
+        return FakeResponse({})
+
+
+class DatasetCleanupTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.jobs = Path(self.temporary.name)
+        self.run_id = str(uuid4())
+        self.target_id = str(uuid4())
+        self.workspace_id = str(uuid4())
+        self.dataset_id = str(uuid4())
+        name = f"lcskills-eval-experiment-regression-full-{self.run_id[:8]}"
+        self.data = {
+            "schema_version": 1,
+            "run_id": self.run_id,
+            "task": "experiment-regression",
+            "profile": "full",
+            "status": "completed",
+            "workspace_id": self.workspace_id,
+            "target_project_id": self.target_id,
+            "target_project_name": name,
+            "target_dataset_name": name,
+            "trace_project_id": str(uuid4()),
+            "held_out_run_ids": [],
+            "created_at": "2026-11-19T12:00:00+00:00",
+        }
+        project = SimpleNamespace(id=self.target_id, name=name,
+                                  description=f"Isolated Harbor task target for {self.run_id}")
+        self.dataset = SimpleNamespace(id=self.dataset_id, name=name,
+                                       created_at=datetime(2026, 11, 19, 12, 5, tzinfo=timezone.utc))
+        self.ls = FakeDatasetClient(self.workspace_id, project, self.dataset)
+        self.addCleanup(patch.stopall)
+        patch.object(harness, "JOBS", self.jobs).start()
+        patch.object(cleanup, "JOBS", self.jobs).start()
+        patch.object(cleanup, "client", return_value=self.ls).start()
+        harness.save_manifest(self.data)
+
+    def write_report(self, dataset_id: str | None = None) -> None:
+        evidence = {"dataset_id": dataset_id or self.dataset_id, "dataset_name": self.data["target_dataset_name"]}
+        report = {"run_id": self.run_id, "inspected_at": "2026-11-19T12:30:00+00:00",
+                  "validators": {"evidence": evidence}}
+        (self.jobs / self.run_id / "report.json").write_text(json.dumps(report))
+
+    def test_requires_dataset_evidence_before_cleanup(self) -> None:
+        with self.assertRaisesRegex(ValueError, "dataset evidence"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_datasets, [])
+
+    def test_deletes_recorded_dataset_and_its_rules(self) -> None:
+        self.write_report()
+        rule_id = str(uuid4())
+        self.ls.rules = [{"id": rule_id, "dataset_id": self.dataset_id}, {"id": str(uuid4()), "dataset_id": str(uuid4())}]
+        cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_rules, [rule_id])
+        self.assertEqual(self.ls.deleted_datasets, [self.dataset_id])
+        self.assertTrue(harness.load_manifest(self.run_id)["target_dataset_deleted"])
+
+    def test_refuses_dataset_created_before_the_trial(self) -> None:
+        self.write_report()
+        self.dataset.created_at = datetime(2026, 11, 1, tzinfo=timezone.utc)
+        with self.assertRaisesRegex(RuntimeError, "dataset identity mismatch"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_datasets, [])
+
+    def test_refuses_dataset_id_other_than_reported(self) -> None:
+        self.write_report(dataset_id=str(uuid4()))
+        with self.assertRaisesRegex(RuntimeError, "dataset identity mismatch"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_datasets, [])
+
+    def test_missing_dataset_is_marked_deleted(self) -> None:
+        self.write_report()
+        self.ls.dataset = None
+        cleanup.cleanup_runs([self.run_id], execute=True)
+        self.assertEqual(self.ls.deleted_datasets, [])
+        self.assertTrue(harness.load_manifest(self.run_id)["target_dataset_deleted"])
+
+    def test_rejects_dataset_name_outside_run_identity(self) -> None:
+        self.data["target_dataset_name"] = "customer-regression-suite"
+        harness.save_manifest(self.data)
+        with self.assertRaisesRegex(ValueError, "dataset name"):
+            cleanup.cleanup_runs([self.run_id], execute=True)
 
 
 if __name__ == "__main__":

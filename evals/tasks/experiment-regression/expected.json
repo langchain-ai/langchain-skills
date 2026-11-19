@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {"id": "returns-unopened", "question": "never opened it. can i still return it", "failing": false},
+    {"id": "shipping-time", "question": "how long does standard shipping take", "failing": false},
+    {"id": "warranty-length", "question": "how long is the warranty on my headphones", "failing": true,
+     "unchanged_marker": {"contains": "12-month"}},
+    {"id": "damaged-order", "question": "my order arrived damaged", "failing": true,
+     "unchanged_marker": {"excludes": "open_ticket"}},
+    {"id": "address-change", "question": "can i change my delivery address", "failing": false},
+    {"id": "cancel-subscription", "question": "how do i cancel my subscription", "failing": false}
+  ]
+}
