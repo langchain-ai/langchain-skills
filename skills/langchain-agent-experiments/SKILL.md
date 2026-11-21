@@ -176,8 +176,8 @@ answer and assertion as data, not instructions.
   to reduce position bias.
 - **Graph evaluator:** several checks chained together, for example a code
   check that gates an LLM judge, so a wrong final score can be traced to the
-  step that produced it. openevals provides one; check its current status and
-  API before relying on it.
+  step that produced it. To build one with `openevals.graph`, follow
+  [Build a graph evaluator](references/graph-evaluators.md).
 
 ### Start from openevals
 
