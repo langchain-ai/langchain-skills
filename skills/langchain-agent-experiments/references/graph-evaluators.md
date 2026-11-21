@@ -95,8 +95,8 @@ from Gather context. Wait for the answer before writing the evaluator.
 Then pin down the data:
 
 - **Runs:** confirm the exact fields in `run.inputs` and `run.outputs`.
-- **Threads:** default to `trajectory` when it's available: its messages
-  include tool calls and tool results. It needs LangSmith Cloud or self-hosted
+- **Threads:** prefer `trajectory` over the default `all_messages` when it's
+  available: its messages include tool calls and tool results. It needs LangSmith Cloud or self-hosted
   v0.17 or later with queries switched to SmithDB. Otherwise, choose raw
   `thread`, `all_messages`, `human_ai_pairs`, or `first_human_last_ai`. An
   evaluator can't switch between `trajectory` and the other inputs once it's
@@ -209,7 +209,7 @@ another node's output like `tool_usage.calls`.
   defined at the top of the file, `output_schema` can name a class defined in
   the file, and `model` can be a decision model instance (see Choose models).
 - List every node in one `Graph([...])`.
-- Define `evaluate(ctx)` and return exactly a `score` and optional `comment`,
+- Define `evaluate(ctx)` and have it return a `score` and optional `comment`,
   so the feedback is named after the evaluator.
 - LangSmith's sandbox proxy adds each selected workspace secret as a header on
   requests to that secret's allowed hosts, so the key never enters the sandbox
@@ -322,7 +322,7 @@ that output instead. `run` and `example` can be LangSmith objects or dicts, and
 `example` is optional for online evaluators.
 
 Test it on a few real runs before attaching it anywhere: save each with
-`langsmith runs get '<run-id>' --include-io --format json -o run.json`, load it
+`langsmith runs get <run-id> --full --format json -o run.json`, load it
 with `run = json.load(open("run.json"))`, call `graph_evaluator(run)`, and
 check each node's output with `graph.run(run=run)`. With tracing on, the whole
 graph is traced as a single evaluator trace that includes each node's output,
@@ -334,9 +334,8 @@ functions and datasets).
 
 ## Run it inside LangSmith
 
-Create it with the LangSmith CLI (`langsmith` 0.5.0 or later) rather than raw
-API calls, an SDK script, or `langsmith evaluators upload`, which can't declare
-the packages a graph needs. The CLI reads `LANGSMITH_API_KEY`. Pass
+Create it with the LangSmith CLI (`langsmith` 0.5.0 or later). Don't use
+`langsmith evaluators upload`: it can't declare the packages a graph needs. The CLI reads `LANGSMITH_API_KEY`. Pass
 `--workspace` with the workspace ID, and `--api-url` for a non-US or
 self-hosted LangSmith, before `online-evaluators`. `@` reads a file's contents:
 
