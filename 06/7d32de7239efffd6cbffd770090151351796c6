@@ -1,0 +1,19 @@
+skills/langchain-managed-deep-agents/SKILL.md
+  s_8bebbc8dd6dae6::t_7ad38db4f565bd 114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "067d32de7239efffd6cbffd770090151351796c6",
+  "prompts": {},
+  "sessions": {
+    "s_8bebbc8dd6dae6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86bfff7c-9134-4c64-938b-dfc59fd6119a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
