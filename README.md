@@ -137,9 +137,15 @@ CLI help to verify implementation details.
 Earlier versions of this repository shipped many smaller skills, such as
 `langchain-fundamentals` and `langgraph-persistence`, and
 [`langsmith-skills`](https://github.com/langchain-ai/langsmith-skills) shipped
-the LangSmith ones. The plugin's four skills replace all of them. Remove the old
-skills before installing the plugin, so the agent doesn't see two overlapping
-sets of guidance.
+the LangSmith ones. The plugin's skills replace all of them; `managed-deep-agents`
+is now `langchain-managed-deep-agents`. Remove the old skills before installing
+the plugin, so the agent doesn't see two overlapping sets of guidance.
+
+Old names in this repository still install with
+`npx skills add langchain-ai/langchain-skills --skill <old-name>`, so existing
+docs and scripts keep working. Each installs a short redirect from
+`skills/.legacy/` that points the agent to its replacement. `--skill '*'` and
+the plugin skip these redirects.
 
 1. **Installed with `npx skills`:** remove every retired skill. Names that
    aren't installed are skipped. Run it once with `--global`, and once without
