@@ -1,0 +1,21 @@
+config/skills/eval-engineering/SKILL.md
+  s_8bebbc8dd6dae6::t_ebfbbed3dd7eb6 1-12
+config/skills/managed-deep-agents/SKILL.md
+  s_8bebbc8dd6dae6::t_72721bd7b60d09 1-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "942d0b12236089241cb6329ee3ac395ee2f190b0",
+  "prompts": {},
+  "sessions": {
+    "s_8bebbc8dd6dae6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86bfff7c-9134-4c64-938b-dfc59fd6119a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
