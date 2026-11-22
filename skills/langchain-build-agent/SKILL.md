@@ -82,7 +82,8 @@ Consider it when the user wants to operate a Deep Agent without assembling that
 runtime stack, or needs managed capabilities such as sandboxes or schedules.
 Keep agent logic and hosted runtime choices distinct. Verify current capabilities
 and setup in official docs and the installed CLI; a general request to build a
-LangChain agent does not imply managed hosting.
+LangChain agent does not imply managed hosting. When the user chooses Managed
+Deep Agents, follow the `langchain-managed-deep-agents` skill.
 
 ## Retrieve the implementation contract
 
