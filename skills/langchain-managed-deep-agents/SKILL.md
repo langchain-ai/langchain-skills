@@ -111,7 +111,7 @@ Have the user send a message in Studio (or `mda chat` in the terminal) and confi
 
 | Limit | Consequence |
 | --- | --- |
-| LangSmith Cloud and BYOC only | No self-hosted or hybrid MDA. The default Serverless deployment type needs GCP SaaS; use `--deployment-type dedicated` elsewhere. BYOC has no Serverless and deploys an image with `mda deploy --push-to <image-repository>` (see `deploy`). |
+| LangSmith Cloud and BYOC only | No self-hosted or hybrid MDA. Serverless, the default Agent Server type, works in every LangSmith Cloud region; use `--agent-server-type dedicated` for always-on capacity (older CLIs: `--deployment-type`). BYOC has no Serverless and deploys an image with `mda deploy --push-to <image-repository>` (see `deploy`). |
 | No public management API | Create and update agents with `mda`. Do not invent a REST create/update flow. |
 | Channels are Slack and HTTP | One Slack channel per deployment. Other services go through an HTTP channel adapter. GitHub and Linear channels are experimental. |
 | Agent memory is deployment-shared | Every caller can read and write `/memories/agent/`. Per-person memory is the user layer and needs person identity. |
