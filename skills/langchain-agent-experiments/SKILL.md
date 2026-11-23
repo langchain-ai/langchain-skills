@@ -79,7 +79,10 @@ langsmith examples list --dataset "support-agent-regression" --format json
 
 After that, change the dataset in place rather than uploading a new copy:
 
-- **Add:** `langsmith examples create`.
+- **Add:** `langsmith examples create`. To turn production failures into
+  regression cases, pass run IDs with `--from-run` (repeatable, or `-` to read
+  IDs from stdin) and `--skip-duplicates`; it copies each run's inputs and
+  outputs and keeps the link to the source run.
 - **Edit:** `langsmith examples update` replaces each field it is given, so
   pass the full new value, such as every assertion, not just the one that
   changed.
@@ -255,6 +258,21 @@ matching columns in the experiment view; check the docs for their current
 shape. Compare experiments on the same dataset version with the same
 evaluators. Use repetitions when the application is nondeterministic, and look
 at per-example differences, not only averages.
+
+When the target is a command rather than Python code, or the evaluators are
+already attached to the dataset, run the experiment from the CLI. The command
+runs once per example with the example's inputs as JSON on stdin and must
+print JSON outputs:
+
+```bash
+langsmith experiments run --dataset "support-agent-regression" --name "support-agent-prompt-v2" -- python app.py
+langsmith experiments compare "support-agent-prompt-v1" "support-agent-prompt-v2" --format json
+```
+
+`experiments run` records a failing example as an errored run and keeps going,
+so check `error_count` before reading scores. `experiments compare` reports
+each score, cost, latency and error-rate change and lists the examples that got
+worse; start the diagnosis below from those examples.
 
 An experiment's runs are recorded only in its own project. To also keep them in
 a tracing project, follow

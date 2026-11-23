@@ -1,6 +1,6 @@
 [project]
 name = "langchain-skills"
-version = "0.4.2"
+version = "0.5.0"
 description = "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation"
 requires-python = ">=3.11"
 dependencies = []
