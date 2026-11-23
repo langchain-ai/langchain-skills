@@ -44,6 +44,11 @@ jobs:
             uv run --no-project scripts/check_plugin_versions.py
           fi
 
+      - name: Check published skill names still install
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: uv run --no-project scripts/check_skill_names.py ${BASE_SHA:+--base "$BASE_SHA"}
+
       - name: Smoke test linked and copied installs
         run: bash tests/test_install.sh
 
