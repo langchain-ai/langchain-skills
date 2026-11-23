@@ -1,24 +1,4 @@
 # Code owners for langchain-skills.
-# Later rules take precedence over earlier ones.
-
-# Fallback for anything not matched below (README, LICENSE, install.sh, ...)
-*                                           @xuro-langchain @jacobkleiman-LC
-
-# LangChain, LangGraph, and Deep Agents
-/skills/langchain-build-agent/              @xuro-langchain @sydney-runkle
-/skills/langchain-managed-deep-agents/      @victorm-lc
-
-# LangSmith
-/skills/langchain-agent-tracing/            @jacobkleiman-LC @maratlangchain
-/skills/langchain-agent-monitoring/         @jacobkleiman-LC @maratlangchain
-/skills/langchain-agent-experiments/        @jacobkleiman-LC @maratlangchain
-/skills/langchain-eval-engineering/         @vtrivedy
-
-# Redirect stubs for retired skill names
-/skills/.legacy/                            @jacobkleiman-LC
-
-# CI, lint tooling, and evals
-/.github/                                   @jacobkleiman-LC
-/scripts/                                   @jacobkleiman-LC
-/tests/                                     @jacobkleiman-LC
-/evals/                                     @jacobkleiman-LC
+# The skills team owns everything here, including every skill and the
+# redirect stubs in skills/.legacy/.
+*       @jacobkleiman-LC @maratlangchain
