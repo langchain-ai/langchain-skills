@@ -59,7 +59,8 @@ to configure or extend them.
 
 For a new reasoning and tool-calling agent, inspect Deep Agents' current
 documentation and extension points before selecting an implementation. Use its
-agent builder as the default, including for small agents with a limited tool set.
+agent builder for agents that handle complex, multi-step tasks or benefit from its
+built-in planning, filesystem, and subagent capabilities.
 
 Preserve an existing application's architecture unless the requested change
 requires revisiting it. Follow explicit user requirements about frameworks.
@@ -69,9 +70,10 @@ workflow control. Where a workflow contains an autonomous agent, that node can
 use Deep Agents. Where an agent needs a deterministic subtask, expose a LangGraph
 workflow as a tool it can call.
 
-Choose a base LangChain agent when a concrete requirement or verified
-incompatibility makes Deep Agents unsuitable, and explain that constraint.
-Task simplicity alone does not establish such a constraint.
+Choose a base LangChain agent with `create_agent` for straightforward agent
+applications, such as small agents with a limited tool set, when you want to
+configure a smaller harness yourself, or when a concrete requirement makes Deep
+Agents unsuitable.
 
 Use a direct model call when no agent loop is needed.
 
