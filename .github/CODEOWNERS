@@ -1,4 +1,8 @@
 # Code owners for langchain-skills.
-# The skills team owns everything here, including every skill and the
-# redirect stubs in skills/.legacy/.
-*       @jacobkleiman-LC @maratlangchain
+# Later rules take precedence over earlier ones. The skills team owns
+# everything; product teams also review the skills for their products.
+
+*                                         @langchain-ai/agentic-dx @jacobkleiman-LC
+/skills/langchain-managed-deep-agents/    @langchain-ai/agentic-dx @jacobkleiman-LC @victorm-lc
+/skills/langchain-build-agent/            @langchain-ai/agentic-dx @jacobkleiman-LC @xuro-langchain @sydney-runkle
+/skills/langchain-eval-engineering/       @langchain-ai/agentic-dx @jacobkleiman-LC @vtrivedy
