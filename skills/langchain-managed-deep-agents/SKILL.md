@@ -7,7 +7,7 @@ description: "Use when building, testing, or deploying a Managed Deep Agent in L
 
 ## Overview
 
-Managed Deep Agents (MDA) is a hosted runtime for code-first Deep Agents in LangSmith. You author an agent in Python or TypeScript, test it locally with `mda dev`, and deploy it with `mda deploy`. It runs the open-source Deep Agents harness (see the `langchain-build-agent` skill) on LangSmith Agent Server, and adds managed sandboxes, browsers, memory, connections, schedules, and channels as project-file declarations.
+Managed Deep Agents (MDA) is a hosted runtime for code-first Deep Agents in LangSmith. You author an agent in Python or TypeScript, test it locally with `mda dev`, and deploy it with `mda deploy`. It runs the open-source Deep Agents harness (see the `langchain-build-agent` skill) on LangSmith Agent Server, and adds managed sandboxes, browsers, memory, schedules, and channels as project-file declarations, plus connections whose credentials live in the LangSmith workspace and resolve at runtime.
 
 The core idea is that **an agent is a directory**. A file's location determines its role, and the CLI compiles that directory into a managed LangGraph app.
 
@@ -96,7 +96,7 @@ Add **one** capability at a time and confirm each works before the next. Do not 
 - Do not write live credential values into `.env`, copy keys from other projects, or echo key values.
 - Confirm `.gitignore` covers `.env` and `.env.*` — `mda init` does this already.
 
-The project needs `LANGSMITH_API_KEY` and its model provider key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, …) in `.env`, the shell, or LangSmith workspace secrets. Outside GCP US, set `LANGSMITH_ENDPOINT` before the first deploy (see `deploy`).
+The project needs `LANGSMITH_API_KEY` in `.env` or the shell, and its model provider key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, …) in `.env`, the shell, or LangSmith workspace secrets. Outside GCP US, set `LANGSMITH_ENDPOINT` before the first deploy (see `deploy`).
 
 ## 7. Run it locally, then deploy
 
