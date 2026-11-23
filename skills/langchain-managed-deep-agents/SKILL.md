@@ -216,7 +216,7 @@ These are the mistakes agents make most often. Check the linked page for current
 - **Memory uses layers**: `define_memory(agent=MemoryLayer())` / `defineMemory({ agent: memoryLayer() })`. String `scope="agent"` is rejected.
 - **User memory needs a person.** With the default LangSmith API-key identity, a workspace service key never mounts it; a personal access token counts as a person (SDK 0.10.2+).
 - **MCP servers go in `tools/mcp.*`** with a named `mcp` export from `define_mcp(servers=...)`. The old `connectors` API was removed.
-- **Agent-owned connections belong to a deployment**: create them after the first successful deploy.
+- **Agent-owned connections belong to a deployment**: create them after the first successful deploy, and rotating the value takes effect on the next run without redeploying.
 - **Restart `mda dev` after adding a managed file** (`memory`, `identity`, `browser`, `tools/mcp`, `schedules/`, `channels/`).
 - **`--no-wait` skips schedule reconciliation** and cannot be used with a Slack channel.
 - **`runtime.channel` is deprecated**; use `runtime.thread.origin.channel`.
