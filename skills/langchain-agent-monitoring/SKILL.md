@@ -116,6 +116,34 @@ account for its uncertainty.
   issue discovery. Keep feedback keys and comments clear so the resulting issue
   evidence is interpretable.
 
+## Diagnose a production problem and confirm the fix
+
+When the user reports that something broke, start with one diagnosis call
+instead of chaining list and stats commands:
+
+```bash
+langsmith investigate --project my-app --format json
+```
+
+It compares the window (default the last 24 hours, or `--last-n-minutes`)
+with a baseline before it, groups failed runs by step and error, marks each
+group as new or already failing, and lists evidence traces and the next
+commands to run. Follow those commands to read the evidence before proposing a
+cause. Failure counts are lower bounds on busy projects; the report says when
+its sample was cut off.
+
+After a fix ships, check that the targeted failures stopped:
+
+```bash
+langsmith verify --project my-app --since 2026-11-10T14:00:00Z --match RateLimitError --format json
+```
+
+`--since` is when the fix went live. Report the verdict as given: `fixed`,
+`still_failing`, `inconclusive` (too little traffic to tell), or `no_traffic`.
+Do not call an `inconclusive` result fixed; wait for more traffic or widen the
+window. Errors that appear only after the fix are listed separately as new
+failures.
+
 ## Use current tools
 
 For current behavior of online evaluators, decision models, rules, Insights, and
