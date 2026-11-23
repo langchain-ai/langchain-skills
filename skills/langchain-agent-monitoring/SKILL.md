@@ -103,8 +103,9 @@ decision model, filter those workflows on the judge's verdict key so first-pass
 false positives do not drive them. Without a judge, use the primary score and
 account for its uncertainty.
 
-- **Find recurring failure modes:** Create an Insights job filtered to the
-  confirmed feedback, and keep each job focused on one behavior.
+- **Find recurring failure modes:** Create an insight whose run filters select
+  the confirmed cases, or add a Boolean filter attribute that describes the
+  failure. Keep each insight focused on one behavior.
 - **Send cases to people:** Create an automation rule that adds runs with the
   confirmed feedback to an annotation queue with a review rubric. Use a Custom
   App when reviewers need a tailored view of the trace, judge explanation, and
