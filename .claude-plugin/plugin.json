@@ -1,7 +1,7 @@
 {
   "name": "langchain-skills",
   "displayName": "LangChain Skills",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Skills for LangChain application development, LangSmith workflows, and Harbor evaluation, with current documentation MCP access",
   "author": {
     "name": "LangChain",
