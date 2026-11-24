@@ -215,7 +215,6 @@ version. If MCP is unavailable, start from https://docs.langchain.com/llms.txt
 and https://reference.langchain.com/llms.txt.
 
 Before the first workspace command, check `langsmith --version` and
-`langsmith auth info`; do not call `langsmith auth token`. If a `langsmith`
-command or flag is unknown, the CLI is outdated: run `langsmith self-update`.
+`langsmith auth info`; do not call `langsmith auth token`. If a `langsmith` command or flag the skill names is missing from `langsmith --help`, the CLI is outdated: run `langsmith self-update`. If it prints a package-manager command (brew, pip, uv), run that instead of passing `--force`.
 Pin the workspace with `--workspace`, request `--format json` when parsing, and
 check each command's `--help` for current flags.

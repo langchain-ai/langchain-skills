@@ -25,7 +25,7 @@ export PROJECT_ID=$(langsmith projects resolve --kind AGENT --id <agent-id> --en
 # Project-based workspace: copy the project UUID from `langsmith projects list --format json`
 ```
 
-- If a `langsmith` command or flag is unknown, the CLI is outdated: run `langsmith self-update`.
+- If a `langsmith` command or flag the skill names is missing from `langsmith --help`, the CLI is outdated: run `langsmith self-update`. If it prints a package-manager command (brew, pip, uv), run that instead of passing `--force`.
 - If `LANGSMITH_API_KEY` is set in your shell, it overrides the OAuth login. Make sure it belongs to the target workspace.
 - Use the project UUID throughout. Name-based `--project` lookups can fall back to a stale `LANGSMITH_PROJECT` value.
 
