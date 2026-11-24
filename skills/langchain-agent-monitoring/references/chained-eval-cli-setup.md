@@ -25,6 +25,7 @@ export PROJECT_ID=$(langsmith projects resolve --kind AGENT --id <agent-id> --en
 # Project-based workspace: copy the project UUID from `langsmith projects list --format json`
 ```
 
+- If a `langsmith` command or flag is unknown, the CLI is outdated: run `langsmith self-update`.
 - If `LANGSMITH_API_KEY` is set in your shell, it overrides the OAuth login. Make sure it belongs to the target workspace.
 - Use the project UUID throughout. Name-based `--project` lookups can fall back to a stale `LANGSMITH_PROJECT` value.
 
@@ -201,11 +202,13 @@ langsmith api "runs/rules/<rule-id>" -X PATCH --body @rule-patch.json --workspac
 
 ## 7. Teardown
 
+These commands permanently delete resources. List what will be removed and confirm with the user before running them. The CLI refuses to delete without `--yes`, because an agent has no terminal to answer its prompt.
+
 ```bash
 langsmith evaluators rule get <rule-id> --workspace $WS          # note evaluator_id and the hub_ref
 langsmith evaluators delete <evaluator-id> --delete-rules --yes --workspace $WS
 langsmith api "repos/-/<hub-prompt-repo>" -X DELETE --workspace $WS
-langsmith insights config delete <config-id> --project-id $PROJECT_ID --workspace $WS
+langsmith insights config delete <config-id> --project-id $PROJECT_ID --yes --workspace $WS
 ```
 
 Repeat the first three commands for each evaluator. Deleting a rule alone leaves its evaluator record and hub prompt behind. Delete the hub prompt using the `hub_ref` without its `:latest` suffix.
