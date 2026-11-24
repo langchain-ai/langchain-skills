@@ -1,0 +1,25 @@
+.claude-plugin/plugin.json
+  s_8bebbc8dd6dae6::t_415494d045f23e 4
+.codex-plugin/plugin.json
+  s_8bebbc8dd6dae6::t_ca1eb39393de68 3
+plugin.json
+  s_8bebbc8dd6dae6::t_5744204fd694a7 4
+pyproject.toml
+  s_8bebbc8dd6dae6::t_a996ffd3fc3ed0 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04223524c1471568995b1215bebcca684705f45f",
+  "prompts": {},
+  "sessions": {
+    "s_8bebbc8dd6dae6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86bfff7c-9134-4c64-938b-dfc59fd6119a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}

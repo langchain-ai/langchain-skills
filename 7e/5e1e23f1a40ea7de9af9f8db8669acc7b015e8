@@ -1,0 +1,63 @@
+README.md
+  s_8bebbc8dd6dae6::t_ebd22dcac58219 140-148
+skills/.legacy/deep-agents-core/SKILL.md
+  s_8bebbc8dd6dae6::t_b6c6931e07a1ee 1-20
+skills/.legacy/deep-agents-memory/SKILL.md
+  s_8bebbc8dd6dae6::t_804abd0917e039 1-20
+skills/.legacy/deep-agents-orchestration/SKILL.md
+  s_8bebbc8dd6dae6::t_229f5a58ff7f81 1-20
+skills/.legacy/deepagents-python-quickstart/SKILL.md
+  s_8bebbc8dd6dae6::t_ef87183cdf87dd 1-20
+skills/.legacy/deepagents-typescript-quickstart/SKILL.md
+  s_8bebbc8dd6dae6::t_e65eda4d664548 1-20
+skills/.legacy/ecosystem-primer/SKILL.md
+  s_8bebbc8dd6dae6::t_9091e00ed69044 1-20
+skills/.legacy/eval-engineering/SKILL.md
+  s_8bebbc8dd6dae6::t_8f66fa0d5b23fa 1-20
+skills/.legacy/langchain-dependencies/SKILL.md
+  s_8bebbc8dd6dae6::t_a84f30a6f0a9de 1-20
+skills/.legacy/langchain-fundamentals/SKILL.md
+  s_8bebbc8dd6dae6::t_bcff7fc37025f1 1-20
+skills/.legacy/langchain-middleware/SKILL.md
+  s_8bebbc8dd6dae6::t_c15ae3e2ff7a19 1-20
+skills/.legacy/langchain-python-quickstart/SKILL.md
+  s_8bebbc8dd6dae6::t_8cbe3a0cd1ce12 1-20
+skills/.legacy/langchain-rag/SKILL.md
+  s_8bebbc8dd6dae6::t_89be6cf2e033bc 1-20
+skills/.legacy/langchain-typescript-quickstart/SKILL.md
+  s_8bebbc8dd6dae6::t_e3a2f86b3a64b1 1-20
+skills/.legacy/langgraph-cli/SKILL.md
+  s_8bebbc8dd6dae6::t_80fe84b48aa153 1-20
+skills/.legacy/langgraph-decision-models/SKILL.md
+  s_8bebbc8dd6dae6::t_c3b72556377836 1-20
+skills/.legacy/langgraph-fundamentals/SKILL.md
+  s_8bebbc8dd6dae6::t_201e903b7b1d49 1-20
+skills/.legacy/langgraph-human-in-the-loop/SKILL.md
+  s_8bebbc8dd6dae6::t_cd656661962590 1-20
+skills/.legacy/langgraph-persistence/SKILL.md
+  s_8bebbc8dd6dae6::t_0b49956d663f7e 1-20
+skills/.legacy/langgraph-python-quickstart/SKILL.md
+  s_8bebbc8dd6dae6::t_2b4791bdffd157 1-20
+skills/.legacy/langgraph-typescript-quickstart/SKILL.md
+  s_8bebbc8dd6dae6::t_130c7e09df98cf 1-20
+skills/.legacy/managed-deep-agents/SKILL.md
+  s_8bebbc8dd6dae6::t_c211ac8382cbba 1-20
+skills/.legacy/swarm/SKILL.md
+  s_8bebbc8dd6dae6::t_3c656c4c9a817a 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7e5e1e23f1a40ea7de9af9f8db8669acc7b015e8",
+  "prompts": {},
+  "sessions": {
+    "s_8bebbc8dd6dae6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86bfff7c-9134-4c64-938b-dfc59fd6119a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
