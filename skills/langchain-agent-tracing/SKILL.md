@@ -215,6 +215,7 @@ version. If MCP is unavailable, start from https://docs.langchain.com/llms.txt
 and https://reference.langchain.com/llms.txt.
 
 Before the first workspace command, check `langsmith --version` and
-`langsmith auth info`; do not call `langsmith auth token`. Pin the workspace
-with `--workspace`, request `--format json` when parsing, and check each
-command's `--help` for current flags.
+`langsmith auth info`; do not call `langsmith auth token`. If a `langsmith`
+command or flag is unknown, the CLI is outdated: run `langsmith self-update`.
+Pin the workspace with `--workspace`, request `--format json` when parsing, and
+check each command's `--help` for current flags.
