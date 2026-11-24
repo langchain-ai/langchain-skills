@@ -107,8 +107,7 @@ range, export time, and stable conversation or trace identifiers.
 When traces are in LangSmith, use the authenticated `langsmith` CLI to sample
 with `runs list` or `threads list` and `threads get`. Use `runs export` for a
 repeatable JSONL snapshot when needed. Check authentication with
-`langsmith auth info`. If a `langsmith` command or flag is unknown, the CLI is
-outdated: run `langsmith self-update`. Pin the target with `--workspace`, request `--format json`
+`langsmith auth info`. If a `langsmith` command or flag the skill names is missing from `langsmith --help`, the CLI is outdated: run `langsmith self-update`. If it prints a package-manager command (brew, pip, uv), run that instead of passing `--force`. Pin the target with `--workspace`, request `--format json`
 for parsed list or get output, and consult each command's `--help` for filters.
 In an agent-based workspace, find the agent with `langsmith agents list`, then
 resolve its environment to a session ID with

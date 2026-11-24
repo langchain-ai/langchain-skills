@@ -157,8 +157,7 @@ https://docs.langchain.com/llms.txt and https://reference.langchain.com/llms.txt
 Use the authenticated `langsmith` CLI for supported workspace inspection and
 resource operations, and the SDK for evaluator code and evaluation runs. Before
 the first workspace command, check `langsmith --version` and authentication with
-`langsmith auth info`; do not call `langsmith auth token`. If a `langsmith`
-command or flag is unknown, the CLI is outdated: run `langsmith self-update`.
+`langsmith auth info`; do not call `langsmith auth token`. If a `langsmith` command or flag the skill names is missing from `langsmith --help`, the CLI is outdated: run `langsmith self-update`. If it prints a package-manager command (brew, pip, uv), run that instead of passing `--force`.
 Confirm the target workspace and pin it with `--workspace`. Request
 `--format json` when parsing results, and check each command's `--help` for
 current flags. Commands that replace or delete refuse to run without `--yes`,
