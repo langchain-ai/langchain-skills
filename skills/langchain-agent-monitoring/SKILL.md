@@ -103,8 +103,9 @@ decision model, filter those workflows on the judge's verdict key so first-pass
 false positives do not drive them. Without a judge, use the primary score and
 account for its uncertainty.
 
-- **Find recurring failure modes:** Create an Insights job filtered to the
-  confirmed feedback, and keep each job focused on one behavior.
+- **Find recurring failure modes:** Create an insight whose run filters select
+  the confirmed cases, or add a Boolean filter attribute that describes the
+  failure. Keep each insight focused on one behavior.
 - **Send cases to people:** Create an automation rule that adds runs with the
   confirmed feedback to an annotation queue with a review rubric. Use a Custom
   App when reviewers need a tailored view of the trace, judge explanation, and
@@ -115,6 +116,34 @@ account for its uncertainty.
 - **Enrich Engine:** If using Engine, let evaluation feedback on traces inform
   issue discovery. Keep feedback keys and comments clear so the resulting issue
   evidence is interpretable.
+
+## Diagnose a production problem and confirm the fix
+
+When the user reports that something broke, start with one diagnosis call
+instead of chaining list and stats commands:
+
+```bash
+langsmith investigate --project my-app --format json
+```
+
+It compares the window (default the last 24 hours, or `--last-n-minutes`)
+with a baseline before it, groups failed runs by step and error, marks each
+group as new or already failing, and lists evidence traces and the next
+commands to run. Follow those commands to read the evidence before proposing a
+cause. Failure counts are lower bounds on busy projects; the report says when
+its sample was cut off.
+
+After a fix ships, check that the targeted failures stopped:
+
+```bash
+langsmith verify --project my-app --since 2026-11-10T14:00:00Z --match RateLimitError --format json
+```
+
+`--since` is when the fix went live. Report the verdict as given: `fixed`,
+`still_failing`, `inconclusive` (too little traffic to tell), or `no_traffic`.
+Do not call an `inconclusive` result fixed; wait for more traffic or widen the
+window. Errors that appear only after the fix are listed separately as new
+failures.
 
 ## Use current tools
 
