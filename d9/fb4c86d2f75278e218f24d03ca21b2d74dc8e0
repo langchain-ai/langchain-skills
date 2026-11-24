@@ -1,0 +1,29 @@
+skills/langchain-agent-tracing/SKILL.md
+  s_d09bf99672d12d::t_d962c362d5ea2d 218-221
+skills/langchain-eval-engineering/references/discovery.md
+  s_d09bf99672d12d::t_66bf63da2ee651 110-111
+skills/langchain-agent-monitoring/references/chained-eval-cli-setup.md
+  s_d09bf99672d12d::t_bbc7b591ee536a 28
+  s_d09bf99672d12d::t_e81de6f83aa721 211
+  s_d09bf99672d12d::t_c50d49052d1719 205-206
+skills/langchain-agent-monitoring/SKILL.md
+  s_d09bf99672d12d::t_d5f20fea5c52a8 160-166
+skills/langchain-agent-experiments/SKILL.md
+  s_d09bf99672d12d::t_454cfde92eae23 314-321
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d9fb4c86d2f75278e218f24d03ca21b2d74dc8e0",
+  "prompts": {},
+  "sessions": {
+    "s_d09bf99672d12d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3c87cbd-0a58-48d6-96b3-75bd6979ea87",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "jacobkleiman-LC <jacob.kleiman@langchain.dev>"
+    }
+  }
+}
