@@ -329,9 +329,11 @@ Use the authenticated `langsmith` CLI for datasets, examples, experiments, and
 evaluator rules, and the SDK for target functions, evaluator code, and
 experiment runs. Before the first workspace command, check `langsmith --version`
 and authentication with `langsmith auth info`; do not call `langsmith auth token`.
-Confirm the target workspace and pin it with `--workspace`. The SDK can read
-the CLI's saved profile, but environment variables and client arguments
-override it, so confirm the CLI and SDK target the same endpoint and workspace.
-Request `--format json` when parsing results, and check each command's `--help`
-for current flags. Commands that replace or delete prompt
-for confirmation; do not pass `--yes` unless the user asks.
+If a `langsmith` command or flag is unknown, the CLI is outdated: run
+`langsmith self-update`. Confirm the target workspace and pin it with
+`--workspace`. The SDK can read the CLI's saved profile, but environment
+variables and client arguments override it, so confirm the CLI and SDK target
+the same endpoint and workspace. Request `--format json` when parsing results,
+and check each command's `--help` for current flags. Commands that replace or
+delete refuse to run without `--yes`, because an agent has no terminal to
+answer their prompt. Confirm the change with the user first, then pass `--yes`.
